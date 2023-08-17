@@ -45,8 +45,12 @@ func main() {
 	}
 
 	for _, feed := range config.Feeds {
-		module := Modules[feed.Module]()
-		feed, err := module.Parse(feed.Options)
+		module, ok := Modules[feed.Module]
+		if !ok {
+			fmt.Printf("Module %s not found\n", feed.Module)
+			return
+		}
+		feed, err := module().Parse(feed.Options)
 		if err != nil {
 			fmt.Print(err)
 			return
