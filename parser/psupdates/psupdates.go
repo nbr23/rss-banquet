@@ -94,8 +94,8 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 	update.Link = &feeds.Link{Href: url}
 	update.Id = guid(hardware, update.Created.Format(time.RFC3339), versionName)
 
-	feed.Title = fmt.Sprintf("%s Updates", hardware)
-	feed.Description = fmt.Sprintf("The latest %s updates", hardware)
+	feed.Title = parser.DefaultedGet(options, "title", fmt.Sprintf("%s Updates", hardware)).(string)
+	feed.Description = parser.DefaultedGet(options, "description", fmt.Sprintf("The latest %s updates", hardware)).(string)
 	feed.Items = append(feed.Items, &update)
 	feed.Author = &feeds.Author{
 		Name: "PlayStation",

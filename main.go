@@ -44,13 +44,13 @@ func main() {
 		return
 	}
 
-	for _, feed := range config.Feeds {
-		module, ok := Modules[feed.Module]
+	for _, f := range config.Feeds {
+		module, ok := Modules[f.Module]
 		if !ok {
-			fmt.Printf("Module %s not found\n", feed.Module)
+			fmt.Printf("Module %s not found\n", f.Module)
 			return
 		}
-		feed, err := module().Parse(feed.Options)
+		feed, err := module().Parse(f.Options)
 		if err != nil {
 			fmt.Print(err)
 			return
@@ -61,7 +61,7 @@ func main() {
 			return
 		}
 
-		output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, feed.Title)
+		output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, f.Name)
 		out, err := os.Create(output_path)
 		if err != nil {
 			fmt.Print(err)
