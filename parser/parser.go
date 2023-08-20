@@ -15,3 +15,13 @@ func DefaultedGet(m map[string]any, k string, d any) any {
 	}
 	return d
 }
+
+func GetLatestDate(dates []time.Time) time.Time {
+	latestDate := dates[0]
+	for _, date := range dates {
+		if date.After(latestDate) {
+			latestDate = date
+		}
+	}
+	return latestDate
+}
