@@ -89,7 +89,11 @@ func main() {
 	)
 
 	flag.BoolVar(&showHelp, "h", false, "Show help message")
-	flag.StringVar(&configPath, "c", "./config.yaml", "Path to configuration file")
+	configPath, found := os.LookupEnv(fmt.Sprintf("%sCONFIG_PATH", ENV_PREFIX))
+	if !found {
+		configPath = "./config.yaml"
+	}
+	flag.StringVar(&configPath, "c", configPath, "Path to configuration file")
 	flag.Parse()
 
 	if showHelp {

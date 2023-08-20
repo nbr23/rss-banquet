@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+const ENV_PREFIX = "ATOMICBANQUET_"
 
 type FeedConfig struct {
 	Module  string         `yaml:"module"`
@@ -48,14 +51,13 @@ func getFeedsFromConfig(path string) (*Config, error) {
 }
 
 func extendConfigFromEnv(config *Config) {
-	const PREFIX = "ATOMICBANQUET_"
-
+	feedOptPrefix := fmt.Sprintf("%sFEED_OPT_", ENV_PREFIX)
 	for _, env := range os.Environ() {
 		keyval := strings.SplitN(env, "=", 2)
 		k, v := keyval[0], keyval[1]
 
-		if strings.HasPrefix(k, PREFIX) {
-			p := strings.Split(strings.TrimPrefix(k, PREFIX), "_")
+		if strings.HasPrefix(k, feedOptPrefix) {
+			p := strings.Split(strings.TrimPrefix(k, feedOptPrefix), "_")
 			feedKey := strings.ToLower(p[0])
 			optionKey := p[1]
 			for _, feed := range config.Feeds {
