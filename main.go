@@ -1,10 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
 	"sort"
+	"strings"
+
+	"github.com/gorilla/feeds"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 func printHelp() {
@@ -21,6 +29,56 @@ func printHelp() {
 	for _, module := range sortedModules {
 		fmt.Printf("  - %s\n%s\n", module, Modules[module]().Help())
 	}
+}
+
+func saveToS3(atom string, outputPath string, feedName string) error {
+	s, err := session.NewSession(&aws.Config{})
+	if err != nil {
+		return err
+	}
+	s3Client := s3.New(s)
+
+	bucketUri := strings.SplitN(strings.TrimPrefix(outputPath, "s3://"), "/", 2)
+	bucketName := bucketUri[0]
+	objectKey := strings.Join(append(bucketUri[1:], fmt.Sprintf("%s.atom", feedName)), "/")
+
+	contentBytes := []byte(atom)
+
+	_, err = s3Client.PutObject(&s3.PutObjectInput{
+		Bucket:      aws.String(bucketName),
+		Key:         aws.String(objectKey),
+		Body:        bytes.NewReader(contentBytes),
+		ContentType: aws.String("application/atom+xml"),
+	})
+	if err != nil {
+		fmt.Println("Error uploading to S3:", err)
+		return err
+	}
+
+	fmt.Println("Uploaded content to S3 successfully!")
+	return nil
+}
+
+func saveFeed(config *Config, feed *feeds.Feed, f FeedConfig) error {
+	atom, err := feed.ToAtom()
+	if err != nil {
+		fmt.Print(err)
+		return err
+	}
+
+	if strings.HasPrefix(config.OutputPath, "s3://") {
+		return saveToS3(atom, config.OutputPath, f.Name)
+	}
+
+	output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, f.Name)
+	out, err := os.Create(output_path)
+	if err != nil {
+		fmt.Print(err)
+		return err
+	}
+	defer out.Close()
+	out.WriteString(atom)
+	return nil
 }
 
 func main() {
@@ -55,19 +113,9 @@ func main() {
 			fmt.Print(err)
 			return
 		}
-		atom, err := feed.ToAtom()
+		err = saveFeed(config, feed, f)
 		if err != nil {
 			fmt.Print(err)
-			return
 		}
-
-		output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, f.Name)
-		out, err := os.Create(output_path)
-		if err != nil {
-			fmt.Print(err)
-			return
-		}
-		defer out.Close()
-		out.WriteString(atom)
 	}
 }
