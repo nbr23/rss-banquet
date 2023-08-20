@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -103,25 +104,22 @@ func main() {
 
 	config, err := getFeedsFromConfig(configPath)
 	if err != nil {
-		fmt.Print(err)
-		return
+		log.Fatal(err)
 	}
 
 	for _, f := range config.Feeds {
 		module, ok := Modules[f.Module]
 		fileName := parser.DefaultedGet(f.Options, "filename", f.Name).(string)
 		if !ok {
-			fmt.Printf("Module %s not found\n", f.Module)
-			return
+			log.Fatalf("Module %s not found\n", f.Module)
 		}
 		feed, err := module().Parse(f.Options)
 		if err != nil {
-			fmt.Print(err)
-			return
+			log.Fatal(err)
 		}
 		err = saveFeed(config, feed, fileName)
 		if err != nil {
-			fmt.Print(err)
+			log.Fatal(err)
 		}
 	}
 }
