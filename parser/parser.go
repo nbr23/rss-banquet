@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"time"
+
 	"github.com/gorilla/feeds"
 )
 
