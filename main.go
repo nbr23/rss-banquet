@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/feeds"
+	"github.com/nbr23/atomic-banquet/parser"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -31,7 +32,7 @@ func printHelp() {
 	}
 }
 
-func saveToS3(atom string, outputPath string, feedName string) error {
+func saveToS3(atom string, outputPath string, fileName string) error {
 	s, err := session.NewSession(&aws.Config{})
 	if err != nil {
 		return err
@@ -40,7 +41,7 @@ func saveToS3(atom string, outputPath string, feedName string) error {
 
 	bucketUri := strings.SplitN(strings.TrimPrefix(outputPath, "s3://"), "/", 2)
 	bucketName := bucketUri[0]
-	objectKey := strings.Join(append(bucketUri[1:], fmt.Sprintf("%s.atom", feedName)), "/")
+	objectKey := strings.Join(append(bucketUri[1:], fmt.Sprintf("%s.atom", fileName)), "/")
 
 	contentBytes := []byte(atom)
 
@@ -59,7 +60,7 @@ func saveToS3(atom string, outputPath string, feedName string) error {
 	return nil
 }
 
-func saveFeed(config *Config, feed *feeds.Feed, f FeedConfig) error {
+func saveFeed(config *Config, feed *feeds.Feed, fileName string) error {
 	atom, err := feed.ToAtom()
 	if err != nil {
 		fmt.Print(err)
@@ -67,10 +68,10 @@ func saveFeed(config *Config, feed *feeds.Feed, f FeedConfig) error {
 	}
 
 	if strings.HasPrefix(config.OutputPath, "s3://") {
-		return saveToS3(atom, config.OutputPath, f.Name)
+		return saveToS3(atom, config.OutputPath, fileName)
 	}
 
-	output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, f.Name)
+	output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, fileName)
 	out, err := os.Create(output_path)
 	if err != nil {
 		fmt.Print(err)
@@ -104,6 +105,7 @@ func main() {
 
 	for _, f := range config.Feeds {
 		module, ok := Modules[f.Module]
+		fileName := parser.DefaultedGet(f.Options, "filename", f.Name).(string)
 		if !ok {
 			fmt.Printf("Module %s not found\n", f.Module)
 			return
@@ -113,7 +115,7 @@ func main() {
 			fmt.Print(err)
 			return
 		}
-		err = saveFeed(config, feed, f)
+		err = saveFeed(config, feed, fileName)
 		if err != nil {
 			fmt.Print(err)
 		}
