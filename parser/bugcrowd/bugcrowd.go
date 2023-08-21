@@ -127,34 +127,34 @@ func getRewardString(item *bugcrowdItem) string {
 }
 
 func buildItemDescription(item *bugcrowdItem) string {
-	description := fmt.Sprintf("Program: %s\n", item.ProgramName)
+	description := fmt.Sprintf("Program: %s<br/>", item.ProgramName)
 	reward := getRewardString(item)
 	if item.Target != "" {
-		description = fmt.Sprintf("%sTarget: %s\n", description, item.Target)
+		description = fmt.Sprintf("%sTarget: %s<br/>", description, item.Target)
 	}
 	if reward != "" {
-		description = fmt.Sprintf("%sReward: %s\n", description, reward)
+		description = fmt.Sprintf("%sReward: %s<br/>", description, reward)
 	}
 	if item.SubmissionStateText != "" {
-		description = fmt.Sprintf("%sState: %s\n", description, item.SubmissionStateText)
+		description = fmt.Sprintf("%sState: %s<br/>", description, item.SubmissionStateText)
 	}
 	if item.SubmissionStateDateText != "" {
-		description = fmt.Sprintf("%sState Date: %s\n", description, item.SubmissionStateDateText)
+		description = fmt.Sprintf("%sState Date: %s<br/>", description, item.SubmissionStateDateText)
 	}
 	if item.DisclosedAt != "" {
-		description = fmt.Sprintf("%sDisclosed At: %s\n", description, item.DisclosedAt)
+		description = fmt.Sprintf("%sDisclosed At: %s<br/>", description, item.DisclosedAt)
 	}
 	if item.ClaimedAt != "" {
-		description = fmt.Sprintf("%sClaimed At: %s\n", description, item.ClaimedAt)
+		description = fmt.Sprintf("%sClaimed At: %s<br/>", description, item.ClaimedAt)
 	}
 	if item.AcceptedAt != "" {
-		description = fmt.Sprintf("%sAccepted At: %s\n", description, item.AcceptedAt)
+		description = fmt.Sprintf("%sAccepted At: %s<br/>", description, item.AcceptedAt)
 	}
 	if item.ClosedAt != "" {
-		description = fmt.Sprintf("%sClosed At: %s\n", description, item.ClosedAt)
+		description = fmt.Sprintf("%sClosed At: %s<br/>", description, item.ClosedAt)
 	}
 	if item.DisclosureReportUrl != "" {
-		description = fmt.Sprintf("%sReport: %s\n", description, item.DisclosureReportUrl)
+		description = fmt.Sprintf("%sReport: %s<br/>", description, item.DisclosureReportUrl)
 	}
 	return description
 }
