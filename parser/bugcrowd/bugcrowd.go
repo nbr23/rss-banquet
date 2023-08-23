@@ -95,6 +95,12 @@ func buildReportUrl(item *bugcrowdItem) *feeds.Link {
 
 func buildItemTitle(item *bugcrowdItem) string {
 	title := item.ProgramName
+	if item.CreatedAt != "" {
+		t, err := time.Parse(time.RFC3339, item.CreatedAt)
+		if err == nil {
+			title = fmt.Sprintf("[%s] %s", t.Format("2006-01-02"), title)
+		}
+	}
 	if item.Priority > 0 {
 		title = fmt.Sprintf("%s | P%d", title, item.Priority)
 	}
