@@ -83,10 +83,63 @@ func saveFeed(config *Config, feed *feeds.Feed, fileName string) error {
 	return nil
 }
 
+func feedWorker(id int, feedJobs <-chan FeedConfig, results chan<- error, config *Config) {
+	for f := range feedJobs {
+		module, ok := Modules[f.Module]
+		fileName := parser.DefaultedGet(f.Options, "filename", f.Name).(string)
+		if !ok {
+			results <- fmt.Errorf("module %s not found", f.Module)
+			return
+		}
+		feed, err := module().Parse(f.Options)
+		if err != nil {
+			results <- err
+			return
+		}
+		err = saveFeed(config, feed, fileName)
+		if err != nil {
+			results <- err
+			return
+		}
+		results <- nil
+	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func processFeeds(config *Config, workersCount int) {
+	wc := min(workersCount, len(config.Feeds))
+
+	feedJobs := make(chan FeedConfig, len(config.Feeds))
+	errors := make(chan error, len(config.Feeds))
+
+	for w := 0; w < wc; w++ {
+		go feedWorker(w, feedJobs, errors, config)
+	}
+
+	for _, f := range config.Feeds {
+		feedJobs <- f
+	}
+	close(feedJobs)
+
+	for i := 0; i < len(config.Feeds); i++ {
+		err := <-errors
+		if err != nil {
+			fmt.Printf("Error: %s\n", err)
+		}
+	}
+}
+
 func main() {
 	var (
-		showHelp   bool
-		configPath string
+		showHelp     bool
+		configPath   string
+		workersCount int
 	)
 
 	flag.BoolVar(&showHelp, "h", false, "Show help message")
@@ -95,6 +148,7 @@ func main() {
 		configPath = "./config.yaml"
 	}
 	flag.StringVar(&configPath, "c", configPath, "Path to configuration file")
+	flag.IntVar(&workersCount, "w", 5, "Number of workers")
 	flag.Parse()
 
 	if showHelp {
@@ -107,19 +161,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, f := range config.Feeds {
-		module, ok := Modules[f.Module]
-		fileName := parser.DefaultedGet(f.Options, "filename", f.Name).(string)
-		if !ok {
-			log.Fatalf("Module %s not found\n", f.Module)
-		}
-		feed, err := module().Parse(f.Options)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = saveFeed(config, feed, fileName)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	processFeeds(config, workersCount)
 }
