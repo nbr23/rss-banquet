@@ -11,9 +11,11 @@ type Parser interface {
 	Help() string
 }
 
-func DefaultedGet(m map[string]any, k string, d any) any {
-	if v, ok := m[k].(string); ok {
-		return v
+func DefaultedGet[T any](m map[string]any, k string, d T) T {
+	if v, ok := m[k]; ok {
+		if _, ok := v.(T); ok {
+			return v.(T)
+		}
 	}
 	return d
 }

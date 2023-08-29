@@ -86,7 +86,7 @@ func saveFeed(config *Config, feed *feeds.Feed, fileName string) error {
 func feedWorker(id int, feedJobs <-chan FeedConfig, results chan<- error, config *Config) {
 	for f := range feedJobs {
 		module, ok := Modules[f.Module]
-		fileName := parser.DefaultedGet(f.Options, "filename", f.Name).(string)
+		fileName := parser.DefaultedGet(f.Options, "filename", f.Name)
 		if !ok {
 			results <- fmt.Errorf("module %s not found", f.Module)
 			return

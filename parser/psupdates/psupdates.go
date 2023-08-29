@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+
 	"strconv"
 	"strings"
 	"time"
@@ -58,9 +59,9 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 	var feed feeds.Feed
 	var update feeds.Item
 
-	hardware, _ := parser.DefaultedGet(options, "hardware", "ps5").(string)
+	hardware := parser.DefaultedGet(options, "hardware", "ps5")
 	hardware = strings.ToUpper(hardware)
-	local, _ := parser.DefaultedGet(options, "local", "en-us").(string)
+	local := parser.DefaultedGet(options, "local", "en-us")
 	url := getHardwareURL(hardware, local)
 
 	resp, err := http.Get(url)
@@ -94,8 +95,8 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 	update.Link = &feeds.Link{Href: url}
 	update.Id = guid(hardware, update.Created.Format(time.RFC3339), versionName)
 
-	feed.Title = parser.DefaultedGet(options, "title", fmt.Sprintf("%s Updates", hardware)).(string)
-	feed.Description = parser.DefaultedGet(options, "description", fmt.Sprintf("The latest %s updates", hardware)).(string)
+	feed.Title = parser.DefaultedGet(options, "title", fmt.Sprintf("%s Updates", hardware))
+	feed.Description = parser.DefaultedGet(options, "description", fmt.Sprintf("The latest %s updates", hardware))
 	feed.Items = append(feed.Items, &update)
 	feed.Author = &feeds.Author{
 		Name: "PlayStation",

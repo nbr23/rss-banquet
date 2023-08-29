@@ -166,8 +166,8 @@ func buildItemDescription(item *bugcrowdItem) string {
 
 func feedAdapter(b *bugcrowdFeed, options map[string]any) (*feeds.Feed, error) {
 	feed := feeds.Feed{
-		Title:       parser.DefaultedGet(options, "title", "Bugcrowd").(string),
-		Description: parser.DefaultedGet(options, "description", "Bugcrowd Crowdstream").(string),
+		Title:       parser.DefaultedGet(options, "title", "Bugcrowd"),
+		Description: parser.DefaultedGet(options, "description", "Bugcrowd Crowdstream"),
 		Items:       []*feeds.Item{},
 		Author:      &feeds.Author{Name: "Bugcrowd"},
 		Created:     time.Now(),
