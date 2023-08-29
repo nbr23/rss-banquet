@@ -104,18 +104,14 @@ func buildItemTitle(item *bugcrowdItem) string {
 	if item.Priority > 0 {
 		title = fmt.Sprintf("%s | P%d", title, item.Priority)
 	}
-	if item.Title != "" {
-		title = fmt.Sprintf("%s | %s", title, item.Title)
-		return title
-	}
-
 	if item.Amount != "" {
 		title = fmt.Sprintf("%s | %s", title, item.Amount)
 	}
+	if item.Title != "" {
+		title = fmt.Sprintf("%s | %s", title, item.Title)
+	}
 	if item.SubmissionStateText != "" {
 		title = fmt.Sprintf("%s | %s", title, item.SubmissionStateText)
-	} else {
-		panic(fmt.Sprintf("item without submission state text: %v", item))
 	}
 	return title
 }
@@ -137,6 +133,9 @@ func buildItemDescription(item *bugcrowdItem) string {
 	reward := getRewardString(item)
 	if item.Target != "" {
 		description = fmt.Sprintf("%sTarget: %s<br/>", description, item.Target)
+	}
+	if item.ResearcherUsername != "" {
+		description = fmt.Sprintf("%sReporter: %s<br/>", description, item.ResearcherUsername)
 	}
 	if reward != "" {
 		description = fmt.Sprintf("%sReward: %s<br/>", description, reward)
