@@ -1,0 +1,41 @@
+feeds:
+  - name: PS5Updates
+    module: psupdates
+    options:
+      title: PS5 Updates
+      hardware: ps5
+  - name: PS4Updates
+    module: psupdates
+    options:
+      hardware: ps4
+  - name: Bugcrowd_All
+    module: bugcrowd
+    options:
+      title: Bugcrowd All
+      disclosures: true
+      accepted: true
+  - name: Bugcrowd_Disclosures
+    module: bugcrowd
+    options:
+      title: Bugcrowd Disclosures
+      disclosures: true
+      accepted: false
+  - name: Bugcrowd_Accepted
+    module: bugcrowd
+    options:
+      title: Bugcrowd Accepted
+      disclosures: false
+      accepted: true
+  - name: Hackerone_All
+    module: hackerone
+    options:
+      title: HackerOne Activity
+      filename: H1_All
+      disclosed_only: false
+  - name: Hackerone_Disclosures
+    module: hackerone
+    options:
+      title: HackerOne Disclosures
+      filename: H1_Disclosures
+      disclosed_only: true
+output_path: ./out
