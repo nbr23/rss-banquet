@@ -96,6 +96,10 @@ func feedWorker(id int, feedJobs <-chan FeedConfig, results chan<- error, config
 			results <- err
 			return
 		}
+		if feed == nil {
+			results <- fmt.Errorf("feed %s is empty", f.Name)
+			return
+		}
 		err = saveFeed(config, feed, fileName)
 		if err != nil {
 			results <- err
