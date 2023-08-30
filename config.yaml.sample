@@ -38,4 +38,9 @@ feeds:
       title: HackerOne Disclosures
       filename: H1_Disclosures
       disclosed_only: true
+  - name: Lego_ComingSoon
+    module: lego
+    options:
+      title: Lego Coming Soon
+      category: coming-soon
 output_path: ./out
