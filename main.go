@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -116,14 +117,15 @@ func min(a, b int) int {
 	return b
 }
 
-func processFeeds(config *Config, workersCount int) {
+func processFeeds(config *Config, workersCount int) error {
 	wc := min(workersCount, len(config.Feeds))
+	var returnedErrors error
 
 	feedJobs := make(chan FeedConfig, len(config.Feeds))
-	errors := make(chan error, len(config.Feeds))
+	errorsChan := make(chan error, len(config.Feeds))
 
 	for w := 0; w < wc; w++ {
-		go feedWorker(w, feedJobs, errors, config)
+		go feedWorker(w, feedJobs, errorsChan, config)
 	}
 
 	for _, f := range config.Feeds {
@@ -132,11 +134,13 @@ func processFeeds(config *Config, workersCount int) {
 	close(feedJobs)
 
 	for i := 0; i < len(config.Feeds); i++ {
-		err := <-errors
+		err := <-errorsChan
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
+			returnedErrors = errors.Join(returnedErrors, err)
 		}
 	}
+	return returnedErrors
 }
 
 func main() {
@@ -165,5 +169,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	processFeeds(config, workersCount)
+	err = processFeeds(config, workersCount)
+	if err != nil {
+		fmt.Println("Errors during feed processing:\n", err)
+	}
 }
