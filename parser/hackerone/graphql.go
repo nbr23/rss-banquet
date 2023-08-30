@@ -10,6 +10,7 @@ import (
 
 func hacktivityFeedQuery(options map[string]any) (*http.Response, error) {
 	disclosed_only := parser.DefaultedGet(options, "disclosed_only", true)
+	reports_count := parser.DefaultedGet(options, "reports_count", 50)
 
 	query := `query HacktivityPageQuery($querystring: String, $orderBy: HacktivityItemOrderInput, $secureOrderBy: FiltersHacktivityItemFilterOrder, $where: FiltersHacktivityItemFilterInput, $count: Int, $cursor: String) {
         me {
@@ -196,7 +197,7 @@ func hacktivityFeedQuery(options map[string]any) (*http.Response, error) {
     }`
 
 	variables := map[string]any{
-		"count":           50,
+		"count":           reports_count,
 		"orderBy":         nil,
 		"product_area":    "hacktivity",
 		"product_feature": "overview",
