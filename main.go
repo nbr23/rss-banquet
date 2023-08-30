@@ -54,7 +54,6 @@ func saveToS3(atom string, outputPath string, fileName string) error {
 		ContentType: aws.String("application/atom+xml"),
 	})
 	if err != nil {
-		fmt.Println("Error uploading to S3:", err)
 		return err
 	}
 
@@ -65,7 +64,6 @@ func saveToS3(atom string, outputPath string, fileName string) error {
 func saveFeed(config *Config, feed *feeds.Feed, fileName string) error {
 	atom, err := feed.ToAtom()
 	if err != nil {
-		fmt.Print(err)
 		return err
 	}
 
@@ -76,7 +74,6 @@ func saveFeed(config *Config, feed *feeds.Feed, fileName string) error {
 	output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, fileName)
 	out, err := os.Create(output_path)
 	if err != nil {
-		fmt.Print(err)
 		return err
 	}
 	defer out.Close()
@@ -94,7 +91,7 @@ func feedWorker(id int, feedJobs <-chan FeedConfig, results chan<- error, config
 		}
 		feed, err := module().Parse(f.Options)
 		if err != nil {
-			results <- err
+			results <- fmt.Errorf("[%s] %w", f.Name, err)
 			return
 		}
 		if feed == nil {
@@ -103,7 +100,7 @@ func feedWorker(id int, feedJobs <-chan FeedConfig, results chan<- error, config
 		}
 		err = saveFeed(config, feed, fileName)
 		if err != nil {
-			results <- err
+			results <- fmt.Errorf("[%s] %w", f.Name, err)
 			return
 		}
 		results <- nil
@@ -136,7 +133,6 @@ func processFeeds(config *Config, workersCount int) error {
 	for i := 0; i < len(config.Feeds); i++ {
 		err := <-errorsChan
 		if err != nil {
-			fmt.Printf("Error: %s\n", err)
 			returnedErrors = errors.Join(returnedErrors, err)
 		}
 	}
@@ -171,6 +167,6 @@ func main() {
 
 	err = processFeeds(config, workersCount)
 	if err != nil {
-		fmt.Println("Errors during feed processing:\n", err)
+		log.Fatal("Errors during feeds processing:\n", err)
 	}
 }
