@@ -112,7 +112,7 @@ func buildItemDescription(item *legoItem) string {
 		description = fmt.Sprintf("%s<br/>%s", description, item.Variant.Attributes.AvailabilityText)
 	}
 	if item.BaseImgUrl != "" {
-		description = fmt.Sprintf("%s<br/><img src=\"%s\"/ alt=\"%s\">", description, item.Name, item.BaseImgUrl)
+		description = fmt.Sprintf("%s<br/><img src=\"%s\"/ alt=\"%s\">", description, item.BaseImgUrl, item.Name)
 	}
 	return description
 }
