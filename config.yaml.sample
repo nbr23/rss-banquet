@@ -43,4 +43,9 @@ feeds:
     options:
       title: Lego Coming Soon
       category: coming-soon
+  - name: Lego_New
+    module: lego
+    options:
+      title: Lego New
+      category: new
 output_path: ./out

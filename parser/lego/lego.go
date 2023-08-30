@@ -60,7 +60,7 @@ func LegoParser() parser.Parser {
 
 func (Lego) Help() string {
 	return "\toptions:\n" +
-		"\t - category: string (default: 'coming-soon', values: ['coming-soon'])\n"
+		"\t - category: string (default: 'new', values: ['coming-soon', 'new'])\n"
 }
 
 func getLegoItemsFromFeed(feed *legoFeed) []legoItem {
@@ -150,12 +150,12 @@ func feedAdapter(l *legoFeed, options map[string]any) (*feeds.Feed, error) {
 func getSlug(options map[string]any) string {
 	category := parser.DefaultedGet(options, "category", "new")
 	switch category {
-	// case "new":
-	// 	return "/categories/new-sets-and-products"
+	case "new":
+		return "/categories/new-sets-and-products"
 	case "coming-soon":
 		return "/categories/coming-soon"
 	default:
-		return "/categories/coming-soon"
+		return "new"
 	}
 }
 
