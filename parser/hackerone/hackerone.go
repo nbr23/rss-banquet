@@ -156,7 +156,8 @@ func HackeroneParser() parser.Parser {
 
 func (Hackerone) Help() string {
 	return "\toptions:\n" +
-		"\t - disclosed_only: bool (default: true)\n"
+		"\t - disclosed_only: bool (default: true)\n" +
+		"\t - reports_count: int (default: 50)\n"
 }
 
 func (Hackerone) Parse(options map[string]any) (*feeds.Feed, error) {
