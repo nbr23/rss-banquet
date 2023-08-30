@@ -39,6 +39,7 @@ type hackeroneItem struct {
 		Title                  string `json:"title"`
 		Substate               string `json:"substate"`
 		Url                    string `json:"url"`
+		CreatedAt              string `json:"created_at"`
 		ReportGeneratedContent struct {
 			Id                string `json:"id"`
 			TypeName          string `json:"__typename"`
@@ -78,6 +79,12 @@ var hackeroneCurrency = map[string]string{
 
 func buildItemTitle(item *hackeroneItem) string {
 	title := item.Team.Name
+	if item.Report.CreatedAt != "" {
+		t, err := time.Parse(time.RFC3339, item.Report.CreatedAt)
+		if err == nil {
+			title = fmt.Sprintf("[%s] %s", t.Format("2006-01-02"), title)
+		}
+	}
 	if item.SeverityRating != "" {
 		title = fmt.Sprintf("%s | %s", title, hackeroneSeverity[item.SeverityRating])
 	}

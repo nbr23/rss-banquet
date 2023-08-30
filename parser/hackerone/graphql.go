@@ -145,6 +145,7 @@ func hacktivityFeedQuery(options map[string]any) (*http.Response, error) {
             title
             substate
             url
+            created_at
             report_generated_content {
                 id
                 hacktivity_summary
