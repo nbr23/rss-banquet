@@ -134,6 +134,13 @@ func feedAdapter(b *hackeroneFeed, options map[string]any) (*feeds.Feed, error) 
 			fmt.Println("error parsing date", err, item.LatestDisclosableActivityAt)
 			continue
 		}
+		if item.Report.Url == "" {
+			if parser.DefaultedGet(options, "disclosed_only", true) {
+				fmt.Printf("skipping disclosed item without a report url %v\n", item)
+				continue
+			}
+			item.Report.Url = item.Team.Url
+		}
 		newItem := feeds.Item{
 			Title:       buildItemTitle(&item),
 			Description: buildItemDescription(&item),
