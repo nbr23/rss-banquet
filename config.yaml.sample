@@ -32,12 +32,14 @@ feeds:
       title: HackerOne Activity
       filename: H1_All
       disclosed_only: false
+      reports_count: 100
   - name: Hackerone_Disclosures
     module: hackerone
     options:
       title: HackerOne Disclosures
       filename: H1_Disclosures
       disclosed_only: true
+      reports_count: 100
   - name: HackerOne_Launch
     module: hackeronePrograms
     options:
