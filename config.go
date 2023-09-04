@@ -19,6 +19,7 @@ type FeedConfig struct {
 type Config struct {
 	Feeds      []FeedConfig `yaml:"feeds"`
 	OutputPath string       `yaml:"output_path"`
+	BuildIndex bool         `yaml:"build_index"`
 }
 
 func setDefaults(config *Config) {

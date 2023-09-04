@@ -19,7 +19,7 @@ import (
 )
 
 func printHelp() {
-	fmt.Println("Usage: atomic-banquet [-hi] [-c config]")
+	fmt.Println("Usage: atomic-banquet [-h] [-c config]")
 	flag.PrintDefaults()
 	fmt.Println("\nModules available:")
 
@@ -162,7 +162,6 @@ func main() {
 		showHelp     bool
 		configPath   string
 		workersCount int
-		buildIndex   bool
 	)
 
 	flag.BoolVar(&showHelp, "h", false, "Show help message")
@@ -172,7 +171,6 @@ func main() {
 	}
 	flag.StringVar(&configPath, "c", configPath, "Path to configuration file")
 	flag.IntVar(&workersCount, "w", 5, "Number of workers")
-	flag.BoolVar(&buildIndex, "i", false, "Build index.html")
 	flag.Parse()
 
 	if showHelp {
@@ -189,7 +187,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Errors during feeds processing:\n", err)
 	}
-	if buildIndex {
+	if config.BuildIndex {
 		err = buildIndexHtml(config)
 		if err != nil {
 			log.Fatal(err)
