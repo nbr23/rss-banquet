@@ -150,6 +150,11 @@ func buildIndexHtml(config *Config) error {
 		index.WriteString(fmt.Sprintf("<li><a target=\"_blank\" href=\"%s.atom\">%s</a></li>\n", fileName, f.Name))
 	}
 	index.WriteString("</ul>\n</body>\n</html>")
+
+	if strings.HasPrefix(config.OutputPath, "s3://") {
+		return saveToS3(index.String(), config.OutputPath, "index.html")
+	}
+
 	output_path := fmt.Sprintf("%s/index.html", config.OutputPath)
 	out, err := os.Create(output_path)
 	if err != nil {
