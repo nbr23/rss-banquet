@@ -53,12 +53,22 @@ type hackeroneProgramFeed struct {
 	} `json:"data"`
 }
 
-func buildItemTitle(item *hackeroneProgramItem) string {
+func getProgramType(item *hackeroneProgramItem) string {
 	programType := strings.Split(item.TeamType, "::")
 	if len(programType) > 1 {
-		return fmt.Sprintf("%s launched a %s program on %s", item.Name, programType[1], item.LaunchedAt)
+		switch programType[1] {
+		case "BugBountyProgram":
+			return "BBP"
+		case "VulnerabilityDisclosureProgram":
+			return "VDP"
+		}
+		return programType[1]
 	}
-	return fmt.Sprintf("%s launched a program on %s", item.Name, item.LaunchedAt)
+	return item.TeamType
+}
+
+func buildItemTitle(item *hackeroneProgramItem) string {
+	return fmt.Sprintf("[%s] %s launched a program on %s", getProgramType(item), item.Name, item.LaunchedAt)
 }
 
 func buildItemDescription(item *hackeroneProgramItem) string {
