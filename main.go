@@ -143,6 +143,9 @@ func buildIndexHtml(config *Config) error {
 	var index strings.Builder
 	index.WriteString("<html><head><title>Atomic Banquet</title></head>\n<body>\n<h1><a target=\"_blank\" href=\"https://github.com/nbr23/atomic-banquet/\">Atomic Banquet's</a> RSS/Atom Feeds Index</h1>\n<ul>\n")
 	for _, f := range config.Feeds {
+		if parser.DefaultedGet(f.Options, "private", false) {
+			continue
+		}
 		fileName := parser.DefaultedGet(f.Options, "filename", f.Name)
 		index.WriteString(fmt.Sprintf("<li><a target=\"_blank\" href=\"%s.atom\">%s</a></li>\n", fileName, f.Name))
 	}

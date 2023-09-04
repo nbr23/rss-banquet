@@ -56,6 +56,6 @@ feeds:
     options:
       title: Lego New
       category: new
-    private: true # Skips adding the feed to the index.html index
+      private: true # Skips adding the feed to the index.html index
 output_path: ./out
 build_index: true
