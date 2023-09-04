@@ -38,6 +38,11 @@ feeds:
       title: HackerOne Disclosures
       filename: H1_Disclosures
       disclosed_only: true
+  - name: HackerOne_Launch
+    module: hackeronePrograms
+    options:
+      title: HackerOne Programs Launch
+      filename: H1_Launch
   - name: Lego_ComingSoon
     module: lego
     options:
