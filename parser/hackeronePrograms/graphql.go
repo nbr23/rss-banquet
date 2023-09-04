@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/nbr23/atomic-banquet/parser"
 )
 
-func programsFeedQuery() (*http.Response, error) {
+func programsFeedQuery(options map[string]any) (*http.Response, error) {
+	results_count := parser.DefaultedGet(options, "results_count", 50)
 	query := `query DiscoveryQuery($query: OpportunitiesQuery!, $filter: QueryInput!, $from: Int, $size: Int, $sort: [SortInput!], $post_filters: OpportunitiesFilterInput) {
         me {
             id
@@ -100,7 +103,7 @@ func programsFeedQuery() (*http.Response, error) {
 	variables := map[string]any{
 		"query": map[string]any{},
 		"sort": []map[string]any{
-			map[string]any{
+			{
 				"field":     "launched_at",
 				"direction": "DESC",
 			},
@@ -122,7 +125,7 @@ func programsFeedQuery() (*http.Response, error) {
 			},
 		},
 		"product_feature": "search",
-		"size":            24,
+		"size":            results_count,
 		"from":            0,
 		"post_filters": map[string]bool{
 			"bookmarked":     false,

@@ -121,11 +121,12 @@ func HackeroneProgramsParser() parser.Parser {
 }
 
 func (HackeronePrograms) Help() string {
-	return ""
+	return "\toptions:\n" +
+		"\t - results_count: int (default: 50)\n"
 }
 
 func (HackeronePrograms) Parse(options map[string]any) (*feeds.Feed, error) {
-	resp, err := programsFeedQuery()
+	resp, err := programsFeedQuery(options)
 
 	if err != nil {
 		return nil, err

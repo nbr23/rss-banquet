@@ -45,6 +45,7 @@ feeds:
     options:
       title: HackerOne Programs Launch
       filename: H1_Launch
+      results_count: 100
   - name: Lego_ComingSoon
     module: lego
     options:
