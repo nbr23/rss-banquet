@@ -19,7 +19,7 @@ import (
 )
 
 func printHelp() {
-	fmt.Println("Usage: atomic-banquet [-h] [-c config]")
+	fmt.Println("Usage: atomic-banquet [-hi] [-c config]")
 	flag.PrintDefaults()
 	fmt.Println("\nModules available:")
 
@@ -139,11 +139,30 @@ func processFeeds(config *Config, workersCount int) error {
 	return returnedErrors
 }
 
+func buildIndexHtml(config *Config) error {
+	var index strings.Builder
+	index.WriteString("<html><head><title>Atomic Banquet</title></head>\n<body>\n<h1><a target=\"_blank\" href=\"https://github.com/nbr23/atomic-banquet/\">Atomic Banquet's</a> RSS/Atom Feeds Index</h1>\n<ul>\n")
+	for _, f := range config.Feeds {
+		fileName := parser.DefaultedGet(f.Options, "filename", f.Name)
+		index.WriteString(fmt.Sprintf("<li><a target=\"_blank\" href=\"%s.atom\">%s</a></li>\n", fileName, f.Name))
+	}
+	index.WriteString("</ul>\n</body>\n</html>")
+	output_path := fmt.Sprintf("%s/index.html", config.OutputPath)
+	out, err := os.Create(output_path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	out.WriteString(index.String())
+	return nil
+}
+
 func main() {
 	var (
 		showHelp     bool
 		configPath   string
 		workersCount int
+		buildIndex   bool
 	)
 
 	flag.BoolVar(&showHelp, "h", false, "Show help message")
@@ -153,6 +172,7 @@ func main() {
 	}
 	flag.StringVar(&configPath, "c", configPath, "Path to configuration file")
 	flag.IntVar(&workersCount, "w", 5, "Number of workers")
+	flag.BoolVar(&buildIndex, "i", false, "Build index.html")
 	flag.Parse()
 
 	if showHelp {
@@ -168,5 +188,11 @@ func main() {
 	err = processFeeds(config, workersCount)
 	if err != nil {
 		log.Fatal("Errors during feeds processing:\n", err)
+	}
+	if buildIndex {
+		err = buildIndexHtml(config)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
