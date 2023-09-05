@@ -43,7 +43,7 @@ func saveToS3(atom string, outputPath string, fileName string) error {
 
 	bucketUri := strings.SplitN(strings.TrimPrefix(outputPath, "s3://"), "/", 2)
 	bucketName := bucketUri[0]
-	objectKey := strings.Join(append(bucketUri[1:], fmt.Sprintf("%s.atom", fileName)), "/")
+	objectKey := strings.Join(append(bucketUri[1:], fileName), "/")
 
 	contentBytes := []byte(atom)
 
@@ -68,7 +68,7 @@ func saveFeed(config *Config, feed *feeds.Feed, fileName string) error {
 	}
 
 	if strings.HasPrefix(config.OutputPath, "s3://") {
-		return saveToS3(atom, config.OutputPath, fileName)
+		return saveToS3(atom, config.OutputPath, fmt.Sprintf("%s.atom", fileName))
 	}
 
 	output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, fileName)
