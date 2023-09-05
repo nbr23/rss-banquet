@@ -34,7 +34,7 @@ func printHelp() {
 	}
 }
 
-func saveToS3(atom string, outputPath string, fileName string) error {
+func saveToS3(atom string, outputPath string, fileName string, contentType string) error {
 	s, err := session.NewSession(&aws.Config{})
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func saveToS3(atom string, outputPath string, fileName string) error {
 		Bucket:      aws.String(bucketName),
 		Key:         aws.String(objectKey),
 		Body:        bytes.NewReader(contentBytes),
-		ContentType: aws.String("application/atom+xml"),
+		ContentType: aws.String(contentType),
 	})
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func saveFeed(config *Config, feed *feeds.Feed, fileName string) error {
 	}
 
 	if strings.HasPrefix(config.OutputPath, "s3://") {
-		return saveToS3(atom, config.OutputPath, fmt.Sprintf("%s.atom", fileName))
+		return saveToS3(atom, config.OutputPath, fmt.Sprintf("%s.atom", fileName), "application/atom+xml")
 	}
 
 	output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, fileName)
@@ -152,7 +152,7 @@ func buildIndexHtml(config *Config) error {
 	index.WriteString("</ul>\n</body>\n</html>")
 
 	if strings.HasPrefix(config.OutputPath, "s3://") {
-		return saveToS3(index.String(), config.OutputPath, "index.html")
+		return saveToS3(index.String(), config.OutputPath, "index.html", "text/html")
 	}
 
 	output_path := fmt.Sprintf("%s/index.html", config.OutputPath)
