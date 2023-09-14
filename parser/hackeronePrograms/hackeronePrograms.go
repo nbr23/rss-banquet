@@ -34,12 +34,12 @@ type hackeroneProgramItem struct {
 	AwardedReporterCount    int            `json:"awarded_reporter_count"`
 	StructuredScopeStats    map[string]int `json:"structured_scope_stats"`
 	Campaign                struct {
-		Id             string `json:"id"`
-		CampaignType   string `json:"campaign_type"`
-		StartDate      string `json:"start_date"`
-		EndDate        string `json:"end_date"`
-		Critical       bool   `json:"critical"`
-		TargetAudience string `json:"target_audience"`
+		Id             string  `json:"id"`
+		CampaignType   string  `json:"campaign_type"`
+		StartDate      string  `json:"start_date"`
+		EndDate        string  `json:"end_date"`
+		Critical       float64 `json:"critical"`
+		TargetAudience bool    `json:"target_audience"`
 	} `json:"campaign"`
 	H1Clear bool `json:"h1_clear"`
 	Idv     bool `json:"idv"`
