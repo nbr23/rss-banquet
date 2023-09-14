@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,19 +14,17 @@ import (
 	"github.com/nbr23/atomic-banquet/parser"
 )
 
-func parseLatestVersion(doc goquery.Document) (string, error) {
+func parseLatestVersion(s *goquery.Selection) (string, error) {
 	var latestVersion string
 	var err error
 
-	doc.Find("div .accordion div .parbase.textblock div p b").Each(func(i int, s *goquery.Selection) {
-		// Assuming the first paragraph with version in the text is the latest version
-		matched, err := regexp.MatchString("[Vv]ersion", s.Text())
-		if err == nil && matched && latestVersion == "" {
-			latestVersion = strings.TrimSpace(s.Text())
-		}
-	})
-	if len(latestVersion) == 0 {
+	r := regexp.MustCompile(`[Vv]ersion:*(.*)\n`)
+	matches := r.FindStringSubmatch(s.Text())
+
+	if (matches == nil) || (len(matches) != 2) {
 		err = fmt.Errorf("unable to parse the latest version in the page")
+	} else {
+		latestVersion = strings.TrimSpace(matches[1])
 	}
 	return latestVersion, err
 }
@@ -36,23 +33,12 @@ func guid(hardware string, releaseDate string, versionName string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(hardware, releaseDate, versionName))))
 }
 
-func parsePublishDate(doc goquery.Document) (time.Time, error) {
-	var publishTimestamp int64
-	var err error
-
-	// Find the document publish date metadata
-	doc.Find("meta").Each(func(i int, s *goquery.Selection) {
-		name, _ := s.Attr("name")
-		if name == "publish_date_timestamp" {
-			pubDate, _ := s.Attr("content")
-			publishTimestamp, err = strconv.ParseInt(pubDate, 10, 64)
-		}
-	})
-	return time.Unix(publishTimestamp, 0), err
+func getReleaseDiv(doc goquery.Document) *goquery.Selection {
+	return doc.Find(".body-text-block .txt-block-paragraph").First()
 }
 
 func getHardwareURL(hardware string, local string) string {
-	return fmt.Sprintf("https://www.playstation.com/%s/support/hardware/%s/system-software/", strings.ToLower(local), strings.ToLower(hardware))
+	return fmt.Sprintf("https://www.playstation.com/%s/support/hardware/%s/system-software-info/", strings.ToLower(local), strings.ToLower(hardware))
 }
 
 func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
@@ -81,17 +67,23 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 		return nil, err
 	}
 
-	update.Created, err = parsePublishDate(*doc)
+	releaseDiv := getReleaseDiv(*doc)
+
+	update.Created = time.Now() // Can't find it on the page anymore...
 	if err != nil {
 		return nil, err
 	}
 
-	versionName, err := parseLatestVersion(*doc)
+	versionName, err := parseLatestVersion(releaseDiv)
 	if err != nil {
 		return nil, err
 	}
+
 	update.Title = fmt.Sprintf("%s Update: %s", hardware, versionName)
-	update.Description = fmt.Sprintf("The %s software update %s was released on %v", hardware, versionName, update.Created)
+	update.Description, err = releaseDiv.Html()
+	if err != nil {
+		update.Description = fmt.Sprintf("The %s software update %s was released on %v", hardware, versionName, update.Created)
+	}
 	update.Link = &feeds.Link{Href: url}
 	update.Id = guid(hardware, update.Created.Format(time.RFC3339), versionName)
 
