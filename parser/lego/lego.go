@@ -117,8 +117,8 @@ func buildItemDescription(item *legoItem) string {
 	return description
 }
 
-func guid(item *legoItem) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(item.ProductCode, item.Name, item.Variant.Sku))))
+func guid(item *legoItem, f feeds.Feed) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(f.Link.Href, item.ProductCode, item.Name, item.Variant.Sku))))
 }
 
 func feedAdapter(l *legoFeed, options map[string]any) (*feeds.Feed, error) {
@@ -138,7 +138,7 @@ func feedAdapter(l *legoFeed, options map[string]any) (*feeds.Feed, error) {
 			Title:       buildItemTitle(&item),
 			Description: buildItemDescription(&item),
 			Link:        &feeds.Link{Href: getLegoProductUrl(item.ProductCode)},
-			Id:          guid(&item),
+			Id:          guid(&item, feed),
 		}
 		feed.Items = append(feed.Items, &newItem)
 	}
