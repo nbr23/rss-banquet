@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.1
-	github.com/aws/aws-sdk-go v1.45.24
+	github.com/aws/aws-sdk-go v1.45.25
 	github.com/gorilla/feeds v1.1.1
 	gopkg.in/yaml.v3 v3.0.1
 )
