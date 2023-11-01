@@ -5,6 +5,7 @@ import (
 	"github.com/nbr23/atomic-banquet/parser/bugcrowd"
 	"github.com/nbr23/atomic-banquet/parser/hackerone"
 	"github.com/nbr23/atomic-banquet/parser/hackeronePrograms"
+	"github.com/nbr23/atomic-banquet/parser/infocon"
 	"github.com/nbr23/atomic-banquet/parser/lego"
 	"github.com/nbr23/atomic-banquet/parser/psupdates"
 )
@@ -24,5 +25,8 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"lego": func() parser.Parser {
 		return lego.LegoParser()
+	},
+	"infocon": func() parser.Parser {
+		return infocon.InfoConParser()
 	},
 }
