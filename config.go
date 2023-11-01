@@ -11,9 +11,10 @@ import (
 const ENV_PREFIX = "ATOMICBANQUET_"
 
 type FeedConfig struct {
-	Module  string         `yaml:"module"`
-	Options map[string]any `yaml:"options"`
-	Name    string         `yaml:"name"`
+	Module   string         `yaml:"module"`
+	Options  map[string]any `yaml:"options"`
+	Name     string         `yaml:"name"`
+	FeedType string         `yaml:"type"`
 }
 
 type Config struct {

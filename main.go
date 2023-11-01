@@ -61,23 +61,35 @@ func saveToS3(atom string, outputPath string, fileName string, contentType strin
 	return nil
 }
 
-func saveFeed(config *Config, feed *feeds.Feed, fileName string) error {
-	atom, err := feed.ToAtom()
+func saveFeed(config *Config, feed *feeds.Feed, fileName string, feedConfig FeedConfig) error {
+	var feedString string
+	var err error
+	var fName string
+	var contentType string
+	if feedConfig.FeedType == "rss" {
+		feedString, err = feed.ToRss()
+		fName = fmt.Sprintf("%s.rss", fileName)
+		contentType = "application/rss+xml"
+	} else {
+		feedString, err = feed.ToAtom()
+		fName = fmt.Sprintf("%s.atom", fileName)
+		contentType = "application/atom+xml"
+	}
 	if err != nil {
 		return err
 	}
 
 	if strings.HasPrefix(config.OutputPath, "s3://") {
-		return saveToS3(atom, config.OutputPath, fmt.Sprintf("%s.atom", fileName), "application/atom+xml")
+		return saveToS3(feedString, config.OutputPath, fName, contentType)
 	}
 
-	output_path := fmt.Sprintf("%s/%s.atom", config.OutputPath, fileName)
+	output_path := fmt.Sprintf("%s/%s", config.OutputPath, fName)
 	out, err := os.Create(output_path)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
-	out.WriteString(atom)
+	out.WriteString(feedString)
 	return nil
 }
 
@@ -98,7 +110,7 @@ func feedWorker(id int, feedJobs <-chan FeedConfig, results chan<- error, config
 			results <- fmt.Errorf("feed %s is empty", f.Name)
 			return
 		}
-		err = saveFeed(config, feed, fileName)
+		err = saveFeed(config, feed, fileName, f)
 		if err != nil {
 			results <- fmt.Errorf("[%s] %w", f.Name, err)
 			return
