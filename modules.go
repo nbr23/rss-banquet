@@ -7,6 +7,7 @@ import (
 	"github.com/nbr23/atomic-banquet/parser/hackeronePrograms"
 	"github.com/nbr23/atomic-banquet/parser/infocon"
 	"github.com/nbr23/atomic-banquet/parser/lego"
+	"github.com/nbr23/atomic-banquet/parser/pentesterland"
 	"github.com/nbr23/atomic-banquet/parser/psupdates"
 )
 
@@ -28,5 +29,8 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"infocon": func() parser.Parser {
 		return infocon.InfoConParser()
+	},
+	"pentesterland": func() parser.Parser {
+		return pentesterland.PentesterLandParser()
 	},
 }
