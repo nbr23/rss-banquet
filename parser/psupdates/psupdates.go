@@ -29,8 +29,8 @@ func parseLatestVersion(s *goquery.Selection) (string, error) {
 	return latestVersion, err
 }
 
-func guid(hardware string, releaseDate string, versionName string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(hardware, releaseDate, versionName))))
+func guid(ss []string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(ss))))
 }
 
 func getReleaseDiv(doc goquery.Document) *goquery.Selection {
@@ -137,7 +137,7 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 		update.Description = fmt.Sprintf("The %s software update %s was released on %v", hardware, versionName, update.Created)
 	}
 	update.Link = &feeds.Link{Href: url}
-	update.Id = guid(hardware, update.Created.Format(time.RFC3339), versionName)
+	update.Id = guid([]string{url, versionName})
 
 	feed.Title = parser.DefaultedGet(options, "title", fmt.Sprintf("%s Updates", hardware))
 	feed.Description = parser.DefaultedGet(options, "description", fmt.Sprintf("The latest %s updates", hardware))
