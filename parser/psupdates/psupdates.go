@@ -125,11 +125,10 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 		return nil, err
 	}
 
-	update.Updated, err = getRemoteFileLastModified(fileUrl)
+	update.Created, err = getRemoteFileLastModified(fileUrl)
 	if err != nil {
 		return nil, err
 	}
-	update.Created = update.Updated
 
 	update.Title = fmt.Sprintf("%s Update: %s", hardware, versionName)
 	update.Description, err = releaseDiv.Html()
@@ -146,7 +145,6 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 		Name: "PlayStation",
 	}
 	feed.Link = &feeds.Link{Href: url}
-	feed.Created = update.Created
 
 	return &feed, nil
 }
