@@ -52,7 +52,7 @@ func getValidUrl(sdkName string) (string, *http.Response, error) {
 }
 
 func (GarminSDK) Parse(options map[string]any) (*feeds.Feed, error) {
-	sdkNames := parser.DefaultedGet(options, "sdks", []string{"fit", "connect-iq"})
+	sdkNames := parser.DefaultedGetSlice(options, "sdks", []string{"fit"})
 	var feed feeds.Feed
 
 	for _, sdkName := range sdkNames {
