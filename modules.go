@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/nbr23/atomic-banquet/parser"
 	"github.com/nbr23/atomic-banquet/parser/bugcrowd"
+	"github.com/nbr23/atomic-banquet/parser/garminsdk"
 	"github.com/nbr23/atomic-banquet/parser/hackerone"
 	"github.com/nbr23/atomic-banquet/parser/hackeronePrograms"
 	"github.com/nbr23/atomic-banquet/parser/infocon"
@@ -32,5 +33,8 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"pentesterland": func() parser.Parser {
 		return pentesterland.PentesterLandParser()
+	},
+	"garmin-sdk": func() parser.Parser {
+		return garminsdk.GarminSDKParser()
 	},
 }
