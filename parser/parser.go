@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"time"
 
 	"github.com/gorilla/feeds"
@@ -28,4 +30,8 @@ func GetLatestDate(dates []time.Time) time.Time {
 		}
 	}
 	return latestDate
+}
+
+func GetGuid(ss []string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(ss))))
 }
