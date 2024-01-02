@@ -107,7 +107,7 @@ func (GarminSDK) Parse(options map[string]any) (*feeds.Feed, error) {
 
 func (GarminSDK) Help() string {
 	return "\toptions:\n" +
-		"\t - sdk: name of the sdk to watch (default: fit)\n"
+		"\t - sdks: list of names of the sdks to watch: fit, connect-iq (default: fit)\n"
 }
 
 type GarminSDK struct{}
