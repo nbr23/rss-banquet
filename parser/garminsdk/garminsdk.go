@@ -52,51 +52,55 @@ func getValidUrl(sdkName string) (string, *http.Response, error) {
 }
 
 func (GarminSDK) Parse(options map[string]any) (*feeds.Feed, error) {
-	sdkName := parser.DefaultedGet(options, "sdk", "fit")
+	sdkNames := parser.DefaultedGet(options, "sdks", []string{"fit", "connect-iq"})
 	var feed feeds.Feed
-	var update feeds.Item
 
-	url, resp, err := getValidUrl(sdkName)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+	for _, sdkName := range sdkNames {
+		var update feeds.Item
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return nil, err
+		_, resp, err := getValidUrl(sdkName)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		doc, err := goquery.NewDocumentFromReader(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		releaseDate, err := parseReleaseDate(doc)
+		if err != nil {
+			return nil, err
+		}
+		downloadButton := getDownloadButton(doc)
+		if downloadButton == nil {
+			return nil, fmt.Errorf("unable to find the download")
+		}
+		downloadUrl := downloadButton.AttrOr("href", "")
+		downloadName := downloadButton.AttrOr("download", "")
+		if downloadUrl == "" || downloadName == "" {
+			return nil, fmt.Errorf("unable to find the download")
+		}
+
+		update.Created, err = time.Parse("January 2, 2006", releaseDate)
+		if err != nil {
+			return nil, err
+		}
+		update.Title = fmt.Sprintf("Garmin %s SDK Update: %s", sdkName, downloadName)
+		update.Description = fmt.Sprintf("The Garmin %s SDK update %s was released on %v", sdkName, downloadName, update.Created)
+		update.Link = &feeds.Link{Href: downloadUrl}
+		update.Id = parser.GetGuid([]string{downloadUrl, releaseDate})
+		feed.Items = append(feed.Items, &update)
 	}
 
-	releaseDate, err := parseReleaseDate(doc)
-	if err != nil {
-		return nil, err
-	}
-	downloadButton := getDownloadButton(doc)
-	if downloadButton == nil {
-		return nil, fmt.Errorf("unable to find the download")
-	}
-	downloadUrl := downloadButton.AttrOr("href", "")
-	downloadName := downloadButton.AttrOr("download", "")
-	if downloadUrl == "" || downloadName == "" {
-		return nil, fmt.Errorf("unable to find the download")
-	}
+	feed.Title = parser.DefaultedGet(options, "title", fmt.Sprintf("Garmin %s SDK Updates", strings.Join(sdkNames, ", ")))
+	feed.Description = parser.DefaultedGet(options, "description", fmt.Sprintf("The latest Garmin %s SDK updates", strings.Join(sdkNames, ", ")))
 
-	update.Created, err = time.Parse("January 2, 2006", releaseDate)
-	if err != nil {
-		return nil, err
-	}
-	update.Title = fmt.Sprintf("Garmin %s SDK Update: %s", sdkName, downloadName)
-	update.Description = fmt.Sprintf("The Garmin %s SDK update %s was released on %v", sdkName, downloadName, update.Created)
-	update.Link = &feeds.Link{Href: downloadUrl}
-	update.Id = parser.GetGuid([]string{downloadUrl, releaseDate})
-
-	feed.Title = parser.DefaultedGet(options, "title", fmt.Sprintf("Garmin %s SDK Updates", sdkName))
-	feed.Description = parser.DefaultedGet(options, "description", fmt.Sprintf("The latest Garmin %s SDK updates", sdkName))
-	feed.Items = append(feed.Items, &update)
 	feed.Author = &feeds.Author{
 		Name: "Garmin",
 	}
-	feed.Link = &feeds.Link{Href: url}
+	feed.Link = &feeds.Link{Href: "https://developer.garmin.com/"}
 
 	return &feed, nil
 }
