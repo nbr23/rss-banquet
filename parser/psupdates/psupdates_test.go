@@ -1,6 +1,7 @@
 package psupdates
 
 import (
+	"regexp"
 	"testing"
 )
 
@@ -18,6 +19,11 @@ func TestPS5UpdatesParse(t *testing.T) {
 	if parsed.Items[0].Title == "" {
 		t.Errorf("Unable to parse PSUpdates: no title in feed item")
 	}
+
+	r := regexp.MustCompile(`^PS5 Update: [^\s]+.*$`)
+	if !r.MatchString(parsed.Items[0].Title) {
+		t.Errorf("Unable to parse PSUpdates, title doesn't match expected format, got '%s'", parsed.Items[0].Title)
+	}
 }
 
 func TestPS4UpdatesParse(t *testing.T) {
@@ -33,6 +39,11 @@ func TestPS4UpdatesParse(t *testing.T) {
 
 	if parsed.Items[0].Title == "" {
 		t.Errorf("Unable to parse PSUpdates: no title in feed item")
+	}
+
+	r := regexp.MustCompile(`^PS4 Update: [^\s]+.*$`)
+	if !r.MatchString(parsed.Items[0].Title) {
+		t.Errorf("Unable to parse PSUpdates, title doesn't match expected format, got '%s'", parsed.Items[0].Title)
 	}
 }
 
