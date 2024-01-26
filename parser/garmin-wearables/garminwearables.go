@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/feeds"
@@ -43,10 +44,20 @@ func (GarminWearables) Parse(options map[string]any) (*feeds.Feed, error) {
 	for _, releaseNote := range releaseNotes {
 		var update feeds.Item
 
+		releaseDate, err := time.Parse("January2006", releaseNote[2])
+		if err != nil {
+			return nil, err
+		}
+
 		update.Created, err = parser.GetRemoteFileLastModified(releaseNote[0])
 		if err != nil {
 			return nil, err
 		}
+
+		if releaseDate.Month() != update.Created.Month() {
+			update.Created = releaseDate
+		}
+
 		update.Title = fmt.Sprintf("[%s] Garmin Wearable Update", releaseNote[2])
 		update.Description = fmt.Sprintf("A Garmin Wearable update was released on %v", update.Created)
 		update.Link = &feeds.Link{Href: releaseNote[0]}
