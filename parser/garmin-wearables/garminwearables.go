@@ -54,8 +54,8 @@ func (GarminWearables) Parse(options map[string]any) (*feeds.Feed, error) {
 		feed.Items = append(feed.Items, &update)
 	}
 
-	feed.Title = parser.DefaultedGet(options, "title", "Garmin %s Wearable Updates")
-	feed.Description = parser.DefaultedGet(options, "description", "The latest Garmin %s Wearable updates")
+	feed.Title = parser.DefaultedGet(options, "title", "Garmin Wearable Updates")
+	feed.Description = parser.DefaultedGet(options, "description", "The latest Garmin Wearable updates")
 
 	feed.Author = &feeds.Author{
 		Name: "Garmin",
