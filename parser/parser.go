@@ -3,6 +3,7 @@ package parser
 import (
 	"crypto/sha256"
 	"fmt"
+	"net/http"
 	"reflect"
 	"time"
 
@@ -50,4 +51,23 @@ func GetLatestDate(dates []time.Time) time.Time {
 
 func GetGuid(ss []string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(ss))))
+}
+
+func GetRemoteFileLastModified(url string) (time.Time, error) {
+	resp, err := http.Head(url)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return time.Time{}, fmt.Errorf("unable to fetch the update file, status code: %d", resp.StatusCode)
+	}
+
+	lastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return lastModified, nil
 }

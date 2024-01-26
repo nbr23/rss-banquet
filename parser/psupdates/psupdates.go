@@ -7,7 +7,6 @@ import (
 	"regexp"
 
 	"strings"
-	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/feeds"
@@ -68,25 +67,6 @@ func getUpdateFileUrl(hardware string, local string) (string, error) {
 	return href, nil
 }
 
-func getRemoteFileLastModified(url string) (time.Time, error) {
-	resp, err := http.Head(url)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return time.Time{}, fmt.Errorf("unable to fetch the update file, status code: %d", resp.StatusCode)
-	}
-
-	lastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return lastModified, nil
-}
-
 func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 	var feed feeds.Feed
 	var update feeds.Item
@@ -125,7 +105,7 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 		return nil, err
 	}
 
-	update.Created, err = getRemoteFileLastModified(fileUrl)
+	update.Created, err = parser.GetRemoteFileLastModified(fileUrl)
 	if err != nil {
 		return nil, err
 	}
