@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/nbr23/atomic-banquet/parser"
 	"github.com/nbr23/atomic-banquet/parser/bugcrowd"
+	garminwearables "github.com/nbr23/atomic-banquet/parser/garmin-wearables"
 	"github.com/nbr23/atomic-banquet/parser/garminsdk"
 	"github.com/nbr23/atomic-banquet/parser/hackerone"
 	"github.com/nbr23/atomic-banquet/parser/hackeronePrograms"
@@ -36,5 +37,8 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"garmin-sdk": func() parser.Parser {
 		return garminsdk.GarminSDKParser()
+	},
+	"garmin-wearables": func() parser.Parser {
+		return garminwearables.GarminWearablesParser()
 	},
 }
