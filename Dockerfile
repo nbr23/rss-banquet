@@ -19,6 +19,7 @@ CMD atomic-banquet
 
 FROM fetcher as server
 ENV PORT 8080
+ENV GIN_MODE release
 
 EXPOSE ${PORT}
 
