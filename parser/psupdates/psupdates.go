@@ -131,10 +131,10 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 }
 
 func (PSUpdates) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/psupdates/:hardware/:local", func(c *gin.Context) {
+	return g.GET("/psupdates/:hardware", func(c *gin.Context) {
 		feed, err := PSUpdates{}.Parse(map[string]any{
 			"hardware": c.Param("hardware"),
-			"local":    c.Param("local"),
+			"local":    c.Query("local"),
 		})
 		if err != nil {
 			c.String(500, "error parsing feed")
