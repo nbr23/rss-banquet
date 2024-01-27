@@ -7,12 +7,14 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 )
 
 type Parser interface {
 	Parse(map[string]any) (*feeds.Feed, error)
 	Help() string
+	Route(*gin.Engine) gin.IRoutes
 }
 
 func DefaultedGet[T any](m map[string]any, k string, d T) T {
@@ -70,4 +72,34 @@ func GetRemoteFileLastModified(url string) (time.Time, error) {
 	}
 
 	return lastModified, nil
+}
+
+func ServeFeed(c *gin.Context, feed *feeds.Feed) {
+	switch c.Query("feedFormat") {
+	case "rss":
+		rss, err := feed.ToRss()
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		c.Data(200, "application/rss+xml", []byte(rss))
+		return
+	case "json":
+		json, err := feed.ToJSON()
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		c.Data(200, "application/json", []byte(json))
+		return
+	// case "atom":
+	default:
+		atom, err := feed.ToAtom()
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		c.Data(200, "application/atom+xml", []byte(atom))
+		return
+	}
 }
