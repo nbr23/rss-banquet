@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
@@ -118,4 +119,18 @@ type GarminSDK struct{}
 
 func GarminSDKParser() parser.Parser {
 	return GarminSDK{}
+}
+
+func (GarminSDK) Route(g *gin.Engine) gin.IRoutes {
+	return g.GET("/garminsdk/:sdks", func(c *gin.Context) {
+		sdks := strings.Split(c.Param("sdks"), ",")
+		feed, err := GarminSDK{}.Parse(map[string]any{
+			"sdks": sdks,
+		})
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		parser.ServeFeed(c, feed)
+	})
 }

@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 
@@ -177,11 +178,28 @@ func buildIndexHtml(config *Config) error {
 	return nil
 }
 
+func runServer(configPath string) (err error) {
+	var port = os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	r := gin.Default()
+
+	for _, module := range Modules {
+		p := module()
+		p.Route(r)
+	}
+
+	return r.Run(fmt.Sprintf(":%s", port))
+}
+
 func main() {
 	var (
 		showHelp     bool
 		configPath   string
 		workersCount int
+		serverMode   bool
 	)
 
 	flag.BoolVar(&showHelp, "h", false, "Show help message")
@@ -191,10 +209,19 @@ func main() {
 	}
 	flag.StringVar(&configPath, "c", configPath, "Path to configuration file")
 	flag.IntVar(&workersCount, "w", 5, "Number of workers")
+	flag.BoolVar(&serverMode, "s", false, "Run in server mode")
 	flag.Parse()
 
 	if showHelp {
 		printHelp()
+		return
+	}
+
+	if serverMode {
+		err := runServer(configPath)
+		if err != nil {
+			log.Fatal(err)
+		}
 		return
 	}
 

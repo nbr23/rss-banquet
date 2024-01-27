@@ -3,11 +3,13 @@ package infocon
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
@@ -89,4 +91,22 @@ func (InfoCon) Parse(options map[string]any) (*feeds.Feed, error) {
 
 	}
 	return &feed, nil
+}
+
+func (InfoCon) Route(g *gin.Engine) gin.IRoutes {
+	return g.GET("/infocon/:url", func(c *gin.Context) {
+		url, err := url.QueryUnescape(c.Param("url"))
+		if err != nil {
+			c.String(500, err.Error())
+			return
+		}
+		feed, err := InfoCon{}.Parse(map[string]any{
+			"url": url,
+		})
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		parser.ServeFeed(c, feed)
+	})
 }

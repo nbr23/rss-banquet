@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
@@ -189,4 +191,24 @@ func (Hackerone) Parse(options map[string]any) (*feeds.Feed, error) {
 	}
 
 	return feedAdapter(&feed, options)
+}
+
+func (Hackerone) Route(g *gin.Engine) gin.IRoutes {
+	return g.GET("/hackerone", func(c *gin.Context) {
+		disclosed_only := c.Query("disclosed_only") == "1"
+		limit, err := strconv.Atoi(c.Query("limit"))
+		if err != nil {
+			limit = 50
+		}
+
+		feed, err := Hackerone{}.Parse(map[string]any{
+			"disclosed_only": disclosed_only,
+			"reports_count":  limit,
+		})
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		parser.ServeFeed(c, feed)
+	})
 }

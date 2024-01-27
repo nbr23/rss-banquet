@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
@@ -127,6 +128,20 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 	feed.Link = &feeds.Link{Href: url}
 
 	return &feed, nil
+}
+
+func (PSUpdates) Route(g *gin.Engine) gin.IRoutes {
+	return g.GET("/psupdates/:hardware/:local", func(c *gin.Context) {
+		feed, err := PSUpdates{}.Parse(map[string]any{
+			"hardware": c.Param("hardware"),
+			"local":    c.Param("local"),
+		})
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		parser.ServeFeed(c, feed)
+	})
 }
 
 func (PSUpdates) Help() string {
