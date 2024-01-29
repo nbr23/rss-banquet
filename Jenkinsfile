@@ -57,6 +57,14 @@ pipeline {
                     """
             }
         }
+        stage('Build Nginx Server Docker Image') {
+            when { branch 'master' }
+            steps {
+                sh """
+                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target server --platform linux/arm64,linux/amd64 -t nbr23/atomic-banquet:server-nginx-latest -t nbr23/atomic-banquet:server-nginx-`git rev-parse --short HEAD` --push .
+                    """
+            }
+        }
         stage('Sync github repos') {
             when { branch 'master' }
             steps {

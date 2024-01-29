@@ -178,8 +178,7 @@ func buildIndexHtml(config *Config) error {
 	return nil
 }
 
-func runServer(configPath string) (err error) {
-	var port = os.Getenv("PORT")
+func runServer(port string, configPath string) (err error) {
 	if port == "" {
 		port = "8080"
 	}
@@ -200,6 +199,7 @@ func main() {
 		configPath   string
 		workersCount int
 		serverMode   bool
+		serverPort   string
 	)
 
 	flag.BoolVar(&showHelp, "h", false, "Show help message")
@@ -210,6 +210,7 @@ func main() {
 	flag.StringVar(&configPath, "c", configPath, "Path to configuration file")
 	flag.IntVar(&workersCount, "w", 5, "Number of workers")
 	flag.BoolVar(&serverMode, "s", false, "Run in server mode")
+	flag.StringVar(&serverPort, "p", os.Getenv("PORT"), "Server port")
 	flag.Parse()
 
 	if showHelp {
@@ -218,7 +219,7 @@ func main() {
 	}
 
 	if serverMode {
-		err := runServer(configPath)
+		err := runServer(serverPort, configPath)
 		if err != nil {
 			log.Fatal(err)
 		}
