@@ -26,6 +26,13 @@ func DefaultedGet[T any](m map[string]any, k string, d T) T {
 	return d
 }
 
+func DefaultedGetSStringSlice(m map[string]any, k string, d []string) []string {
+	if v, ok := m[k]; ok {
+		return v.([]string)
+	}
+	return d
+}
+
 func DefaultedGetSlice[S ~[]T, T any](m map[string]any, k string, d S) S {
 	if v, ok := m[k]; ok {
 		if reflect.TypeOf(v).Kind() == reflect.Slice {
