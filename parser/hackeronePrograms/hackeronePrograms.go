@@ -162,7 +162,7 @@ func (HackeronePrograms) Parse(options map[string]any) (*feeds.Feed, error) {
 }
 
 func (HackeronePrograms) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/hackeroneprograms/:limit", func(c *gin.Context) {
+	return g.GET("/hackeroneprograms", func(c *gin.Context) {
 		limit, err := strconv.Atoi(c.Query("limit"))
 		if err != nil {
 			limit = 50
