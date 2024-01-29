@@ -246,7 +246,7 @@ func (Bugcrowd) Parse(options map[string]any) (*feeds.Feed, error) {
 }
 
 func (Bugcrowd) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/bugcrowd/:category", func(c *gin.Context) {
+	return g.GET("/bugcrowd", func(c *gin.Context) {
 		disclosures := c.Query("disclosed_only") == "1"
 		accepted := c.Query("accepted") == "1"
 		feed, err := Bugcrowd{}.Parse(map[string]any{
