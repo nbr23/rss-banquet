@@ -18,6 +18,10 @@ func TestParseSuccess(t *testing.T,
 		t.Errorf("Unable to parse: %s", err)
 	}
 
+	if parsed == nil {
+		t.Errorf("Unable to parse: nil feed returned")
+	}
+
 	if parsed.Items == nil || len(parsed.Items) < minItem {
 		t.Errorf("Unable to parse: not enough items in feed")
 	}
