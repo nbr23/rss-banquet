@@ -58,21 +58,6 @@ func containsLoose(l []string, s string) bool {
 	return false
 }
 
-func listBooksBy(booksList map[string]*book, author, language string, year_min, year_max int) {
-	booksToSort := make(map[string]*book)
-	for year := year_min; year <= year_max; year++ {
-		listBooksByForYear(booksToSort, author, language, year)
-	}
-	for _, book := range booksToSort {
-		if book.PublishedDate.Year() < year_min || book.PublishedDate.Year() > year_max {
-			continue
-		}
-		if _, ok := booksList[book.NormalizedName()]; !ok {
-			booksList[book.NormalizedName()] = book
-		}
-	}
-}
-
 func listBooksByForYear(booksList map[string]*book, author, language string, year int) {
 	pageSize := 40
 	for page := 0; ; page++ {
