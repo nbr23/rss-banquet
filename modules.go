@@ -48,5 +48,9 @@ var Modules = map[string]func() parser.Parser{
 }
 
 func GetModule(name string) parser.Parser {
-	return Modules[name]()
+	m, ok := Modules[name]
+	if ok {
+		return m()
+	}
+	return nil
 }

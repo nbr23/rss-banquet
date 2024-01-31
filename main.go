@@ -283,7 +283,11 @@ func runOneShot(args []string) {
 		}
 	}
 
-	res, err := GetModule(moduleName).Parse(optionsMap)
+	m := GetModule(moduleName)
+	if m == nil {
+		log.Fatal(fmt.Errorf("module `%s` not found", moduleName))
+	}
+	res, err := m.Parse(optionsMap)
 	if err != nil {
 		log.Fatal(err)
 	}
