@@ -1,6 +1,7 @@
 package books
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -132,7 +133,7 @@ func (Books) Parse(options map[string]any) (*feeds.Feed, error) {
 			Title:       fmt.Sprintf("%s - %s", book.Title, book.Author),
 			Description: fmt.Sprintf("%s by %s published on %s", book.Title, book.Author, book.PublishedDate.Format("2006-01-02")),
 			Link:        &feeds.Link{Href: book.VolumeLink},
-			Id:          fmt.Sprintf("%s%s", book.PublishedDate.Format(time.RFC3339), book.VolumeLink),
+			Id:          fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%s%s%s", book.Title, book.Author, book.Language)))),
 			Created:     book.PublishedDate,
 			Updated:     book.PublishedDate,
 		}
