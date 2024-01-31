@@ -161,7 +161,7 @@ func (Books) Route(g *gin.Engine) gin.IRoutes {
 func (Books) Help() string {
 	return "\toptions:\n" +
 		"\t - author\n" +
-		"\t - language (default: en-us)\n"
+		"\t - language (default: en)\n"
 }
 
 type Books struct{}
