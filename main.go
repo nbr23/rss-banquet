@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -252,12 +253,60 @@ func runFetcher(args []string) {
 	}
 }
 
+func runOneShot(args []string) {
+	var (
+		listModules bool
+		moduleName  string
+		format      string
+		options     string
+	)
+
+	fetcherFlags := flag.NewFlagSet("oneshot", flag.ExitOnError)
+	fetcherFlags.BoolVar(&listModules, "l", false, "List available modules")
+	fetcherFlags.StringVar(&moduleName, "m", moduleName, "Module name")
+	fetcherFlags.StringVar(&format, "f", format, "Output format")
+	fetcherFlags.StringVar(&options, "o", options, "Options (JSON formatted)")
+	fetcherFlags.Parse(args)
+
+	if listModules {
+		for module := range Modules {
+			fmt.Println("- ", module)
+		}
+		return
+	}
+
+	var optionsMap map[string]any
+	if options != "" {
+		err := json.Unmarshal([]byte(options), &optionsMap)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	res, err := GetModule(moduleName).Parse(optionsMap)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	switch format {
+	case "rss":
+		fmt.Println(res.ToRss())
+	case "atom":
+		fmt.Println(res.ToAtom())
+	case "json":
+		fmt.Println(res.ToJSON())
+	default:
+		fmt.Println(res)
+	}
+}
+
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <command> [options]\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Commands:\n")
 		fmt.Fprintf(os.Stderr, "  server: run atomic-banquet in server mode\n")
 		fmt.Fprintf(os.Stderr, "  fetcher: run atomic-banquet in fetch mode based on a declarative config file\n")
+		fmt.Fprintf(os.Stderr, "  oneshot: run atomic-banquet in oneshot mode to fetch a specific module's results\n")
 	}
 	flag.Parse()
 	if flag.NArg() < 1 {
@@ -270,6 +319,8 @@ func main() {
 		runServer(os.Args[2:])
 	case "fetcher":
 		runFetcher(os.Args[2:])
+	case "oneshot":
+		runOneShot(os.Args[2:])
 	default:
 		flag.Usage()
 		return

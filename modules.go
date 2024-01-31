@@ -46,3 +46,7 @@ var Modules = map[string]func() parser.Parser{
 		return dockerhub.DockerHubParser()
 	},
 }
+
+func GetModule(name string) parser.Parser {
+	return Modules[name]()
+}
