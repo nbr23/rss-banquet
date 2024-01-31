@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/nbr23/atomic-banquet/parser"
+	"github.com/nbr23/atomic-banquet/parser/books"
 	"github.com/nbr23/atomic-banquet/parser/bugcrowd"
 	"github.com/nbr23/atomic-banquet/parser/dockerhub"
 	garminwearables "github.com/nbr23/atomic-banquet/parser/garmin-wearables"
@@ -44,6 +45,9 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"dockerhub": func() parser.Parser {
 		return dockerhub.DockerHubParser()
+	},
+	"books": func() parser.Parser {
+		return books.BooksParser()
 	},
 }
 
