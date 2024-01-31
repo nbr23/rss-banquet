@@ -199,6 +199,12 @@ func runServer(args []string) {
 
 	r := gin.Default()
 
+	r.GET("/healthcheck", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "ok",
+		})
+	})
+
 	for _, module := range Modules {
 		p := module()
 		p.Route(r)
