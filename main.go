@@ -178,9 +178,23 @@ func buildIndexHtml(config *Config) error {
 	return nil
 }
 
-func runServer(port string, configPath string) (err error) {
-	if port == "" {
-		port = "8080"
+func runServer(args []string) {
+	var (
+		configPath string
+		serverPort string
+	)
+
+	configPath, found := os.LookupEnv(fmt.Sprintf("%sCONFIG_PATH", ENV_PREFIX))
+	if !found {
+		configPath = "./config.yaml"
+	}
+	serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
+	serverFlags.StringVar(&configPath, "c", configPath, "Path to configuration file")
+	serverFlags.StringVar(&serverPort, "p", os.Getenv("PORT"), "Server port")
+	serverFlags.Parse(args)
+
+	if serverPort == "" {
+		serverPort = "8080"
 	}
 
 	r := gin.Default()
@@ -190,39 +204,28 @@ func runServer(port string, configPath string) (err error) {
 		p.Route(r)
 	}
 
-	return r.Run(fmt.Sprintf(":%s", port))
+	r.Run(fmt.Sprintf(":%s", serverPort))
 }
 
-func main() {
+func runFetcher(args []string) {
 	var (
 		showHelp     bool
 		configPath   string
 		workersCount int
-		serverMode   bool
-		serverPort   string
 	)
 
-	flag.BoolVar(&showHelp, "h", false, "Show help message")
+	fetcherFlags := flag.NewFlagSet("fetcher", flag.ExitOnError)
+	fetcherFlags.BoolVar(&showHelp, "h", false, "Show help message")
 	configPath, found := os.LookupEnv(fmt.Sprintf("%sCONFIG_PATH", ENV_PREFIX))
 	if !found {
 		configPath = "./config.yaml"
 	}
-	flag.StringVar(&configPath, "c", configPath, "Path to configuration file")
-	flag.IntVar(&workersCount, "w", 5, "Number of workers")
-	flag.BoolVar(&serverMode, "s", false, "Run in server mode")
-	flag.StringVar(&serverPort, "p", os.Getenv("PORT"), "Server port")
-	flag.Parse()
+	fetcherFlags.StringVar(&configPath, "c", configPath, "Path to configuration file")
+	fetcherFlags.IntVar(&workersCount, "w", 5, "Number of workers")
+	fetcherFlags.Parse(args)
 
 	if showHelp {
 		printHelp()
-		return
-	}
-
-	if serverMode {
-		err := runServer(serverPort, configPath)
-		if err != nil {
-			log.Fatal(err)
-		}
 		return
 	}
 
@@ -240,5 +243,29 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+}
+
+func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s <command> [options]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Commands:\n")
+		fmt.Fprintf(os.Stderr, "  server: run atomic-banquet in server mode\n")
+		fmt.Fprintf(os.Stderr, "  fetcher: run atomic-banquet in fetch mode based on a declarative config file\n")
+	}
+	flag.Parse()
+	if flag.NArg() < 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	switch flag.Arg(0) {
+	case "server":
+		runServer(os.Args[2:])
+	case "fetcher":
+		runFetcher(os.Args[2:])
+	default:
+		flag.Usage()
+		return
 	}
 }

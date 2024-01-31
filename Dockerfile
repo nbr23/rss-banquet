@@ -17,7 +17,7 @@ ARG TARGETOS
 
 COPY --from=builder /build/atomic-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/atomic-banquet
 
-CMD atomic-banquet
+CMD atomic-banquet fetcher
 
 # Server
 
@@ -27,7 +27,7 @@ ENV GIN_MODE release
 
 EXPOSE ${PORT}
 
-CMD atomic-banquet -s
+CMD atomic-banquet server -p ${PORT}
 
 
 # nginx
@@ -57,4 +57,4 @@ proxy_cache_path /var/lib/nginx/cache levels=1:2 keys_zone=mycache:50m max_size=
 
 EOF
 
-CMD ["sh", "-c", "nginx && atomic-banquet -s -p 8081"]
+CMD ["sh", "-c", "nginx && atomic-banquet server -p 8081"]
