@@ -219,10 +219,10 @@ func (DockerHub) Parse(options map[string]any) (*feeds.Feed, error) {
 	}
 	imageName := parseDockerImage(imageNameStr)
 	var platform *dockerImagePlatform
-	if options["arch"] == nil {
+	if options["platform"] == nil {
 		platform = nil
 	} else {
-		platform = parsePlatform(options["arch"].(string))
+		platform = parsePlatform(options["platform"].(string))
 	}
 
 	var images []dockerhubImage
@@ -289,8 +289,8 @@ func (DockerHub) Parse(options map[string]any) (*feeds.Feed, error) {
 func (DockerHub) Route(g *gin.Engine) gin.IRoutes {
 	return g.GET("/dockerhub/*image", func(c *gin.Context) {
 		feed, err := DockerHub{}.Parse(map[string]any{
-			"image": c.Param("image"),
-			"arch":  c.Query("arch"),
+			"image":    c.Param("image"),
+			"platform": c.Query("platform"),
 		})
 		if err != nil {
 			c.String(500, "error parsing feed")
@@ -303,7 +303,7 @@ func (DockerHub) Route(g *gin.Engine) gin.IRoutes {
 func (DockerHub) Help() string {
 	return "\toptions:\n" +
 		"\t - image: image name (eg nbr23/atomic-banquet:latest)\n" +
-		"\t - arch: architecture filter\n"
+		"\t - platform: image platform filter (linux/arm64, ...)\n"
 }
 
 type DockerHub struct{}

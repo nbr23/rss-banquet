@@ -16,11 +16,11 @@ func TestDockerHubParse(t *testing.T) {
 	)
 }
 
-func TestDockerHubParseArch(t *testing.T) {
+func TestDockerHubParsePlatform(t *testing.T) {
 	testsuite.TestParseSuccess(
 		t,
 		DockerHub{},
-		map[string]interface{}{"image": "nbr23/atomic-banquet", "arch": "linux/arm64"},
+		map[string]interface{}{"image": "nbr23/atomic-banquet", "platform": "linux/arm64"},
 		1,
 		`^nbr23/atomic-banquet:[-\d\w]+ linux/arm64+$`,
 	)
