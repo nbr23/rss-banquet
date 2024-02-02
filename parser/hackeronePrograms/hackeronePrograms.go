@@ -31,7 +31,7 @@ type hackeroneProgramItem struct {
 	FirstResponseTime       float64        `json:"first_response_time"`
 	SubmissionState         string         `json:"submission_state"`
 	ResolvedReportCount     int            `json:"resolved_report_count"`
-	GoldStandard            int            `json:"gold_standard"`
+	GoldStandard            bool           `json:"gold_standard"`
 	AwardedReportCount      int            `json:"awarded_report_count"`
 	AwardedReporterCount    int            `json:"awarded_reporter_count"`
 	StructuredScopeStats    map[string]int `json:"structured_scope_stats"`
