@@ -12,6 +12,7 @@ import (
 	"github.com/nbr23/atomic-banquet/parser/infocon"
 	"github.com/nbr23/atomic-banquet/parser/lego"
 	"github.com/nbr23/atomic-banquet/parser/pentesterland"
+	"github.com/nbr23/atomic-banquet/parser/pocorgtfo"
 	"github.com/nbr23/atomic-banquet/parser/psupdates"
 )
 
@@ -48,6 +49,9 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"books": func() parser.Parser {
 		return books.BooksParser()
+	},
+	"pocorgtfo": func() parser.Parser {
+		return pocorgtfo.PoCOrGTFOParser()
 	},
 }
 
