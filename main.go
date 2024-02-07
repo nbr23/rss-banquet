@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -19,22 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
-
-func printHelp() {
-	fmt.Println("Usage: atomic-banquet [-h] [-c config]")
-	flag.PrintDefaults()
-	fmt.Println("\nModules available:")
-
-	sortedModules := make([]string, 0, len(Modules))
-	for key := range Modules {
-		sortedModules = append(sortedModules, key)
-	}
-	sort.Strings(sortedModules)
-
-	for _, module := range sortedModules {
-		fmt.Printf("  - %s\n%s\n", module, Modules[module]().Help())
-	}
-}
 
 func saveToS3(atom string, outputPath string, fileName string, contentType string) error {
 	s, err := session.NewSession(&aws.Config{})
@@ -181,6 +164,7 @@ func buildIndexHtml(config *Config) error {
 
 func runServer(args []string) {
 	var (
+		showHelp   bool
 		configPath string
 		serverPort string
 	)
@@ -189,10 +173,17 @@ func runServer(args []string) {
 	if !found {
 		configPath = "./config.yaml"
 	}
-	serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
-	serverFlags.StringVar(&configPath, "c", configPath, "Path to configuration file")
-	serverFlags.StringVar(&serverPort, "p", os.Getenv("PORT"), "Server port")
-	serverFlags.Parse(args)
+	flags := flag.NewFlagSet("server", flag.ExitOnError)
+	flags.BoolVar(&showHelp, "h", false, "Show help message")
+	flags.StringVar(&configPath, "c", configPath, "Path to configuration file")
+	flags.StringVar(&serverPort, "p", os.Getenv("PORT"), "Server port")
+	flags.Parse(args)
+
+	if showHelp {
+		flags.Usage()
+		printModulesHelp()
+		return
+	}
 
 	if serverPort == "" {
 		serverPort = "8080"
@@ -221,18 +212,19 @@ func runFetcher(args []string) {
 		workersCount int
 	)
 
-	fetcherFlags := flag.NewFlagSet("fetcher", flag.ExitOnError)
-	fetcherFlags.BoolVar(&showHelp, "h", false, "Show help message")
+	flags := flag.NewFlagSet("fetcher", flag.ExitOnError)
+	flags.BoolVar(&showHelp, "h", false, "Show help message")
 	configPath, found := os.LookupEnv(fmt.Sprintf("%sCONFIG_PATH", ENV_PREFIX))
 	if !found {
 		configPath = "./config.yaml"
 	}
-	fetcherFlags.StringVar(&configPath, "c", configPath, "Path to configuration file")
-	fetcherFlags.IntVar(&workersCount, "w", 5, "Number of workers")
-	fetcherFlags.Parse(args)
+	flags.StringVar(&configPath, "c", configPath, "Path to configuration file")
+	flags.IntVar(&workersCount, "w", 5, "Number of workers")
+	flags.Parse(args)
 
 	if showHelp {
-		printHelp()
+		flags.Usage()
+		printModulesHelp()
 		return
 	}
 
@@ -255,18 +247,26 @@ func runFetcher(args []string) {
 
 func runOneShot(args []string) {
 	var (
+		showHelp    bool
 		listModules bool
 		moduleName  string
 		format      string
 		options     string
 	)
 
-	fetcherFlags := flag.NewFlagSet("oneshot", flag.ExitOnError)
-	fetcherFlags.BoolVar(&listModules, "l", false, "List available modules")
-	fetcherFlags.StringVar(&moduleName, "m", moduleName, "Module name")
-	fetcherFlags.StringVar(&format, "f", format, "Output format")
-	fetcherFlags.StringVar(&options, "o", options, "Options (JSON formatted)")
-	fetcherFlags.Parse(args)
+	flags := flag.NewFlagSet("oneshot", flag.ExitOnError)
+	flags.BoolVar(&showHelp, "h", false, "Show help message")
+	flags.BoolVar(&listModules, "l", false, "List available modules")
+	flags.StringVar(&moduleName, "m", moduleName, "Module name")
+	flags.StringVar(&format, "f", format, "Output format")
+	flags.StringVar(&options, "o", options, "Options (JSON formatted)")
+	flags.Parse(args)
+
+	if showHelp {
+		flags.Usage()
+		printModulesHelp()
+		return
+	}
 
 	if listModules {
 		for module := range Modules {
@@ -283,7 +283,7 @@ func runOneShot(args []string) {
 		}
 	}
 
-	m := GetModule(moduleName)
+	m := getModule(moduleName)
 	if m == nil {
 		log.Fatal(fmt.Errorf("module `%s` not found", moduleName))
 	}

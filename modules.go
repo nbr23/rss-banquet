@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"sort"
+
 	"github.com/nbr23/atomic-banquet/parser"
 	"github.com/nbr23/atomic-banquet/parser/books"
 	"github.com/nbr23/atomic-banquet/parser/bugcrowd"
@@ -55,10 +58,24 @@ var Modules = map[string]func() parser.Parser{
 	},
 }
 
-func GetModule(name string) parser.Parser {
+func getModule(name string) parser.Parser {
 	m, ok := Modules[name]
 	if ok {
 		return m()
 	}
 	return nil
+}
+
+func printModulesHelp() {
+	fmt.Println("\nModules available:")
+
+	sortedModules := make([]string, 0, len(Modules))
+	for key := range Modules {
+		sortedModules = append(sortedModules, key)
+	}
+	sort.Strings(sortedModules)
+
+	for _, module := range sortedModules {
+		fmt.Printf("  - %s\n%s\n", module, Modules[module]().Help())
+	}
 }
