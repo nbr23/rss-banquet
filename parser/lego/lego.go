@@ -15,6 +15,7 @@ import (
 type legoItem struct {
 	Name        string `json:"name"`
 	ProductCode string `json:"productCode"`
+	OverrideUrl string `json:"overrideUrl"`
 	BaseImgUrl  string `json:"baseImgUrl"`
 	Variant     struct {
 		Sku        string `json:"sku"`
@@ -49,8 +50,11 @@ type legoFeed struct {
 	} `json:"data"`
 }
 
-func getLegoProductUrl(id string) string {
-	return "https://www.lego.com/en-us/product/" + id
+func getLegoProductUrl(l *legoItem) string {
+	if l.OverrideUrl != "" {
+		return l.OverrideUrl
+	}
+	return "https://www.lego.com/en-us/product/" + l.ProductCode
 }
 
 type Lego struct{}
@@ -138,7 +142,7 @@ func feedAdapter(l *legoFeed, options map[string]any) (*feeds.Feed, error) {
 		newItem := feeds.Item{
 			Title:       buildItemTitle(&item),
 			Description: buildItemDescription(&item),
-			Link:        &feeds.Link{Href: getLegoProductUrl(item.ProductCode)},
+			Link:        &feeds.Link{Href: getLegoProductUrl(&item)},
 			Id:          guid(&item, feed),
 		}
 		feed.Items = append(feed.Items, &newItem)
