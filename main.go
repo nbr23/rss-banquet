@@ -292,16 +292,22 @@ func runOneShot(args []string) {
 		log.Fatal(err)
 	}
 
+	var s string
+
 	switch format {
 	case "rss":
-		fmt.Println(res.ToRss())
+		s, err = res.ToRss()
 	case "atom":
-		fmt.Println(res.ToAtom())
+		s, err = res.ToAtom()
 	case "json":
-		fmt.Println(res.ToJSON())
+		s, err = res.ToJSON()
 	default:
-		fmt.Println(res)
+		s = fmt.Sprintf("%v", res)
 	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(s)
 }
 
 func main() {
