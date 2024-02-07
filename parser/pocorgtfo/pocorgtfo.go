@@ -21,7 +21,7 @@ func (PoCOrGTFO) Parse(options map[string]any) (*feeds.Feed, error) {
 	const url = "https://www.alchemistowl.org/pocorgtfo/"
 	var feed feeds.Feed
 	pubRegex := regexp.MustCompile(`(?i)^(PoC\|\|GTFO 0x[0-9a-fA-F]{2})`)
-	dateRegex := regexp.MustCompile(`(?i)^PoC||GTFO 0x[0-9a-fA-F]{2}, ([^,]+),`)
+	dateRegex := regexp.MustCompile(`(?i)^PoC\|\|GTFO 0x[0-9a-fA-F]{2}, ([^,]+),`)
 
 	resp, err := http.Get(url)
 
@@ -49,14 +49,14 @@ func (PoCOrGTFO) Parse(options map[string]any) (*feeds.Feed, error) {
 			item.Description = s.Text()
 			item.Link = &feeds.Link{Href: fmt.Sprintf("%s%s", url, link.AttrOr("href", ""))}
 			item.Id = guid([]string{item.Title})
-			date := dateRegex.FindStringSubmatch(item.Title)
-			if len(date) < 1 {
-				fmt.Println("unable to parse date", item.Title)
+			date := dateRegex.FindStringSubmatch(s.Text())
+			if len(date) < 2 || len(date[1]) <= 1 {
+				fmt.Println("unable to find date", s.Text())
 				return
 			}
-			item.Created, err = time.Parse("January 2, 2006", date[0])
-			if err == nil {
-				fmt.Println("unable to parse date", item.Title)
+			item.Created, err = time.Parse("January 2006", date[1])
+			if err != nil {
+				fmt.Println("unable to parse date", s.Text())
 				return
 			}
 			feed.Items = append(feed.Items, &item)
