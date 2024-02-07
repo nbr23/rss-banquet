@@ -67,8 +67,6 @@ func getModule(name string) parser.Parser {
 }
 
 func printModulesHelp() {
-	fmt.Println("\nModules available:")
-
 	sortedModules := make([]string, 0, len(Modules))
 	for key := range Modules {
 		sortedModules = append(sortedModules, key)

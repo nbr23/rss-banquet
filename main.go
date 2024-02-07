@@ -162,31 +162,40 @@ func buildIndexHtml(config *Config) error {
 	return nil
 }
 
-func runServer(args []string) {
-	var (
-		showHelp   bool
-		configPath string
-		serverPort string
-	)
+type runServerFlags struct {
+	showHelp   bool
+	configPath string
+	serverPort string
+}
 
+func getRunServerFlags(f *runServerFlags) *flag.FlagSet {
+	flags := flag.NewFlagSet("server", flag.ExitOnError)
+	flags.BoolVar(&f.showHelp, "h", false, "Show help message")
+	flags.StringVar(&f.configPath, "c", f.configPath, "Path to configuration file")
 	configPath, found := os.LookupEnv(fmt.Sprintf("%sCONFIG_PATH", ENV_PREFIX))
 	if !found {
 		configPath = "./config.yaml"
 	}
-	flags := flag.NewFlagSet("server", flag.ExitOnError)
-	flags.BoolVar(&showHelp, "h", false, "Show help message")
-	flags.StringVar(&configPath, "c", configPath, "Path to configuration file")
-	flags.StringVar(&serverPort, "p", os.Getenv("PORT"), "Server port")
+	f.configPath = configPath
+	flags.StringVar(&f.serverPort, "p", os.Getenv("PORT"), "Server port")
+	return flags
+}
+
+func runServer(args []string) {
+	var f runServerFlags
+
+	flags := getRunServerFlags(&f)
 	flags.Parse(args)
 
-	if showHelp {
+	if f.showHelp {
 		flags.Usage()
+		fmt.Println("Modules available:")
 		printModulesHelp()
 		return
 	}
 
-	if serverPort == "" {
-		serverPort = "8080"
+	if f.serverPort == "" {
+		f.serverPort = "8080"
 	}
 
 	r := gin.Default()
@@ -202,38 +211,47 @@ func runServer(args []string) {
 		p.Route(r)
 	}
 
-	r.Run(fmt.Sprintf(":%s", serverPort))
+	r.Run(fmt.Sprintf(":%s", f.serverPort))
 }
 
-func runFetcher(args []string) {
-	var (
-		showHelp     bool
-		configPath   string
-		workersCount int
-	)
+type runFetcherFlags struct {
+	showHelp     bool
+	configPath   string
+	workersCount int
+}
 
+func getRunFetcherFlags(f *runFetcherFlags) *flag.FlagSet {
 	flags := flag.NewFlagSet("fetcher", flag.ExitOnError)
-	flags.BoolVar(&showHelp, "h", false, "Show help message")
+	flags.BoolVar(&f.showHelp, "h", false, "Show help message")
 	configPath, found := os.LookupEnv(fmt.Sprintf("%sCONFIG_PATH", ENV_PREFIX))
 	if !found {
 		configPath = "./config.yaml"
 	}
-	flags.StringVar(&configPath, "c", configPath, "Path to configuration file")
-	flags.IntVar(&workersCount, "w", 5, "Number of workers")
+	f.configPath = configPath
+	flags.StringVar(&f.configPath, "c", f.configPath, "Path to configuration file")
+	flags.IntVar(&f.workersCount, "w", 5, "Number of workers")
+	return flags
+}
+
+func runFetcher(args []string) {
+	var f runFetcherFlags
+
+	flags := getRunFetcherFlags(&f)
 	flags.Parse(args)
 
-	if showHelp {
+	if f.showHelp {
 		flags.Usage()
+		fmt.Println("Modules available:")
 		printModulesHelp()
 		return
 	}
 
-	config, err := getFeedsFromConfig(configPath)
+	config, err := getFeedsFromConfig(f.configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = processFeeds(config, workersCount)
+	err = processFeeds(config, f.workersCount)
 	if err != nil {
 		log.Fatal("Errors during feeds processing:\n", err)
 	}
@@ -245,30 +263,39 @@ func runFetcher(args []string) {
 	}
 }
 
-func runOneShot(args []string) {
-	var (
-		showHelp    bool
-		listModules bool
-		moduleName  string
-		format      string
-		options     string
-	)
+type oneShotFlags struct {
+	showHelp    bool
+	listModules bool
+	moduleName  string
+	format      string
+	options     string
+}
+
+func getOneShotFlags(f *oneShotFlags) *flag.FlagSet {
 
 	flags := flag.NewFlagSet("oneshot", flag.ExitOnError)
-	flags.BoolVar(&showHelp, "h", false, "Show help message")
-	flags.BoolVar(&listModules, "l", false, "List available modules")
-	flags.StringVar(&moduleName, "m", moduleName, "Module name")
-	flags.StringVar(&format, "f", format, "Output format")
-	flags.StringVar(&options, "o", options, "Options (JSON formatted)")
+	flags.BoolVar(&f.showHelp, "h", false, "Show help message")
+	flags.BoolVar(&f.listModules, "l", false, "List available modules")
+	flags.StringVar(&f.moduleName, "m", f.moduleName, "Module name")
+	flags.StringVar(&f.format, "f", f.format, "Output format")
+	flags.StringVar(&f.options, "o", f.options, "Options (JSON formatted)")
+	return flags
+}
+
+func runOneShot(args []string) {
+	var f oneShotFlags
+
+	flags := getOneShotFlags(&f)
 	flags.Parse(args)
 
-	if showHelp {
+	if f.showHelp {
 		flags.Usage()
+		fmt.Println("Modules available:")
 		printModulesHelp()
 		return
 	}
 
-	if listModules {
+	if f.listModules {
 		for module := range Modules {
 			fmt.Println("- ", module)
 		}
@@ -276,16 +303,16 @@ func runOneShot(args []string) {
 	}
 
 	var optionsMap map[string]any
-	if options != "" {
-		err := json.Unmarshal([]byte(options), &optionsMap)
+	if f.options != "" {
+		err := json.Unmarshal([]byte(f.options), &optionsMap)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	m := getModule(moduleName)
+	m := getModule(f.moduleName)
 	if m == nil {
-		log.Fatal(fmt.Errorf("module `%s` not found", moduleName))
+		log.Fatal(fmt.Errorf("module `%s` not found", f.moduleName))
 	}
 	res, err := m.Parse(optionsMap)
 	if err != nil {
@@ -294,7 +321,7 @@ func runOneShot(args []string) {
 
 	var s string
 
-	switch format {
+	switch f.format {
 	case "rss":
 		s, err = res.ToRss()
 	case "atom":
