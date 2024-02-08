@@ -337,6 +337,38 @@ func runOneShot(args []string) {
 	fmt.Println(s)
 }
 
+func readMe(usage func()) {
+	var (
+		serverFlags  runServerFlags
+		fetcherFlags runFetcherFlags
+		oneshotFlags oneShotFlags
+	)
+	sf := getRunServerFlags(&serverFlags)
+	ff := getRunFetcherFlags(&fetcherFlags)
+	of := getOneShotFlags(&oneshotFlags)
+	fmt.Println(`# Atomic Banquet
+
+A Modular Atom/RSS Feed Generator
+
+## Usage
+
+### Server mode
+
+` + "```")
+	sf.Usage()
+	fmt.Println("```\n")
+	fmt.Println("### Fetcher mode\n")
+	fmt.Println("```")
+	ff.Usage()
+	fmt.Println("```\n")
+	fmt.Println("### Oneshot mode\n")
+	fmt.Println("```")
+	of.Usage()
+	fmt.Println("```")
+	fmt.Print("\n## Modules available:\n\n")
+	printModulesHelp()
+}
+
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <command> [options]\n", os.Args[0])
@@ -358,6 +390,8 @@ func main() {
 		runFetcher(os.Args[2:])
 	case "oneshot":
 		runOneShot(os.Args[2:])
+	case "readme":
+		readMe(flag.Usage)
 	default:
 		flag.Usage()
 		return
