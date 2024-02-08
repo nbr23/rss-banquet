@@ -352,6 +352,10 @@ A Modular Atom/RSS Feed Generator
 
 ## Usage
 
+` + "```")
+
+	usage()
+	fmt.Println("```\n" + `
 ### Server mode
 
 ` + "```")

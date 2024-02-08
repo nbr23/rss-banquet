@@ -4,6 +4,14 @@ A Modular Atom/RSS Feed Generator
 
 ## Usage
 
+```
+Usage: ./atomic-banquet <command> [options]
+Commands:
+  server: run atomic-banquet in server mode
+  fetcher: run atomic-banquet in fetch mode based on a declarative config file
+  oneshot: run atomic-banquet in oneshot mode to fetch a specific module's results
+```
+
 ### Server mode
 
 ```
