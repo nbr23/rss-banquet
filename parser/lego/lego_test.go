@@ -12,7 +12,7 @@ func TestLegoParseNew(t *testing.T) {
 		Lego{},
 		map[string]interface{}{"category": "new"},
 		1,
-		`^\[\w+\] [0-9]+ - .* - Available now .*$`,
+		`^\[\w+\] [0-9]+ - .* - (Available now|Pre-order this item today,) .*$`,
 	)
 }
 
