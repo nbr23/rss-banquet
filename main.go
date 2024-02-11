@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
@@ -181,6 +182,23 @@ func getRunServerFlags(f *runServerFlags) *flag.FlagSet {
 	return flags
 }
 
+func responseLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		t := time.Now()
+		c.Next()
+		duration := time.Since(t)
+		fmt.Printf("%v | %d | %d | %s | %s | %s \"%s\"\n",
+			time.Now().Format("2006/01/02 - 15:04:05"),
+			c.Writer.Status(),
+			c.Writer.Size(),
+			duration,
+			c.ClientIP(),
+			c.Request.Method,
+			c.Request.RequestURI,
+		)
+	}
+}
+
 func runServer(args []string) {
 	var f runServerFlags
 
@@ -198,7 +216,9 @@ func runServer(args []string) {
 		f.serverPort = "8080"
 	}
 
-	r := gin.Default()
+	r := gin.New()
+	r.Use(responseLogger())
+	r.Use(gin.Recovery())
 
 	r.GET("/healthcheck", func(c *gin.Context) {
 		c.JSON(200, gin.H{
