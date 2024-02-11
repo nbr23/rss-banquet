@@ -53,6 +53,9 @@ RUN apk update && apk add nginx && rm -rf /var/cache/apk/*
 RUN cat <<EOF > /etc/nginx/http.d/default.conf
 proxy_cache_path /var/lib/nginx/cache levels=1:2 keys_zone=mycache:50m max_size=1g inactive=15m use_temp_path=off;
 
+gzip on;
+gzip_types application/json application/rss+xml application/atom+xml;
+
   server {
 		listen ${PORT};
 
