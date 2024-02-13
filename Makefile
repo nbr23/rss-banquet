@@ -15,4 +15,4 @@ clean:
 
 docker-dev:
 	docker build -t atomic-banquet-dev --target dev-server . && \
-	docker run --rm -p 8080:8080 atomic-banquet-dev
+	docker run --rm -v $$PWD:/build -p 8080:8080 atomic-banquet-dev
