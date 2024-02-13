@@ -1,6 +1,6 @@
 BINARY_NAME := atomic-banquet
 
-.PHONY: all clean readme
+.PHONY: all clean readme docker-dev
 
 all: $(BINARY_NAME)
 
@@ -12,3 +12,7 @@ readme: $(BINARY_NAME)
 
 clean:
 	rm $(BINARY_NAME)
+
+docker-dev:
+	docker build -t atomic-banquet-dev --target dev-server . && \
+	docker run --rm -p 8080:8080 atomic-banquet-dev
