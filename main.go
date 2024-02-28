@@ -330,13 +330,20 @@ func runOneShot(args []string) {
 		}
 	}
 
+	if f.moduleName == "" {
+		flags.Usage()
+		return
+	}
+
 	m := getModule(f.moduleName)
 	if m == nil {
 		log.Fatal(fmt.Errorf("module `%s` not found", f.moduleName))
 	}
 	res, err := m.Parse(optionsMap)
 	if err != nil {
+		fmt.Println(m.Help())
 		log.Fatal(err)
+		return
 	}
 
 	var s string

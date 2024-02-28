@@ -115,6 +115,10 @@ func listBooksByForYear(booksList map[string]*book, author, language string, yea
 func (Books) Parse(options map[string]any) (*feeds.Feed, error) {
 	var feed feeds.Feed
 
+	if _, ok := options["author"]; !ok {
+		return nil, fmt.Errorf("missing author")
+	}
+
 	author := options["author"].(string)
 	language := parser.DefaultedGet(options, "language", "en")
 
