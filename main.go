@@ -78,7 +78,7 @@ func saveFeed(config *Config, feed *feeds.Feed, fileName string, feedConfig *Fee
 	return nil
 }
 
-func feedWorker(id int, feedJobs <-chan *FeedConfig, results chan<- error, config *Config) {
+func feedWorker(feedJobs <-chan *FeedConfig, results chan<- error, config *Config) {
 	for f := range feedJobs {
 		module, ok := Modules[f.Module]
 		fileName := f.Name
@@ -119,7 +119,7 @@ func processFeeds(config *Config, workersCount int) error {
 	errorsChan := make(chan error, len(config.Feeds))
 
 	for w := 0; w < wc; w++ {
-		go feedWorker(w, feedJobs, errorsChan, config)
+		go feedWorker(feedJobs, errorsChan, config)
 	}
 
 	for _, f := range config.Feeds {
