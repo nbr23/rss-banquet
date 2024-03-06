@@ -7,10 +7,29 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (GarminSDK) String() string {
+	return "garminsdk"
+}
+
+func (GarminSDK) GetOptions() parser.Options {
+	return parser.Options{
+		OptionsList: []*parser.Option{
+			&parser.Option{
+				Flag:     "sdks",
+				Required: false,
+				Type:     "stringSlice",
+				Help:     "list of names of the sdks to watch: fit, connect-iq",
+				Default:  "fit",
+				Value:    "",
+			},
+		},
+		Parser: GarminSDK{},
+	}
+}
 
 func parseReleaseDate(s *goquery.Document) (string, error) {
 	disclaimer := s.Find("p.disclaimer")
@@ -53,8 +72,8 @@ func getValidUrl(sdkName string) (string, *http.Response, error) {
 	return url, resp, nil
 }
 
-func (GarminSDK) Parse(options map[string]any) (*feeds.Feed, error) {
-	sdkNames := parser.DefaultedGetSStringSlice(options, "sdks", []string{"fit"})
+func (GarminSDK) Parse(options *parser.Options) (*feeds.Feed, error) {
+	sdkNames := options.Get("sdks").([]string)
 	var feed feeds.Feed
 
 	for _, sdkName := range sdkNames {
@@ -99,8 +118,8 @@ func (GarminSDK) Parse(options map[string]any) (*feeds.Feed, error) {
 		}
 	}
 
-	feed.Title = parser.DefaultedGet(options, "title", fmt.Sprintf("Garmin %s SDK Updates", strings.Join(sdkNames, ", ")))
-	feed.Description = parser.DefaultedGet(options, "description", fmt.Sprintf("The latest Garmin %s SDK updates", strings.Join(sdkNames, ", ")))
+	feed.Title = fmt.Sprintf("Garmin %s SDK Updates", strings.Join(sdkNames, ", "))
+	feed.Description = fmt.Sprintf("The latest Garmin %s SDK updates", strings.Join(sdkNames, ", "))
 
 	feed.Author = &feeds.Author{
 		Name: "Garmin",
@@ -110,27 +129,8 @@ func (GarminSDK) Parse(options map[string]any) (*feeds.Feed, error) {
 	return &feed, nil
 }
 
-func (GarminSDK) Help() string {
-	return "\toptions:\n" +
-		"\t - sdks: list of names of the sdks to watch: fit, connect-iq (default: fit)\n"
-}
-
 type GarminSDK struct{}
 
 func GarminSDKParser() parser.Parser {
 	return GarminSDK{}
-}
-
-func (GarminSDK) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/garminsdk/:sdks", func(c *gin.Context) {
-		sdks := strings.Split(c.Param("sdks"), ",")
-		feed, err := GarminSDK{}.Parse(map[string]any{
-			"sdks": sdks,
-		})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
 }

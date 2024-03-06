@@ -36,64 +36,76 @@ Usage of fetcher:
 
 ### Oneshot mode
 
-```
-Usage of oneshot:
-  -f string
-    	Output format
-  -h	Show help message
-  -l	List available modules
-  -m string
-    	Module name
-  -o string
-    	Options (JSON formatted)
-```
+Usage: `atomic-banquet oneshot <module> [module options]`
+
 
 ## Modules available:
 
   - books
-	options:
-	 - author
-	 - language (default: en)
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
+	 - author: author of the books (default: )
+	 - language: language of the books (default: en)
 
   - bugcrowd
-	options:
-	 - disclosures: bool (default: true)
-	 - accepted: bool (default: true)
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
+	 - disclosures: Show disclosure reports (default: )
+	 - accepted: Show accepted reports (default: en)
+	 - title: Feed title (default: Bugcrowd)
+	 - description: Feed description (default: Bugcrowd Crowdstream)
 
   - dockerhub
-	options:
-	 - image: image name (eg nbr23/atomic-banquet:latest)
-	 - platform: image platform filter (linux/arm64, ...)
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
+	 - image: image name (eg nbr23/atomic-banquet:latest) (default: )
+	 - platform: image platform filter (linux/arm64, ...) (default: )
 
   - garmin-sdk
-	options:
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
 	 - sdks: list of names of the sdks to watch: fit, connect-iq (default: fit)
 
   - garmin-wearables
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
 
   - hackerone
-	options:
-	 - disclosed_only: bool (default: true)
-	 - reports_count: int (default: 50)
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
+	 - disclosed_only: Show only disclosed reports (default: true)
+	 - reports_count: Number of reports to display (default: 50)
+	 - title: Feed title (default: HackerOne)
+	 - description: Feed description (default: Hackerone Hacktivity)
 
   - hackeronePrograms
-	options:
-	 - results_count: int (default: 50)
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
+	 - results_count: Number of programs to display (default: 50)
+	 - title: Feed title (default: HackerOne Programs)
+	 - description: Feed description (default: Hackerone Program Launch)
 
   - infocon
-	options:
-	 - url: string
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
+	 - url: url of the infocon (default: )
 
   - lego
-	options:
-	 - category: string (default: 'new', values: ['coming-soon', 'new'])
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
+	 - category: category of the lego products (new, coming-soon) (default: new)
 
   - pentesterland
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
 
   - pocorgtfo
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
 
   - psupdates
-	options:
-	 - hardware: ps5 or ps4 (default: ps5)
-	 - local: en-us or fr-fr (default: en-us)
+	 - feedFormat: feed output format (rss, atom, json) (default: atom)
+	 - private: private feed (default: false)
+	 - hardware: hardware of the updates (default: ps5)
+	 - local: local of the updates (default: en-us)
 

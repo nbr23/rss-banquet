@@ -7,10 +7,29 @@ import (
 	"io"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (Lego) String() string {
+	return "lego"
+}
+
+func (Lego) GetOptions() parser.Options {
+	return parser.Options{
+		OptionsList: []*parser.Option{
+			&parser.Option{
+				Flag:     "category",
+				Required: false,
+				Type:     "string",
+				Help:     "category of the lego products (new, coming-soon)",
+				Default:  "new",
+				Value:    "",
+			},
+		},
+		Parser: Lego{},
+	}
+}
 
 type legoItem struct {
 	Name        string `json:"name"`
@@ -61,11 +80,6 @@ type Lego struct{}
 
 func LegoParser() parser.Parser {
 	return Lego{}
-}
-
-func (Lego) Help() string {
-	return "\toptions:\n" +
-		"\t - category: string (default: 'new', values: ['coming-soon', 'new'])\n"
 }
 
 func getLegoItemsFromFeed(feed *legoFeed) []legoItem {
@@ -126,10 +140,10 @@ func guid(item *legoItem, f feeds.Feed) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(f.Link.Href, item.ProductCode, item.Name, item.Variant.Sku))))
 }
 
-func feedAdapter(l *legoFeed, options map[string]any) (*feeds.Feed, error) {
+func feedAdapter(l *legoFeed, options *parser.Options) (*feeds.Feed, error) {
 	feed := feeds.Feed{
-		Title:       parser.DefaultedGet(options, "title", "Lego"),
-		Description: parser.DefaultedGet(options, "description", "Lego Products"),
+		Title:       fmt.Sprintf("Lego %s", getSlug(options)),
+		Description: fmt.Sprintf("Lego %s Products", getSlug(options)),
 		Items:       []*feeds.Item{},
 		Author:      &feeds.Author{Name: "lego"},
 		Created:     time.Now(),
@@ -152,8 +166,8 @@ func feedAdapter(l *legoFeed, options map[string]any) (*feeds.Feed, error) {
 
 }
 
-func getSlug(options map[string]any) string {
-	category := parser.DefaultedGet(options, "category", "new")
+func getSlug(options *parser.Options) string {
+	category := options.Get("category").(string)
 	switch category {
 	case "new":
 		return "/categories/new-sets-and-products"
@@ -164,7 +178,7 @@ func getSlug(options map[string]any) string {
 	}
 }
 
-func (Lego) Parse(options map[string]any) (*feeds.Feed, error) {
+func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 	resp, err := legoFeedQuery(options)
 
 	if err != nil {
@@ -186,17 +200,4 @@ func (Lego) Parse(options map[string]any) (*feeds.Feed, error) {
 	}
 
 	return feedAdapter(&feed, options)
-}
-
-func (Lego) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/lego/:category", func(c *gin.Context) {
-		feed, err := Lego{}.Parse(map[string]any{
-			"category": c.Param("category"),
-		})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
 }

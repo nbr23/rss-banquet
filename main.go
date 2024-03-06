@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -47,7 +46,7 @@ func saveToS3(atom string, outputPath string, fileName string, contentType strin
 	return nil
 }
 
-func saveFeed(config *Config, feed *feeds.Feed, fileName string, feedConfig FeedConfig) error {
+func saveFeed(config *Config, feed *feeds.Feed, fileName string, feedConfig *FeedConfig) error {
 	var feedString string
 	var err error
 	var fName string
@@ -79,10 +78,10 @@ func saveFeed(config *Config, feed *feeds.Feed, fileName string, feedConfig Feed
 	return nil
 }
 
-func feedWorker(id int, feedJobs <-chan FeedConfig, results chan<- error, config *Config) {
+func feedWorker(id int, feedJobs <-chan *FeedConfig, results chan<- error, config *Config) {
 	for f := range feedJobs {
 		module, ok := Modules[f.Module]
-		fileName := parser.DefaultedGet(f.Options, "filename", f.Name)
+		fileName := f.Name
 		if !ok {
 			results <- fmt.Errorf("module %s not found", f.Module)
 			return
@@ -116,7 +115,7 @@ func processFeeds(config *Config, workersCount int) error {
 	wc := min(workersCount, len(config.Feeds))
 	var returnedErrors error
 
-	feedJobs := make(chan FeedConfig, len(config.Feeds))
+	feedJobs := make(chan *FeedConfig, len(config.Feeds))
 	errorsChan := make(chan error, len(config.Feeds))
 
 	for w := 0; w < wc; w++ {
@@ -141,10 +140,11 @@ func buildIndexHtml(config *Config) error {
 	var index strings.Builder
 	index.WriteString("<html><head><title>Atomic Banquet</title></head>\n<body>\n<h1><a target=\"_blank\" href=\"https://github.com/nbr23/atomic-banquet/\">Atomic Banquet's</a> RSS/Atom Feeds Index</h1>\n<ul>\n")
 	for _, f := range config.Feeds {
-		if parser.DefaultedGet(f.Options, "private", false) {
+
+		if f.Options.Get("private").(bool) {
 			continue
 		}
-		fileName := parser.DefaultedGet(f.Options, "filename", f.Name)
+		fileName := f.Name
 		index.WriteString(fmt.Sprintf("<li><a target=\"_blank\" href=\"%s.atom\">%s</a></li>\n", fileName, f.Name))
 	}
 	index.WriteString("</ul>\n</body>\n</html>")
@@ -228,7 +228,7 @@ func runServer(args []string) {
 
 	for _, module := range Modules {
 		p := module()
-		p.Route(r)
+		parser.Route(r, p, parser.GetFullOptions(p))
 	}
 
 	r.Run(fmt.Sprintf(":%s", f.serverPort))
@@ -283,72 +283,42 @@ func runFetcher(args []string) {
 	}
 }
 
-type oneShotFlags struct {
-	showHelp    bool
-	listModules bool
-	moduleName  string
-	format      string
-	options     string
-}
-
-func getOneShotFlags(f *oneShotFlags) *flag.FlagSet {
-
-	flags := flag.NewFlagSet("oneshot", flag.ExitOnError)
-	flags.BoolVar(&f.showHelp, "h", false, "Show help message")
-	flags.BoolVar(&f.listModules, "l", false, "List available modules")
-	flags.StringVar(&f.moduleName, "m", f.moduleName, "Module name")
-	flags.StringVar(&f.format, "f", f.format, "Output format")
-	flags.StringVar(&f.options, "o", f.options, "Options (JSON formatted)")
-	return flags
-}
-
 func runOneShot(args []string) {
-	var f oneShotFlags
-
-	flags := getOneShotFlags(&f)
-	flags.Parse(args)
-
-	if f.showHelp {
-		flags.Usage()
-		fmt.Println("Modules available:")
+	if len(args) < 1 {
+		fmt.Println("Missing module name")
 		printModulesHelp()
 		return
 	}
 
-	if f.listModules {
-		for module := range Modules {
-			fmt.Println("- ", module)
-		}
-		return
-	}
-
-	var optionsMap map[string]any
-	if f.options != "" {
-		err := json.Unmarshal([]byte(f.options), &optionsMap)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	if f.moduleName == "" {
-		flags.Usage()
-		return
-	}
-
-	m := getModule(f.moduleName)
+	m := getModule(args[0])
 	if m == nil {
-		log.Fatal(fmt.Errorf("module `%s` not found", f.moduleName))
+		log.Fatal(fmt.Errorf("module `%s` not found", args[0]))
 	}
-	res, err := m.Parse(optionsMap)
+	flags := flag.NewFlagSet(fmt.Sprintf("oneshot %s", m), flag.ExitOnError)
+	o := parser.GetFullOptions(m)
+	o.AddFlags(flags)
+
+	flags.Parse(args[1:])
+
+	for _, option := range o.OptionsList {
+		if option.Required {
+			if o.Get(option.Flag) == "" {
+				flags.Usage()
+				log.Fatalf("missing required parameter: %s", option.Flag)
+			}
+		}
+	}
+
+	res, err := m.Parse(o)
 	if err != nil {
-		fmt.Println(m.Help())
+		fmt.Println(parser.GetFullOptions(m).GetHelp())
 		log.Fatal(err)
 		return
 	}
 
 	var s string
 
-	switch f.format {
+	switch o.Get("f") {
 	case "rss":
 		s, err = res.ToRss()
 	case "atom":
@@ -368,11 +338,9 @@ func readMe(usage func()) {
 	var (
 		serverFlags  runServerFlags
 		fetcherFlags runFetcherFlags
-		oneshotFlags oneShotFlags
 	)
 	sf := getRunServerFlags(&serverFlags)
 	ff := getRunFetcherFlags(&fetcherFlags)
-	of := getOneShotFlags(&oneshotFlags)
 	fmt.Println(`# Atomic Banquet
 
 A Modular Atom/RSS Feed Generator
@@ -392,10 +360,7 @@ A Modular Atom/RSS Feed Generator
 	fmt.Println("```")
 	ff.Usage()
 	fmt.Print("```\n\n")
-	fmt.Print("### Oneshot mode\n\n")
-	fmt.Println("```")
-	of.Usage()
-	fmt.Println("```")
+	fmt.Print("### Oneshot mode\n\nUsage: `atomic-banquet oneshot <module> [module options]`\n\n")
 	fmt.Print("\n## Modules available:\n\n")
 	printModulesHelp()
 }

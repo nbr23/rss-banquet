@@ -74,6 +74,6 @@ func printModulesHelp() {
 	sort.Strings(sortedModules)
 
 	for _, module := range sortedModules {
-		fmt.Printf("  - %s\n%s\n", module, Modules[module]().Help())
+		fmt.Printf("  - %s\n%s\n", module, parser.GetFullOptions(Modules[module]()).GetHelp())
 	}
 }

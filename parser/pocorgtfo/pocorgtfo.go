@@ -8,16 +8,23 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (PoCOrGTFO) String() string {
+	return "pocorgtfo"
+}
+
+func (PoCOrGTFO) GetOptions() parser.Options {
+	return parser.Options{}
+}
 
 func guid(ss []string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(ss))))
 }
 
-func (PoCOrGTFO) Parse(options map[string]any) (*feeds.Feed, error) {
+func (PoCOrGTFO) Parse(options *parser.Options) (*feeds.Feed, error) {
 	const url = "https://www.alchemistowl.org/pocorgtfo/"
 	var feed feeds.Feed
 	pubRegex := regexp.MustCompile(`(?i)^(PoC\|\|GTFO 0x[0-9a-fA-F]{2})`)
@@ -63,29 +70,14 @@ func (PoCOrGTFO) Parse(options map[string]any) (*feeds.Feed, error) {
 		}
 	})
 
-	feed.Title = parser.DefaultedGet(options, "title", "PoC || GTFO")
-	feed.Description = parser.DefaultedGet(options, "description", "PoC || GTFO Publications")
+	feed.Title = "PoC || GTFO"
+	feed.Description = "PoC || GTFO Publications"
 	feed.Author = &feeds.Author{
 		Name: "PoC || GTFO",
 	}
 	feed.Link = &feeds.Link{Href: url}
 
 	return &feed, nil
-}
-
-func (PoCOrGTFO) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/pocorgtfo", func(c *gin.Context) {
-		feed, err := PoCOrGTFO{}.Parse(map[string]any{})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
-}
-
-func (PoCOrGTFO) Help() string {
-	return ""
 }
 
 type PoCOrGTFO struct{}

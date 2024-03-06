@@ -4,14 +4,48 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (HackeronePrograms) String() string {
+	return "hackeroneprograms"
+}
+
+func (HackeronePrograms) GetOptions() parser.Options {
+	return parser.Options{
+		OptionsList: []*parser.Option{
+			&parser.Option{
+				Flag:     "results_count",
+				Required: false,
+				Type:     "int",
+				Help:     "Number of programs to display",
+				Default:  "50",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "title",
+				Required: false,
+				Type:     "string",
+				Help:     "Feed title",
+				Default:  "HackerOne Programs",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "description",
+				Required: false,
+				Type:     "string",
+				Help:     "Feed description",
+				Default:  "Hackerone Program Launch",
+				Value:    "",
+			},
+		},
+		Parser: HackeronePrograms{},
+	}
+}
 
 type hackeroneProgramItem struct {
 	Id                      string         `json:"id"`
@@ -96,10 +130,10 @@ Program last updated on %s<br/>
 	return description
 }
 
-func feedAdapter(b *hackeroneProgramFeed, options map[string]any) (*feeds.Feed, error) {
+func feedAdapter(b *hackeroneProgramFeed, options *parser.Options) (*feeds.Feed, error) {
 	feed := feeds.Feed{
-		Title:       parser.DefaultedGet(options, "title", "hackerone"),
-		Description: parser.DefaultedGet(options, "description", "Hackerone Program Launch"),
+		Title:       options.Get("title").(string),
+		Description: options.Get("description").(string),
 		Items:       []*feeds.Item{},
 		Author:      &feeds.Author{Name: "hackerone"},
 		Created:     time.Now(),
@@ -132,12 +166,7 @@ func HackeroneProgramsParser() parser.Parser {
 	return HackeronePrograms{}
 }
 
-func (HackeronePrograms) Help() string {
-	return "\toptions:\n" +
-		"\t - results_count: int (default: 50)\n"
-}
-
-func (HackeronePrograms) Parse(options map[string]any) (*feeds.Feed, error) {
+func (HackeronePrograms) Parse(options *parser.Options) (*feeds.Feed, error) {
 	resp, err := programsFeedQuery(options)
 
 	if err != nil {
@@ -159,21 +188,4 @@ func (HackeronePrograms) Parse(options map[string]any) (*feeds.Feed, error) {
 	}
 
 	return feedAdapter(&feed, options)
-}
-
-func (HackeronePrograms) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/hackeroneprograms", func(c *gin.Context) {
-		limit, err := strconv.Atoi(c.Query("limit"))
-		if err != nil {
-			limit = 50
-		}
-		feed, err := HackeronePrograms{}.Parse(map[string]any{
-			"results_count": limit,
-		})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
 }

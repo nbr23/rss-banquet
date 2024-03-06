@@ -10,10 +10,36 @@ import (
 
 	"encoding/json"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (DockerHub) String() string {
+	return "dockerhub"
+}
+
+func (DockerHub) GetOptions() parser.Options {
+	return parser.Options{
+		OptionsList: []*parser.Option{
+			&parser.Option{
+				Flag:     "image",
+				Required: true,
+				Type:     "string",
+				Help:     "image name (eg nbr23/atomic-banquet:latest)",
+				Value:    "",
+				IsPath:   true,
+			},
+			&parser.Option{
+				Flag:     "platform",
+				Required: false,
+				Type:     "string",
+				Help:     "image platform filter (linux/arm64, ...)",
+				Value:    "",
+			},
+		},
+		Parser: DockerHub{},
+	}
+}
 
 type dockerImageName struct {
 	Org   string
@@ -211,18 +237,18 @@ func getDockerTagsImages(image dockerImageName) ([]dockerhubImage, error) {
 	return images, nil
 }
 
-func (DockerHub) Parse(options map[string]any) (*feeds.Feed, error) {
+func (DockerHub) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
-	imageNameStr := options["image"].(string)
+	imageNameStr := options.Get("image").(string)
 	if imageNameStr[0] == '/' {
 		imageNameStr = imageNameStr[1:]
 	}
 	imageName := parseDockerImage(imageNameStr)
 	var platform *dockerImagePlatform
-	if options["platform"] == nil {
+	if options.Get("platform") == nil {
 		platform = nil
 	} else {
-		platform = parsePlatform(options["platform"].(string))
+		platform = parsePlatform(options.Get("platform").(string))
 	}
 
 	var images []dockerhubImage
@@ -284,26 +310,6 @@ func (DockerHub) Parse(options map[string]any) (*feeds.Feed, error) {
 
 	feed.Link = &feeds.Link{Href: imageName.GetUiURL()}
 	return &feed, nil
-}
-
-func (DockerHub) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/dockerhub/*image", func(c *gin.Context) {
-		feed, err := DockerHub{}.Parse(map[string]any{
-			"image":    c.Param("image"),
-			"platform": c.Query("platform"),
-		})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
-}
-
-func (DockerHub) Help() string {
-	return "\toptions:\n" +
-		"\t - image: image name (eg nbr23/atomic-banquet:latest)\n" +
-		"\t - platform: image platform filter (linux/arm64, ...)\n"
 }
 
 type DockerHub struct{}

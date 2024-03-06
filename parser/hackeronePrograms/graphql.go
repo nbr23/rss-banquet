@@ -8,8 +8,8 @@ import (
 	"github.com/nbr23/atomic-banquet/parser"
 )
 
-func programsFeedQuery(options map[string]any) (*http.Response, error) {
-	results_count := parser.DefaultedGet(options, "results_count", 50)
+func programsFeedQuery(options *parser.Options) (*http.Response, error) {
+	results_count := options.Get("results_count").(int)
 	query := `query DiscoveryQuery($query: OpportunitiesQuery!, $filter: QueryInput!, $from: Int, $size: Int, $sort: [SortInput!], $post_filters: OpportunitiesFilterInput) {
         me {
             id

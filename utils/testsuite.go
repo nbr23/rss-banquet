@@ -9,7 +9,7 @@ import (
 
 func TestParseSuccess(t *testing.T,
 	p parser.Parser,
-	parserOptions map[string]interface{},
+	parserOptions *parser.Options,
 	minItem int,
 	itemTitleRegex string,
 ) {
@@ -36,7 +36,7 @@ func TestParseSuccess(t *testing.T,
 
 func TestParseFailure(t *testing.T,
 	p parser.Parser,
-	parserOptions map[string]interface{},
+	parserOptions *parser.Options,
 ) {
 	_, err := p.Parse(parserOptions)
 

@@ -2,9 +2,11 @@ package parser
 
 import (
 	"crypto/sha256"
+	"flag"
 	"fmt"
 	"net/http"
-	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,40 +14,33 @@ import (
 )
 
 type Parser interface {
-	Parse(map[string]any) (*feeds.Feed, error)
-	Help() string
-	Route(*gin.Engine) gin.IRoutes
+	Parse(*Options) (*feeds.Feed, error)
+	GetOptions() Options
+	String() string
 }
 
-func DefaultedGet[T any](m map[string]any, k string, d T) T {
-	if v, ok := m[k]; ok {
-		if _, ok := v.(T); ok {
-			return v.(T)
-		}
-	}
-	return d
-}
+func GetFullOptions(p Parser) *Options {
+	opts := p.GetOptions()
+	opts.OptionsList = append([]*Option{
+		{
+			Flag:     "feedFormat",
+			Required: false,
+			Type:     "string",
+			Help:     "feed output format (rss, atom, json)",
+			Default:  "atom",
+			Value:    "",
+		},
+		{
+			Flag:     "private",
+			Required: false,
+			Type:     "bool",
+			Help:     "private feed",
+			Default:  "false",
+			Value:    false,
+		},
+	}, opts.OptionsList...)
 
-func DefaultedGetSStringSlice(m map[string]any, k string, d []string) []string {
-	if v, ok := m[k]; ok {
-		return v.([]string)
-	}
-	return d
-}
-
-func DefaultedGetSlice[S ~[]T, T any](m map[string]any, k string, d S) S {
-	if v, ok := m[k]; ok {
-		if reflect.TypeOf(v).Kind() == reflect.Slice {
-			ret := make(S, 0)
-			for _, v := range v.([]interface{}) {
-				if _, ok := v.(T); ok {
-					ret = append(ret, v.(T))
-				}
-			}
-			return ret
-		}
-	}
-	return d
+	return &opts
 }
 
 func GetLatestDate(dates []time.Time) time.Time {
@@ -108,5 +103,159 @@ func ServeFeed(c *gin.Context, feed *feeds.Feed) {
 		}
 		c.Data(200, "application/atom+xml", []byte(atom))
 		return
+	}
+}
+
+type Option struct {
+	Flag      string
+	Value     interface{}
+	Required  bool
+	Default   string
+	Help      string
+	ShortFlag string
+	Type      string
+	IsPath    bool
+}
+
+type Options struct {
+	OptionsList OptionsList
+	Parser      Parser
+}
+
+type OptionsList []*Option
+
+func (o OptionsList) Get(key string) (interface{}, error) {
+	for _, option := range o {
+		if option.Flag == key {
+			switch option.Type {
+			case "string":
+				if str, ok := option.Value.(string); ok {
+					return str, nil
+				}
+				return *(option.Value.(*string)), nil
+			case "stringSlice":
+				if str, ok := option.Value.(string); ok {
+					return strings.Split(str, ","), nil
+				}
+				return strings.Split(*(option.Value.(*string)), ","), nil
+			case "int":
+				if str, ok := option.Value.(string); ok {
+					i, err := strconv.Atoi(str)
+					if err != nil {
+						return 0, nil
+					}
+					return i, nil
+				}
+				if stri, ok := option.Value.(int); ok {
+					return stri, nil
+				}
+				return *(option.Value.(*int)), nil
+			case "bool":
+				if option.Value == nil {
+					return false, nil
+				}
+				if strp, ok := option.Value.(*string); ok {
+					return *strp == "true" || *strp == "1", nil
+				}
+				if str, ok := option.Value.(string); ok {
+					return str == "true" || str == "1", nil
+				}
+				return (option.Value.(bool)), nil
+			default:
+				return option.Value, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("option not found")
+}
+
+func (o *Options) Get(key string) interface{} {
+	v, err := o.OptionsList.Get(key)
+	if err == nil {
+		return v
+	}
+	v, err = o.Parser.GetOptions().OptionsList.Get(key)
+	if err == nil {
+		return v
+	}
+	return nil
+}
+
+func (o Options) GetHelp() string {
+	help := ""
+	for _, option := range o.OptionsList {
+		help += fmt.Sprintf("\t - %s: %s (default: %s)\n", option.Flag, option.Help, option.Default)
+	}
+	return help
+}
+
+func (o *Options) ParseYaml(m map[string]any) error {
+	for _, option := range o.OptionsList {
+		if v, ok := m[option.Flag]; ok {
+			option.Value = v
+		} else {
+			option.Value = option.Default
+		}
+	}
+	return nil
+}
+
+func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
+	urlPath := []string{p.String()}
+	for _, option := range o.OptionsList {
+		if option.Required {
+			prefix := ":"
+			if option.IsPath {
+				prefix = "*"
+			}
+			urlPath = append(urlPath, fmt.Sprintf("%s%s", prefix, option.Flag))
+		}
+	}
+	route := fmt.Sprintf("/%s", strings.Join(urlPath, "/"))
+
+	return g.GET(route, func(c *gin.Context) {
+		for _, option := range o.OptionsList {
+			if option.Required {
+				if c.Param(option.Flag) == "" {
+					c.String(400, "missing required parameter: %s", option.Flag)
+					return
+				} else {
+					option.Value = c.Param(option.Flag)
+				}
+			} else {
+				if c.Query(option.Flag) == "" {
+					option.Value = option.Default
+				} else {
+					option.Value = c.Query(option.Flag)
+				}
+			}
+		}
+		feed, err := p.Parse(o)
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		ServeFeed(c, feed)
+	})
+}
+
+func (o Options) AddFlags(f *flag.FlagSet) {
+	for _, option := range o.OptionsList {
+		switch option.Type {
+		case "bool":
+			option.Value = f.Bool(option.Flag, option.Default == "true", option.Help)
+		case "int":
+			d, err := strconv.Atoi(option.Default)
+			if err != nil {
+				d = 0
+			}
+			option.Value = f.Int(option.Flag, d, option.Help)
+		case "string":
+			option.Value = f.String(option.Flag, option.Default, option.Help)
+		case "stringSlice":
+			option.Value = f.String(option.Flag, option.Default, option.Help)
+		default:
+			panic(fmt.Errorf("unknown type: %s", option.Type))
+		}
 	}
 }

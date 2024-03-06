@@ -4,13 +4,55 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (Hackerone) String() string {
+	return "hackerone"
+}
+
+func (Hackerone) GetOptions() parser.Options {
+	return parser.Options{
+		OptionsList: []*parser.Option{
+			&parser.Option{
+				Flag:     "disclosed_only",
+				Required: false,
+				Type:     "bool",
+				Help:     "Show only disclosed reports",
+				Default:  "true",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "reports_count",
+				Required: false,
+				Type:     "int",
+				Help:     "Number of reports to display",
+				Default:  "50",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "title",
+				Required: false,
+				Type:     "string",
+				Help:     "Feed title",
+				Default:  "HackerOne",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "description",
+				Required: false,
+				Type:     "string",
+				Help:     "Feed description",
+				Default:  "Hackerone Hacktivity",
+				Value:    "",
+			},
+		},
+		Parser: Hackerone{},
+	}
+}
 
 type hackeroneItem struct {
 	Id         string `json:"id"`
@@ -119,10 +161,10 @@ func buildItemDescription(item *hackeroneItem) string {
 	return description
 }
 
-func feedAdapter(b *hackeroneFeed, options map[string]any) (*feeds.Feed, error) {
+func feedAdapter(b *hackeroneFeed, options *parser.Options) (*feeds.Feed, error) {
 	feed := feeds.Feed{
-		Title:       parser.DefaultedGet(options, "title", "hackerone"),
-		Description: parser.DefaultedGet(options, "description", "Hackerone Hacktivity"),
+		Title:       options.Get("title").(string),
+		Description: options.Get("description").(string),
 		Items:       []*feeds.Item{},
 		Author:      &feeds.Author{Name: "hackerone"},
 		Created:     time.Now(),
@@ -137,7 +179,7 @@ func feedAdapter(b *hackeroneFeed, options map[string]any) (*feeds.Feed, error) 
 			continue
 		}
 		if item.Report.Url == "" {
-			if parser.DefaultedGet(options, "disclosed_only", true) {
+			if options.Get("disclosed_only").(bool) {
 				fmt.Printf("skipping disclosed item without a report url %v\n", item)
 				continue
 			}
@@ -163,13 +205,7 @@ func HackeroneParser() parser.Parser {
 	return Hackerone{}
 }
 
-func (Hackerone) Help() string {
-	return "\toptions:\n" +
-		"\t - disclosed_only: bool (default: true)\n" +
-		"\t - reports_count: int (default: 50)\n"
-}
-
-func (Hackerone) Parse(options map[string]any) (*feeds.Feed, error) {
+func (Hackerone) Parse(options *parser.Options) (*feeds.Feed, error) {
 	resp, err := hacktivityFeedQuery(options)
 
 	if err != nil {
@@ -191,24 +227,4 @@ func (Hackerone) Parse(options map[string]any) (*feeds.Feed, error) {
 	}
 
 	return feedAdapter(&feed, options)
-}
-
-func (Hackerone) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/hackerone", func(c *gin.Context) {
-		disclosed_only := c.Query("disclosed_only") == "1"
-		limit, err := strconv.Atoi(c.Query("limit"))
-		if err != nil {
-			limit = 50
-		}
-
-		feed, err := Hackerone{}.Parse(map[string]any{
-			"disclosed_only": disclosed_only,
-			"reports_count":  limit,
-		})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
 }

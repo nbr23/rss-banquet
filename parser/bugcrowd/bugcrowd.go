@@ -8,10 +8,52 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (Bugcrowd) String() string {
+	return "bugcrowd"
+}
+
+func (Bugcrowd) GetOptions() parser.Options {
+	return parser.Options{
+		OptionsList: []*parser.Option{
+			&parser.Option{
+				Flag:     "disclosures",
+				Required: false,
+				Type:     "bool",
+				Help:     "Show disclosure reports",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "accepted",
+				Required: false,
+				Type:     "bool",
+				Help:     "Show accepted reports",
+				Default:  "en",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "title",
+				Required: false,
+				Type:     "string",
+				Help:     "Feed title",
+				Default:  "Bugcrowd",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "description",
+				Required: false,
+				Type:     "string",
+				Help:     "Feed description",
+				Default:  "Bugcrowd Crowdstream",
+				Value:    "",
+			},
+		},
+		Parser: Bugcrowd{},
+	}
+}
 
 type bugcrowdItem struct {
 	LogoUrl                 string `json:"logo"`
@@ -165,10 +207,10 @@ func buildItemDescription(item *bugcrowdItem) string {
 	return description
 }
 
-func feedAdapter(b *bugcrowdFeed, options map[string]any) (*feeds.Feed, error) {
+func feedAdapter(b *bugcrowdFeed, options *parser.Options) (*feeds.Feed, error) {
 	feed := feeds.Feed{
-		Title:       parser.DefaultedGet(options, "title", "Bugcrowd"),
-		Description: parser.DefaultedGet(options, "description", "Bugcrowd Crowdstream"),
+		Title:       options.Get("title").(string),
+		Description: options.Get("description").(string),
 		Items:       []*feeds.Item{},
 		Author:      &feeds.Author{Name: "Bugcrowd"},
 		Created:     time.Now(),
@@ -197,10 +239,10 @@ func BugcrowdParser() parser.Parser {
 	return Bugcrowd{}
 }
 
-func getCrowdStreamUrl(options map[string]any) string {
+func getCrowdStreamUrl(options *parser.Options) string {
 	filters := []string{}
-	disclosures, _ := options["disclosures"].(bool)
-	accepted, _ := options["accepted"].(bool)
+	disclosures, _ := options.Get("disclosures").(bool)
+	accepted, _ := options.Get("accepted").(bool)
 	if accepted {
 		filters = append(filters, "accepted")
 	}
@@ -213,13 +255,7 @@ func getCrowdStreamUrl(options map[string]any) string {
 	return fmt.Sprintf("https://bugcrowd.com/crowdstream.json?page=1&filter_by=%s", strings.Join(filters, "%2C"))
 }
 
-func (Bugcrowd) Help() string {
-	return "\toptions:\n" +
-		"\t - disclosures: bool (default: true)\n" +
-		"\t - accepted: bool (default: true)\n"
-}
-
-func (Bugcrowd) Parse(options map[string]any) (*feeds.Feed, error) {
+func (Bugcrowd) Parse(options *parser.Options) (*feeds.Feed, error) {
 	url := getCrowdStreamUrl(options)
 
 	resp, err := http.Get(url)
@@ -243,20 +279,4 @@ func (Bugcrowd) Parse(options map[string]any) (*feeds.Feed, error) {
 	}
 
 	return feedAdapter(&feed, options)
-}
-
-func (Bugcrowd) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/bugcrowd", func(c *gin.Context) {
-		disclosures := c.Query("disclosures") == "1"
-		accepted := c.Query("accepted") == "1"
-		feed, err := Bugcrowd{}.Parse(map[string]any{
-			"disclosures": disclosures,
-			"accepted":    accepted,
-		})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
 }

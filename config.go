@@ -1,26 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"strings"
 
+	"github.com/nbr23/atomic-banquet/parser"
 	"gopkg.in/yaml.v3"
 )
 
 const ENV_PREFIX = "ATOMICBANQUET_"
 
 type FeedConfig struct {
-	Module   string         `yaml:"module"`
-	Options  map[string]any `yaml:"options"`
-	Name     string         `yaml:"name"`
-	FeedType string         `yaml:"type"`
+	Module     string          `yaml:"module"`
+	OptionsRaw map[string]any  `yaml:"options"`
+	Options    *parser.Options `yaml:"-"`
+	Name       string          `yaml:"name"`
+	FeedType   string          `yaml:"type"`
 }
 
 type Config struct {
-	Feeds      []FeedConfig `yaml:"feeds"`
-	OutputPath string       `yaml:"output_path"`
-	BuildIndex bool         `yaml:"build_index"`
+	Feeds      []*FeedConfig `yaml:"feeds"`
+	OutputPath string        `yaml:"output_path"`
+	BuildIndex bool          `yaml:"build_index"`
 }
 
 func setDefaults(config *Config) {
@@ -46,27 +46,11 @@ func getFeedsFromConfig(path string) (*Config, error) {
 
 	setDefaults(&config)
 
-	extendConfigFromEnv(&config)
+	for _, feed := range config.Feeds {
+		m := Modules[feed.Module]()
+		feed.Options = parser.GetFullOptions(m)
+		feed.Options.ParseYaml(feed.OptionsRaw)
+	}
 
 	return &config, nil
-
-}
-
-func extendConfigFromEnv(config *Config) {
-	feedOptPrefix := fmt.Sprintf("%sFEED_OPT_", ENV_PREFIX)
-	for _, env := range os.Environ() {
-		keyval := strings.SplitN(env, "=", 2)
-		k, v := keyval[0], keyval[1]
-
-		if strings.HasPrefix(k, feedOptPrefix) {
-			p := strings.Split(strings.TrimPrefix(k, feedOptPrefix), "_")
-			feedKey := strings.ToLower(p[0])
-			optionKey := p[1]
-			for _, feed := range config.Feeds {
-				if feed.Module == feedKey {
-					feed.Options[optionKey] = v
-				}
-			}
-		}
-	}
 }

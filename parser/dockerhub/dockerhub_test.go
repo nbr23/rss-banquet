@@ -3,6 +3,7 @@ package dockerhub
 import (
 	"testing"
 
+	"github.com/nbr23/atomic-banquet/parser"
 	testsuite "github.com/nbr23/atomic-banquet/utils"
 )
 
@@ -10,7 +11,16 @@ func TestDockerHubParse(t *testing.T) {
 	testsuite.TestParseSuccess(
 		t,
 		DockerHub{},
-		map[string]interface{}{"image": "nbr23/atomic-banquet"},
+		&parser.Options{
+			OptionsList: parser.OptionsList{
+				&parser.Option{
+					Flag:  "image",
+					Type:  "string",
+					Value: "nbr23/atomic-banquet",
+				},
+			},
+			Parser: DockerHub{},
+		},
 		1,
 		`^nbr23/atomic-banquet:[-\d\w]+ linux/[\d\w]+$`,
 	)
@@ -20,7 +30,21 @@ func TestDockerHubParsePlatform(t *testing.T) {
 	testsuite.TestParseSuccess(
 		t,
 		DockerHub{},
-		map[string]interface{}{"image": "nbr23/atomic-banquet", "platform": "linux/arm64"},
+		&parser.Options{
+			OptionsList: parser.OptionsList{
+				&parser.Option{
+					Flag:  "image",
+					Type:  "string",
+					Value: "nbr23/atomic-banquet",
+				},
+				&parser.Option{
+					Flag:  "platform",
+					Type:  "string",
+					Value: "linux/arm64",
+				},
+			},
+			Parser: DockerHub{},
+		},
 		1,
 		`^nbr23/atomic-banquet:[-\d\w]+ linux/arm64+$`,
 	)

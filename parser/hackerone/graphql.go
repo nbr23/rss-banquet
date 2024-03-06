@@ -8,9 +8,9 @@ import (
 	"github.com/nbr23/atomic-banquet/parser"
 )
 
-func hacktivityFeedQuery(options map[string]any) (*http.Response, error) {
-	disclosed_only := parser.DefaultedGet(options, "disclosed_only", true)
-	reports_count := parser.DefaultedGet(options, "reports_count", 50)
+func hacktivityFeedQuery(options *parser.Options) (*http.Response, error) {
+	disclosed_only := options.Get("disclosed_only").(bool)
+	reports_count := options.Get("reports_count").(int)
 
 	query := `query HacktivityPageQuery($querystring: String, $orderBy: HacktivityItemOrderInput, $secureOrderBy: FiltersHacktivityItemFilterOrder, $where: FiltersHacktivityItemFilterInput, $count: Int, $cursor: String) {
         me {

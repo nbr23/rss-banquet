@@ -12,11 +12,37 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	unidecode "github.com/mozillazg/go-unidecode"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (Books) String() string {
+	return "books"
+}
+
+func (Books) GetOptions() parser.Options {
+	return parser.Options{
+		OptionsList: []*parser.Option{
+			&parser.Option{
+				Flag:     "author",
+				Required: true,
+				Type:     "string",
+				Help:     "author of the books",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "language",
+				Required: false,
+				Type:     "string",
+				Help:     "language of the books",
+				Default:  "en",
+				Value:    "",
+			},
+		},
+		Parser: Books{},
+	}
+}
 
 type book struct {
 	Title         string    `xml:"title"`
@@ -112,15 +138,11 @@ func listBooksByForYear(booksList map[string]*book, author, language string, yea
 	}
 }
 
-func (Books) Parse(options map[string]any) (*feeds.Feed, error) {
+func (Books) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
 
-	if _, ok := options["author"]; !ok {
-		return nil, fmt.Errorf("missing author")
-	}
-
-	author := options["author"].(string)
-	language := parser.DefaultedGet(options, "language", "en")
+	author := options.Get("author").(string)
+	language := options.Get("language").(string)
 
 	year_min := time.Now().Year() - 1
 	year_max := time.Now().Year() + 1
@@ -154,26 +176,6 @@ func (Books) Parse(options map[string]any) (*feeds.Feed, error) {
 	feed.Description = fmt.Sprintf("%s's books - %s", strings.Title(author), language)
 
 	return &feed, nil
-}
-
-func (Books) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/books/:author", func(c *gin.Context) {
-		feed, err := Books{}.Parse(map[string]any{
-			"author":   c.Param("author"),
-			"language": c.Query("language"),
-		})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
-}
-
-func (Books) Help() string {
-	return "\toptions:\n" +
-		"\t - author\n" +
-		"\t - language (default: en)\n"
 }
 
 type Books struct{}

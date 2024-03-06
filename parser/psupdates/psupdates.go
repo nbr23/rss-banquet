@@ -9,10 +9,37 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (PSUpdates) String() string {
+	return "psupdates"
+}
+
+func (PSUpdates) GetOptions() parser.Options {
+	return parser.Options{
+		OptionsList: []*parser.Option{
+			&parser.Option{
+				Flag:     "hardware",
+				Required: true,
+				Type:     "string",
+				Help:     "hardware of the updates",
+				Default:  "ps5",
+				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "local",
+				Required: false,
+				Type:     "string",
+				Help:     "local of the updates",
+				Default:  "en-us",
+				Value:    "",
+			},
+		},
+		Parser: PSUpdates{},
+	}
+}
 
 func parseLatestVersion(s *goquery.Selection) (string, error) {
 	var latestVersion string
@@ -68,13 +95,13 @@ func getUpdateFileUrl(hardware string, local string) (string, error) {
 	return href, nil
 }
 
-func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
+func (PSUpdates) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
 	var update feeds.Item
 
-	hardware := parser.DefaultedGet(options, "hardware", "ps5")
+	hardware := options.Get("hardware").(string)
 	hardware = strings.ToUpper(hardware)
-	local := parser.DefaultedGet(options, "local", "en-us")
+	local := options.Get("local").(string)
 	url := getHardwareURL(hardware, local)
 
 	resp, err := http.Get(url)
@@ -119,8 +146,8 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 	update.Link = &feeds.Link{Href: url}
 	update.Id = guid([]string{url, versionName})
 
-	feed.Title = parser.DefaultedGet(options, "title", fmt.Sprintf("%s Updates", hardware))
-	feed.Description = parser.DefaultedGet(options, "description", fmt.Sprintf("The latest %s updates", hardware))
+	feed.Title = fmt.Sprintf("%s Updates", hardware)
+	feed.Description = fmt.Sprintf("The latest %s updates", hardware)
 	feed.Items = append(feed.Items, &update)
 	feed.Author = &feeds.Author{
 		Name: "PlayStation",
@@ -128,26 +155,6 @@ func (PSUpdates) Parse(options map[string]any) (*feeds.Feed, error) {
 	feed.Link = &feeds.Link{Href: url}
 
 	return &feed, nil
-}
-
-func (PSUpdates) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/psupdates/:hardware", func(c *gin.Context) {
-		feed, err := PSUpdates{}.Parse(map[string]any{
-			"hardware": c.Param("hardware"),
-			"local":    c.Query("local"),
-		})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
-}
-
-func (PSUpdates) Help() string {
-	return "\toptions:\n" +
-		"\t - hardware: ps5 or ps4 (default: ps5)\n" +
-		"\t - local: en-us or fr-fr (default: en-us)\n"
 }
 
 type PSUpdates struct{}

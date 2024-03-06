@@ -8,10 +8,17 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/atomic-banquet/parser"
 )
+
+func (GarminWearables) String() string {
+	return "garminwearables"
+}
+
+func (GarminWearables) GetOptions() parser.Options {
+	return parser.Options{}
+}
 
 func getReleaseNotes(s *goquery.Document) [][]string {
 	scriptTags := s.Find("script")
@@ -24,7 +31,7 @@ func getReleaseNotes(s *goquery.Document) [][]string {
 	return nil
 }
 
-func (GarminWearables) Parse(options map[string]any) (*feeds.Feed, error) {
+func (GarminWearables) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
 	resp, err := http.Get("https://www.garmin.com/en-US/support/software/wearables/")
 
@@ -66,8 +73,8 @@ func (GarminWearables) Parse(options map[string]any) (*feeds.Feed, error) {
 		feed.Items = append(feed.Items, &update)
 	}
 
-	feed.Title = parser.DefaultedGet(options, "title", "Garmin Wearable Updates")
-	feed.Description = parser.DefaultedGet(options, "description", "The latest Garmin Wearable updates")
+	feed.Title = "Garmin Wearable Updates"
+	feed.Description = "The latest Garmin Wearable updates"
 
 	feed.Author = &feeds.Author{
 		Name: "Garmin",
@@ -77,23 +84,8 @@ func (GarminWearables) Parse(options map[string]any) (*feeds.Feed, error) {
 	return &feed, nil
 }
 
-func (GarminWearables) Help() string {
-	return ""
-}
-
 type GarminWearables struct{}
 
 func GarminWearablesParser() parser.Parser {
 	return GarminWearables{}
-}
-
-func (GarminWearables) Route(g *gin.Engine) gin.IRoutes {
-	return g.GET("/garminwearables", func(c *gin.Context) {
-		feed, err := GarminWearables{}.Parse(map[string]any{})
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		parser.ServeFeed(c, feed)
-	})
 }

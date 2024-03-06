@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/nbr23/atomic-banquet/parser"
 )
 
-func legoFeedQuery(options map[string]any) (*http.Response, error) {
+func legoFeedQuery(options *parser.Options) (*http.Response, error) {
 
 	query := `query ContentPageQuery($slug: String!, $perPage: Int, $page: Int, $sort: SortInput, $filters: [Filter!], $searchSessionId: Int, $offset: Int) {
     contentPage(slug: $slug) {
