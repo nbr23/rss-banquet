@@ -18,7 +18,7 @@ func (Lego) String() string {
 func (Lego) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "category",
 				Required: false,
 				Type:     "string",

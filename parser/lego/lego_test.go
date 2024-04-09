@@ -22,7 +22,7 @@ func TestLegoParseNew(t *testing.T) {
 			Parser: Lego{},
 		},
 		1,
-		`^\[\w+\] [0-9]+ - .* - (Available now|Pre-order this item today,) .*$`,
+		`^\[\w+\] [0-9]+ - .* - (Available now|Pre-order this item today,|Will ship by) .*$`,
 	)
 }
 
