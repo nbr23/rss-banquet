@@ -16,13 +16,13 @@ func TestDockerHubParse(t *testing.T) {
 				&parser.Option{
 					Flag:  "image",
 					Type:  "string",
-					Value: "nbr23/rss-banquet",
+					Value: "nbr23/youtube-dl-server",
 				},
 			},
 			Parser: DockerHub{},
 		},
 		1,
-		`^nbr23/rss-banquet:[-\d\w]+ linux/[\d\w]+$`,
+		`^nbr23/youtube-dl-server:[-\d\w]+ linux/[\d\w]+$`,
 	)
 }
 
@@ -35,7 +35,7 @@ func TestDockerHubParsePlatform(t *testing.T) {
 				&parser.Option{
 					Flag:  "image",
 					Type:  "string",
-					Value: "nbr23/rss-banquet",
+					Value: "nbr23/youtube-dl-server",
 				},
 				&parser.Option{
 					Flag:  "platform",
@@ -46,7 +46,7 @@ func TestDockerHubParsePlatform(t *testing.T) {
 			Parser: DockerHub{},
 		},
 		1,
-		`^nbr23/rss-banquet:[-\d\w]+ linux/arm64+$`,
+		`^nbr23/youtube-dl-server:[-\d\w]+ linux/arm64+$`,
 	)
 }
 
@@ -58,8 +58,8 @@ func TestParseDockerImage(t *testing.T) {
 	}{
 		{"alpine", dockerImageName{Org: "library", Image: "alpine", Tag: ""}},
 		{"alpine:latest", dockerImageName{Org: "library", Image: "alpine", Tag: "latest"}},
-		{"nbr23/rss-banquet", dockerImageName{Org: "nbr23", Image: "rss-banquet", Tag: ""}},
-		{"nbr23/rss-banquet:latest", dockerImageName{Org: "nbr23", Image: "rss-banquet", Tag: "latest"}},
+		{"nbr23/youtube-dl-server", dockerImageName{Org: "nbr23", Image: "youtube-dl-server", Tag: ""}},
+		{"nbr23/youtube-dl-server:latest", dockerImageName{Org: "nbr23", Image: "youtube-dl-server", Tag: "latest"}},
 	}
 
 	for _, tc := range testCases {
@@ -80,8 +80,8 @@ func TestDockerImageString(t *testing.T) {
 	}{
 		{"alpine", "library/alpine"},
 		{"alpine:latest", "library/alpine"},
-		{"nbr23/rss-banquet", "nbr23/rss-banquet"},
-		{"nbr23/rss-banquet:latest", "nbr23/rss-banquet"},
+		{"nbr23/youtube-dl-server", "nbr23/youtube-dl-server"},
+		{"nbr23/youtube-dl-server:latest", "nbr23/youtube-dl-server"},
 	}
 
 	for _, tc := range testCases {
@@ -99,8 +99,8 @@ func TestDockerImagePretty(t *testing.T) {
 	testCases := []string{
 		"alpine",
 		"alpine:latest",
-		"nbr23/rss-banquet",
-		"nbr23/rss-banquet:latest",
+		"nbr23/youtube-dl-server",
+		"nbr23/youtube-dl-server:latest",
 	}
 
 	for _, tc := range testCases {
