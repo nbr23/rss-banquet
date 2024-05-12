@@ -16,14 +16,17 @@ func TestParseSuccess(t *testing.T,
 	parsed, err := p.Parse(parserOptions)
 	if err != nil {
 		t.Errorf("Unable to parse: %s", err)
+		return
 	}
 
 	if parsed == nil {
 		t.Errorf("Unable to parse: nil feed returned")
+		return
 	}
 
 	if parsed.Items == nil || len(parsed.Items) < minItem {
 		t.Errorf("Unable to parse: not enough items in feed")
+		return
 	}
 
 	if itemTitleRegex != "" {
