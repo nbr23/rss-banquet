@@ -6,8 +6,8 @@ RUN apk add gcc musl-dev
 COPY go* main.go modules.go config.go /build/
 COPY parser parser
 
-RUN GOOS=linux GOARCH=arm64 go build -trimpath -o atomic-banquet-linux-arm64
-RUN GOOS=linux GOARCH=amd64 go build -trimpath -o atomic-banquet-linux-amd64
+RUN GOOS=linux GOARCH=arm64 go build -trimpath -o rss-banquet-linux-arm64
+RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
 
 # Fetcher
 
@@ -15,9 +15,9 @@ FROM --platform=${TARGETOS}/${TARGETARCH} alpine:latest as fetcher
 ARG TARGETARCH
 ARG TARGETOS
 
-COPY --from=builder /build/atomic-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/atomic-banquet
+COPY --from=builder /build/rss-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/rss-banquet
 
-CMD atomic-banquet fetcher
+CMD rss-banquet fetcher
 
 # Server
 
@@ -27,7 +27,7 @@ ENV GIN_MODE release
 
 EXPOSE ${PORT}
 
-CMD atomic-banquet server -p ${PORT}
+CMD rss-banquet server -p ${PORT}
 
 # Development
 
@@ -38,7 +38,7 @@ EXPOSE ${PORT}
 
 RUN apk update && apk add watchexec
 
-CMD watchexec -w . -e go,sum,mod -r sh -c "date && echo [WATCHEXEC] Building... && go build && echo [WATCHEXEC] Built, launching && ./atomic-banquet server -p ${PORT}"
+CMD watchexec -w . -e go,sum,mod -r sh -c "date && echo [WATCHEXEC] Building... && go build && echo [WATCHEXEC] Built, launching && ./rss-banquet server -p ${PORT}"
 
 # nginx
 
@@ -70,4 +70,4 @@ gzip_types application/json application/rss+xml application/atom+xml;
 
 EOF
 
-CMD ["sh", "-c", "nginx && atomic-banquet server -p 8081"]
+CMD ["sh", "-c", "nginx && rss-banquet server -p 8081"]

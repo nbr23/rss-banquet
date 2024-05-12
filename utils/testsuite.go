@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/nbr23/atomic-banquet/parser"
+	"github.com/nbr23/rss-banquet/parser"
 )
 
 func TestParseSuccess(t *testing.T,

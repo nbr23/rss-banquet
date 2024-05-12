@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/nbr23/atomic-banquet/parser"
+	"github.com/nbr23/rss-banquet/parser"
 )
 
 func programsFeedQuery(options *parser.Options) (*http.Response, error) {

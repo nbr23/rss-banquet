@@ -1,15 +1,15 @@
-# Atomic Banquet
+# RSS Banquet
 
 A Modular Atom/RSS Feed Generator
 
 ## Usage
 
 ```
-Usage: ./atomic-banquet <command> [options]
+Usage: ./rss-banquet <command> [options]
 Commands:
-  server: run atomic-banquet in server mode
-  fetcher: run atomic-banquet in fetch mode based on a declarative config file
-  oneshot: run atomic-banquet in oneshot mode to fetch a specific module's results
+  server: run rss-banquet in server mode
+  fetcher: run rss-banquet in fetch mode based on a declarative config file
+  oneshot: run rss-banquet in oneshot mode to fetch a specific module's results
 ```
 
 ### Server mode
@@ -36,7 +36,7 @@ Usage of fetcher:
 
 ### Oneshot mode
 
-Usage: `atomic-banquet oneshot <module> [module options]`
+Usage: `rss-banquet oneshot <module> [module options]`
 
 
 ## Modules available:
@@ -58,7 +58,7 @@ Usage: `atomic-banquet oneshot <module> [module options]`
   - dockerhub
 	 - feedFormat: feed output format (rss, atom, json) (default: atom)
 	 - private: private feed (default: false)
-	 - image: image name (eg nbr23/atomic-banquet:latest) (default: )
+	 - image: image name (eg nbr23/rss-banquet:latest) (default: )
 	 - platform: image platform filter (linux/arm64, ...) (default: )
 
   - garmin-sdk

@@ -12,7 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
-	"github.com/nbr23/atomic-banquet/parser"
+	"github.com/nbr23/rss-banquet/parser"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -138,7 +138,7 @@ func processFeeds(config *Config, workersCount int) error {
 
 func buildIndexHtml(config *Config) error {
 	var index strings.Builder
-	index.WriteString("<html><head><title>Atomic Banquet</title></head>\n<body>\n<h1><a target=\"_blank\" href=\"https://github.com/nbr23/atomic-banquet/\">Atomic Banquet's</a> RSS/Atom Feeds Index</h1>\n<ul>\n")
+	index.WriteString("<html><head><title>RSS Banquet</title></head>\n<body>\n<h1><a target=\"_blank\" href=\"https://github.com/nbr23/rss-banquet/\">RSS Banquet's</a> RSS/Atom Feeds Index</h1>\n<ul>\n")
 	for _, f := range config.Feeds {
 
 		if f.Options.Get("private").(bool) {
@@ -341,7 +341,7 @@ func readMe(usage func()) {
 	)
 	sf := getRunServerFlags(&serverFlags)
 	ff := getRunFetcherFlags(&fetcherFlags)
-	fmt.Println(`# Atomic Banquet
+	fmt.Println(`# RSS Banquet
 
 A Modular Atom/RSS Feed Generator
 
@@ -360,7 +360,7 @@ A Modular Atom/RSS Feed Generator
 	fmt.Println("```")
 	ff.Usage()
 	fmt.Print("```\n\n")
-	fmt.Print("### Oneshot mode\n\nUsage: `atomic-banquet oneshot <module> [module options]`\n\n")
+	fmt.Print("### Oneshot mode\n\nUsage: `rss-banquet oneshot <module> [module options]`\n\n")
 	fmt.Print("\n## Modules available:\n\n")
 	printModulesHelp()
 }
@@ -369,9 +369,9 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <command> [options]\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Commands:\n")
-		fmt.Fprintf(os.Stderr, "  server: run atomic-banquet in server mode\n")
-		fmt.Fprintf(os.Stderr, "  fetcher: run atomic-banquet in fetch mode based on a declarative config file\n")
-		fmt.Fprintf(os.Stderr, "  oneshot: run atomic-banquet in oneshot mode to fetch a specific module's results\n")
+		fmt.Fprintf(os.Stderr, "  server: run rss-banquet in server mode\n")
+		fmt.Fprintf(os.Stderr, "  fetcher: run rss-banquet in fetch mode based on a declarative config file\n")
+		fmt.Fprintf(os.Stderr, "  oneshot: run rss-banquet in oneshot mode to fetch a specific module's results\n")
 	}
 	flag.Parse()
 	if flag.NArg() < 1 {

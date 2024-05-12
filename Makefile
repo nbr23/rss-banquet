@@ -1,4 +1,4 @@
-BINARY_NAME := atomic-banquet
+BINARY_NAME := rss-banquet
 
 .PHONY: all clean readme docker-dev test
 
@@ -14,8 +14,8 @@ clean:
 	rm $(BINARY_NAME)
 
 docker-dev:
-	docker build -t atomic-banquet-dev --target dev-server . && \
-	docker run --rm -v $$PWD:/build -p 8080:8080 atomic-banquet-dev
+	docker build -t rss-banquet-dev --target dev-server . && \
+	docker run --rm -v $$PWD:/build -p 8080:8080 rss-banquet-dev
 
 test:
 	@go test -v ./... | sed '/PASS/s//\x1b[32m&\x1b[0m/' | sed '/FAIL/s//\x1b[31m&\x1b[0m/'

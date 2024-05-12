@@ -1,4 +1,4 @@
-module github.com/nbr23/atomic-banquet
+module github.com/nbr23/rss-banquet
 
 go 1.20
 

@@ -3,8 +3,8 @@ package dockerhub
 import (
 	"testing"
 
-	"github.com/nbr23/atomic-banquet/parser"
-	testsuite "github.com/nbr23/atomic-banquet/utils"
+	"github.com/nbr23/rss-banquet/parser"
+	testsuite "github.com/nbr23/rss-banquet/utils"
 )
 
 func TestDockerHubParse(t *testing.T) {
@@ -16,13 +16,13 @@ func TestDockerHubParse(t *testing.T) {
 				&parser.Option{
 					Flag:  "image",
 					Type:  "string",
-					Value: "nbr23/atomic-banquet",
+					Value: "nbr23/rss-banquet",
 				},
 			},
 			Parser: DockerHub{},
 		},
 		1,
-		`^nbr23/atomic-banquet:[-\d\w]+ linux/[\d\w]+$`,
+		`^nbr23/rss-banquet:[-\d\w]+ linux/[\d\w]+$`,
 	)
 }
 
@@ -35,7 +35,7 @@ func TestDockerHubParsePlatform(t *testing.T) {
 				&parser.Option{
 					Flag:  "image",
 					Type:  "string",
-					Value: "nbr23/atomic-banquet",
+					Value: "nbr23/rss-banquet",
 				},
 				&parser.Option{
 					Flag:  "platform",
@@ -46,7 +46,7 @@ func TestDockerHubParsePlatform(t *testing.T) {
 			Parser: DockerHub{},
 		},
 		1,
-		`^nbr23/atomic-banquet:[-\d\w]+ linux/arm64+$`,
+		`^nbr23/rss-banquet:[-\d\w]+ linux/arm64+$`,
 	)
 }
 
@@ -58,8 +58,8 @@ func TestParseDockerImage(t *testing.T) {
 	}{
 		{"alpine", dockerImageName{Org: "library", Image: "alpine", Tag: ""}},
 		{"alpine:latest", dockerImageName{Org: "library", Image: "alpine", Tag: "latest"}},
-		{"nbr23/atomic-banquet", dockerImageName{Org: "nbr23", Image: "atomic-banquet", Tag: ""}},
-		{"nbr23/atomic-banquet:latest", dockerImageName{Org: "nbr23", Image: "atomic-banquet", Tag: "latest"}},
+		{"nbr23/rss-banquet", dockerImageName{Org: "nbr23", Image: "rss-banquet", Tag: ""}},
+		{"nbr23/rss-banquet:latest", dockerImageName{Org: "nbr23", Image: "rss-banquet", Tag: "latest"}},
 	}
 
 	for _, tc := range testCases {
@@ -80,8 +80,8 @@ func TestDockerImageString(t *testing.T) {
 	}{
 		{"alpine", "library/alpine"},
 		{"alpine:latest", "library/alpine"},
-		{"nbr23/atomic-banquet", "nbr23/atomic-banquet"},
-		{"nbr23/atomic-banquet:latest", "nbr23/atomic-banquet"},
+		{"nbr23/rss-banquet", "nbr23/rss-banquet"},
+		{"nbr23/rss-banquet:latest", "nbr23/rss-banquet"},
 	}
 
 	for _, tc := range testCases {
@@ -99,8 +99,8 @@ func TestDockerImagePretty(t *testing.T) {
 	testCases := []string{
 		"alpine",
 		"alpine:latest",
-		"nbr23/atomic-banquet",
-		"nbr23/atomic-banquet:latest",
+		"nbr23/rss-banquet",
+		"nbr23/rss-banquet:latest",
 	}
 
 	for _, tc := range testCases {

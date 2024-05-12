@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 
 	"github.com/gorilla/feeds"
-	"github.com/nbr23/atomic-banquet/parser"
+	"github.com/nbr23/rss-banquet/parser"
 )
 
 func (DockerHub) String() string {
@@ -25,7 +25,7 @@ func (DockerHub) GetOptions() parser.Options {
 				Flag:     "image",
 				Required: true,
 				Type:     "string",
-				Help:     "image name (eg nbr23/atomic-banquet:latest)",
+				Help:     "image name (eg nbr23/rss-banquet:latest)",
 				Value:    "",
 				IsPath:   true,
 			},

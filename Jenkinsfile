@@ -45,7 +45,7 @@ pipeline {
             when { branch 'master' }
             steps {
                 sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER --target fetcher --platform linux/arm64,linux/amd64 -t nbr23/atomic-banquet:latest -t nbr23/atomic-banquet:`git rev-parse --short HEAD` --push .
+                    docker buildx build --pull --builder \$BUILDX_BUILDER --target fetcher --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:latest -t nbr23/rss-banquet:`git rev-parse --short HEAD` --push .
                     """
             }
         }
@@ -53,7 +53,7 @@ pipeline {
             when { branch 'master' }
             steps {
                 sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target server --platform linux/arm64,linux/amd64 -t nbr23/atomic-banquet:server-latest -t nbr23/atomic-banquet:server-`git rev-parse --short HEAD` --push .
+                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target server --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:server-latest -t nbr23/rss-banquet:server-`git rev-parse --short HEAD` --push .
                     """
             }
         }
@@ -61,14 +61,14 @@ pipeline {
             when { branch 'master' }
             steps {
                 sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target server --platform linux/arm64,linux/amd64 -t nbr23/atomic-banquet:server-nginx-latest -t nbr23/atomic-banquet:server-nginx-`git rev-parse --short HEAD` --push .
+                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target server --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:server-nginx-latest -t nbr23/rss-banquet:server-nginx-`git rev-parse --short HEAD` --push .
                     """
             }
         }
         stage('Sync github repos') {
             when { branch 'master' }
             steps {
-                syncRemoteBranch('git@github.com:nbr23/atomic-banquet.git', 'master')
+                syncRemoteBranch('git@github.com:nbr23/rss-banquet.git', 'master')
             }
         }
     }

@@ -14,7 +14,7 @@ import (
 	"github.com/araddon/dateparse"
 	"github.com/gorilla/feeds"
 	unidecode "github.com/mozillazg/go-unidecode"
-	"github.com/nbr23/atomic-banquet/parser"
+	"github.com/nbr23/rss-banquet/parser"
 )
 
 func (Books) String() string {

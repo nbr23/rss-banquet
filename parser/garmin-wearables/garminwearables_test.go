@@ -3,8 +3,8 @@ package garminwearables
 import (
 	"testing"
 
-	"github.com/nbr23/atomic-banquet/parser"
-	testsuite "github.com/nbr23/atomic-banquet/utils"
+	"github.com/nbr23/rss-banquet/parser"
+	testsuite "github.com/nbr23/rss-banquet/utils"
 )
 
 func TestGarminWearablesParse(t *testing.T) {

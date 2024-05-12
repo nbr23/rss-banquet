@@ -3,8 +3,8 @@ package books
 import (
 	"testing"
 
-	"github.com/nbr23/atomic-banquet/parser"
-	testsuite "github.com/nbr23/atomic-banquet/utils"
+	"github.com/nbr23/rss-banquet/parser"
+	testsuite "github.com/nbr23/rss-banquet/utils"
 )
 
 // Amélie Nothomb has been publishing yearly for 30 years. Don't break my tests!
