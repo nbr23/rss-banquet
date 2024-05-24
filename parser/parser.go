@@ -38,6 +38,15 @@ func GetFullOptions(p Parser) *Options {
 			Default:  "false",
 			Value:    false,
 		},
+		{
+			Flag:     "route",
+			Required: false,
+			Type:     "string",
+			Help:     "route to expose the feed",
+			Default:  p.String(),
+			Value:    p.String(),
+			IsStatic: true,
+		},
 	}, opts.OptionsList...)
 
 	return &opts
@@ -115,6 +124,7 @@ type Option struct {
 	ShortFlag string
 	Type      string
 	IsPath    bool
+	IsStatic  bool // static options are exposed through the API
 }
 
 type Options struct {
@@ -201,8 +211,11 @@ func (o *Options) ParseYaml(m map[string]any) error {
 }
 
 func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
-	urlPath := []string{p.String()}
+	urlPath := []string{o.Get("route").(string)}
 	for _, option := range o.OptionsList {
+		if option.IsStatic {
+			continue
+		}
 		if option.Required {
 			prefix := ":"
 			if option.IsPath {
