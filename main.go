@@ -318,7 +318,7 @@ func runOneShot(args []string) {
 
 	var s string
 
-	switch o.Get("f") {
+	switch o.Get("feedFormat") {
 	case "rss":
 		s, err = res.ToRss()
 	case "atom":
