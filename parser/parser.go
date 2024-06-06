@@ -27,7 +27,7 @@ func GetFullOptions(p Parser) *Options {
 			Required: false,
 			Type:     "string",
 			Help:     "feed output format (rss, atom, json)",
-			Default:  "atom",
+			Default:  "rss",
 			Value:    "",
 		},
 		{
@@ -87,14 +87,6 @@ func GetRemoteFileLastModified(url string) (time.Time, error) {
 
 func ServeFeed(c *gin.Context, feed *feeds.Feed) {
 	switch c.Query("feedFormat") {
-	case "rss":
-		rss, err := feed.ToRss()
-		if err != nil {
-			c.String(500, "error parsing feed")
-			return
-		}
-		c.Data(200, "application/rss+xml", []byte(rss))
-		return
 	case "json":
 		json, err := feed.ToJSON()
 		if err != nil {
@@ -103,14 +95,22 @@ func ServeFeed(c *gin.Context, feed *feeds.Feed) {
 		}
 		c.Data(200, "application/json", []byte(json))
 		return
-	// case "atom":
-	default:
+	case "atom":
 		atom, err := feed.ToAtom()
 		if err != nil {
 			c.String(500, "error parsing feed")
 			return
 		}
 		c.Data(200, "application/atom+xml", []byte(atom))
+		return
+	// case "rss":
+	default:
+		rss, err := feed.ToRss()
+		if err != nil {
+			c.String(500, "error parsing feed")
+			return
+		}
+		c.Data(200, "application/rss+xml", []byte(rss))
 		return
 	}
 }
