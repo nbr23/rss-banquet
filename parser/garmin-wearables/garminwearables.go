@@ -67,7 +67,7 @@ func (GarminWearables) Parse(options *parser.Options) (*feeds.Feed, error) {
 		}
 
 		update.Title = fmt.Sprintf("[%s] Garmin Wearable Update", releaseNote[2])
-		update.Description = fmt.Sprintf("A Garmin Wearable update was released on %v", update.Created)
+		update.Content = fmt.Sprintf("A Garmin Wearable update was released on %v", update.Created)
 		update.Link = &feeds.Link{Href: releaseNote[0]}
 		update.Id = parser.GetGuid([]string{releaseNote[0], releaseNote[2]})
 		feed.Items = append(feed.Items, &update)

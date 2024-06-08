@@ -113,7 +113,7 @@ func buildItemTitle(item *legoItem) string {
 	return title
 }
 
-func buildItemDescription(item *legoItem) string {
+func buildItemContent(item *legoItem) string {
 	description := fmt.Sprintf("%s - %s", item.ProductCode, item.Name)
 	if item.Variant.Attributes.IsNew {
 		description = fmt.Sprintf("%s (New)", description)
@@ -154,10 +154,10 @@ func feedAdapter(l *legoFeed, options *parser.Options) (*feeds.Feed, error) {
 
 	for _, item := range getLegoItemsFromFeed(l) {
 		newItem := feeds.Item{
-			Title:       buildItemTitle(&item),
-			Description: buildItemDescription(&item),
-			Link:        &feeds.Link{Href: getLegoProductUrl(&item)},
-			Id:          guid(&item, feed),
+			Title:   buildItemTitle(&item),
+			Content: buildItemContent(&item),
+			Link:    &feeds.Link{Href: getLegoProductUrl(&item)},
+			Id:      guid(&item, feed),
 		}
 		feed.Items = append(feed.Items, &newItem)
 	}

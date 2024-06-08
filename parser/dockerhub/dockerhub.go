@@ -293,7 +293,7 @@ func (DockerHub) Parse(options *parser.Options) (*feeds.Feed, error) {
 			continue
 		}
 		item.Title = fmt.Sprintf("%s %s", i.FullName.Pretty(), i.Platform())
-		item.Description = fmt.Sprintf("The %s image %s was pushed on %v", i.FullName.Pretty(), i.Platform(), i.LastPushed)
+		item.Content = fmt.Sprintf("The %s image %s was pushed on %v", i.FullName.Pretty(), i.Platform(), i.LastPushed)
 		item.Link = &feeds.Link{Href: i.FullName.GetImageURL(i.Digest)}
 		item.Id = fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(i.FullName.Pretty(), i.FullName, i.Os, i.Architecture, i.LastPushed))))
 		item.Updated = imagePushed

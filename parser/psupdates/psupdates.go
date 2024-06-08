@@ -139,9 +139,9 @@ func (PSUpdates) Parse(options *parser.Options) (*feeds.Feed, error) {
 	}
 
 	update.Title = fmt.Sprintf("%s Update: %s", hardware, versionName)
-	update.Description, err = releaseDiv.Html()
+	update.Content, err = releaseDiv.Html()
 	if err != nil {
-		update.Description = fmt.Sprintf("The %s software update %s was released on %v", hardware, versionName, update.Created)
+		update.Content = fmt.Sprintf("The %s software update %s was released on %v", hardware, versionName, update.Created)
 	}
 	update.Link = &feeds.Link{Href: url}
 	update.Id = guid([]string{url, versionName})

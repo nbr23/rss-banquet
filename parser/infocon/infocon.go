@@ -99,10 +99,10 @@ func (InfoCon) Parse(options *parser.Options) (*feeds.Feed, error) {
 		}
 
 		newItem := feeds.Item{
-			Title:       name,
-			Description: fmt.Sprintf("%s | %s | %s", name, size, date),
-			Link:        &feeds.Link{Href: link},
-			Created:     createdOn,
+			Title:   name,
+			Content: fmt.Sprintf("%s | %s | %s", name, size, date),
+			Link:    &feeds.Link{Href: link},
+			Created: createdOn,
 		}
 		feed.Items = append(feed.Items, &newItem)
 

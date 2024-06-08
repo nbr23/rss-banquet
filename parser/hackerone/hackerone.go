@@ -144,7 +144,7 @@ func buildItemTitle(item *hackeroneItem) string {
 	return title
 }
 
-func buildItemDescription(item *hackeroneItem) string {
+func buildItemContent(item *hackeroneItem) string {
 	description := fmt.Sprintf("Program: %s<br/>", item.Team.Name)
 	if item.Reporter.Username != "" {
 		description = fmt.Sprintf("%sReporter: %s<br/>", description, item.Reporter.Username)
@@ -186,12 +186,12 @@ func feedAdapter(b *hackeroneFeed, options *parser.Options) (*feeds.Feed, error)
 			item.Report.Url = item.Team.Url
 		}
 		newItem := feeds.Item{
-			Title:       buildItemTitle(&item),
-			Description: buildItemDescription(&item),
-			Link:        &feeds.Link{Href: item.Report.Url},
-			Created:     updatedAt,
-			Id:          fmt.Sprint(updatedAt.Format(time.RFC3339), item.Id),
-			Updated:     updatedAt,
+			Title:   buildItemTitle(&item),
+			Content: buildItemContent(&item),
+			Link:    &feeds.Link{Href: item.Report.Url},
+			Created: updatedAt,
+			Id:      fmt.Sprint(updatedAt.Format(time.RFC3339), item.Id),
+			Updated: updatedAt,
 		}
 		feed.Items = append(feed.Items, &newItem)
 	}
