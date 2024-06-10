@@ -154,10 +154,11 @@ func feedAdapter(l *legoFeed, options *parser.Options) (*feeds.Feed, error) {
 
 	for _, item := range getLegoItemsFromFeed(l) {
 		newItem := feeds.Item{
-			Title:   buildItemTitle(&item),
-			Content: buildItemContent(&item),
-			Link:    &feeds.Link{Href: getLegoProductUrl(&item)},
-			Id:      guid(&item, feed),
+			Title:       buildItemTitle(&item),
+			Content:     buildItemContent(&item),
+			Description: buildItemContent(&item),
+			Link:        &feeds.Link{Href: getLegoProductUrl(&item)},
+			Id:          guid(&item, feed),
 		}
 		feed.Items = append(feed.Items, &newItem)
 	}

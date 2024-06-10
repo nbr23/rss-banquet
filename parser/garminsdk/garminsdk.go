@@ -112,6 +112,7 @@ func (GarminSDK) Parse(options *parser.Options) (*feeds.Feed, error) {
 			}
 			update.Title = fmt.Sprintf("[%s] Garmin %s SDK Update: %s", releaseDate, sdkName, downloadName)
 			update.Content = fmt.Sprintf("The Garmin %s SDK update %s was released on %v", sdkName, downloadName, update.Created)
+			update.Description = update.Content
 			update.Link = &feeds.Link{Href: downloadUrl}
 			update.Id = parser.GetGuid([]string{downloadUrl, releaseDate})
 			feed.Items = append(feed.Items, &update)

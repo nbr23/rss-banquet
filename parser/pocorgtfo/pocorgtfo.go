@@ -53,6 +53,7 @@ func (PoCOrGTFO) Parse(options *parser.Options) (*feeds.Feed, error) {
 		if len(pubMatches) > 0 && len(pubMatches[0]) >= 1 {
 			var item feeds.Item
 			item.Title = pubMatches[0]
+			item.Content = s.Text()
 			item.Description = s.Text()
 			item.Link = &feeds.Link{Href: fmt.Sprintf("%s%s", url, link.AttrOr("href", ""))}
 			item.Id = guid([]string{item.Title})

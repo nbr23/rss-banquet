@@ -170,6 +170,7 @@ func (Books) Parse(options *parser.Options) (*feeds.Feed, error) {
 			item.Title = fmt.Sprintf("[ANNOUNCED] %s - %s - %s", book.Title, book.Author, book.Language)
 			item.Content = fmt.Sprintf("%s by %s announced for %s", book.Title, book.Author, book.PublishedDate.Format("2006-01-02"))
 		}
+		item.Description = item.Content
 		feed.Items = append(feed.Items, item)
 	}
 	feed.Title = fmt.Sprintf("%s's books - %s", strings.Title(author), language)

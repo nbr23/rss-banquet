@@ -186,12 +186,13 @@ func feedAdapter(b *hackeroneFeed, options *parser.Options) (*feeds.Feed, error)
 			item.Report.Url = item.Team.Url
 		}
 		newItem := feeds.Item{
-			Title:   buildItemTitle(&item),
-			Content: buildItemContent(&item),
-			Link:    &feeds.Link{Href: item.Report.Url},
-			Created: updatedAt,
-			Id:      fmt.Sprint(updatedAt.Format(time.RFC3339), item.Id),
-			Updated: updatedAt,
+			Title:       buildItemTitle(&item),
+			Content:     buildItemContent(&item),
+			Description: buildItemContent(&item),
+			Link:        &feeds.Link{Href: item.Report.Url},
+			Created:     updatedAt,
+			Id:          fmt.Sprint(updatedAt.Format(time.RFC3339), item.Id),
+			Updated:     updatedAt,
 		}
 		feed.Items = append(feed.Items, &newItem)
 	}

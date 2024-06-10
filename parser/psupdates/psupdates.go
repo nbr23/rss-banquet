@@ -140,6 +140,7 @@ func (PSUpdates) Parse(options *parser.Options) (*feeds.Feed, error) {
 
 	update.Title = fmt.Sprintf("%s Update: %s", hardware, versionName)
 	update.Content, err = releaseDiv.Html()
+	update.Description = releaseDiv.Text()
 	if err != nil {
 		update.Content = fmt.Sprintf("The %s software update %s was released on %v", hardware, versionName, update.Created)
 	}

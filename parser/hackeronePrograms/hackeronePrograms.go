@@ -147,12 +147,13 @@ func feedAdapter(b *hackeroneProgramFeed, options *parser.Options) (*feeds.Feed,
 			continue
 		}
 		newItem := feeds.Item{
-			Title:   buildItemTitle(&item),
-			Content: buildItemContent(&item),
-			Link:    &feeds.Link{Href: fmt.Sprintf("https://hackerone.com/%s?type=team", item.Handle)},
-			Created: updatedAt,
-			Id:      fmt.Sprint(updatedAt.Format(time.RFC3339), item.Id),
-			Updated: updatedAt,
+			Title:       buildItemTitle(&item),
+			Content:     buildItemContent(&item),
+			Description: buildItemContent(&item),
+			Link:        &feeds.Link{Href: fmt.Sprintf("https://hackerone.com/%s?type=team", item.Handle)},
+			Created:     updatedAt,
+			Id:          fmt.Sprint(updatedAt.Format(time.RFC3339), item.Id),
+			Updated:     updatedAt,
 		}
 		feed.Items = append(feed.Items, &newItem)
 	}

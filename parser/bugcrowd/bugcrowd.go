@@ -220,12 +220,13 @@ func feedAdapter(b *bugcrowdFeed, options *parser.Options) (*feeds.Feed, error) 
 	for _, item := range b.Results {
 		updatedAt := item.GetUpdatedAt()
 		newItem := feeds.Item{
-			Title:   buildItemTitle(&item),
-			Content: buildItemContent(&item),
-			Link:    buildReportUrl(&item),
-			Created: updatedAt,
-			Id:      fmt.Sprint(updatedAt.Format(time.RFC3339), item.Id),
-			Updated: updatedAt,
+			Title:       buildItemTitle(&item),
+			Content:     buildItemContent(&item),
+			Description: buildItemContent(&item),
+			Link:        buildReportUrl(&item),
+			Created:     updatedAt,
+			Id:          fmt.Sprint(updatedAt.Format(time.RFC3339), item.Id),
+			Updated:     updatedAt,
 		}
 		feed.Items = append(feed.Items, &newItem)
 	}
