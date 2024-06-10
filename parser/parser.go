@@ -11,6 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
+
+	"github.com/nbr23/rss-banquet/style"
 )
 
 type Parser interface {
@@ -85,10 +87,10 @@ func GetRemoteFileLastModified(url string) (time.Time, error) {
 	return lastModified, nil
 }
 
-func ServeFeed(c *gin.Context, feed *feeds.Feed) {
+func ServeFeed(c *gin.Context, f *feeds.Feed) {
 	switch c.Query("feedFormat") {
 	case "json":
-		json, err := feed.ToJSON()
+		json, err := f.ToJSON()
 		if err != nil {
 			c.String(500, "error parsing feed")
 			return
@@ -96,21 +98,23 @@ func ServeFeed(c *gin.Context, feed *feeds.Feed) {
 		c.Data(200, "application/json", []byte(json))
 		return
 	case "atom":
-		atom, err := feed.ToAtom()
+		atom, err := f.ToAtom()
 		if err != nil {
 			c.String(500, "error parsing feed")
 			return
 		}
-		c.Data(200, "application/atom+xml", []byte(atom))
+		atom = style.InjectAtomStyle(atom)
+		c.Data(200, "application/xml", []byte(atom))
 		return
 	// case "rss":
 	default:
-		rss, err := feed.ToRss()
+		rss, err := f.ToRss()
 		if err != nil {
 			c.String(500, "error parsing feed")
 			return
 		}
-		c.Data(200, "application/rss+xml", []byte(rss))
+		rss = style.InjectRssStyle(rss)
+		c.Data(200, "application/xml", []byte(rss))
 		return
 	}
 }

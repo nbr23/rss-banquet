@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/rss-banquet/parser"
+	"github.com/nbr23/rss-banquet/style"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -230,6 +231,14 @@ func runServer(args []string) {
 		p := module()
 		parser.Route(r, p, parser.GetFullOptions(p))
 	}
+	r.GET("/rss-style.xsl", func(c *gin.Context) {
+		c.Header("Content-Type", "text/xsl")
+		c.String(200, style.RssStyle)
+	})
+	r.GET("/atom-style.xsl", func(c *gin.Context) {
+		c.Header("Content-Type", "text/xsl")
+		c.String(200, style.AtomStyle)
+	})
 
 	r.Run(fmt.Sprintf(":%s", f.serverPort))
 }
