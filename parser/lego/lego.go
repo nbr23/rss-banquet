@@ -2,11 +2,12 @@ package lego
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
-	"io"
+	"net/http"
+	"strings"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/rss-banquet/parser"
 )
@@ -32,46 +33,19 @@ func (Lego) GetOptions() parser.Options {
 }
 
 type legoItem struct {
-	Name        string `json:"name"`
-	ProductCode string `json:"productCode"`
-	OverrideUrl string `json:"overrideUrl"`
-	BaseImgUrl  string `json:"baseImgUrl"`
-	Variant     struct {
-		Sku        string `json:"sku"`
-		Id         string `json:"id"`
-		Attributes struct {
-			AgeRange         string `json:"ageRange"`
-			PieceCount       int    `json:"pieceCount"`
-			IsNew            bool   `json:"isNew"`
-			OnSale           bool   `json:"onSale"`
-			AvailabilityText string `json:"availabilityText"`
-		} `json:"attributes"`
-		Price struct {
-			FormattedAmount string `json:"formattedAmount"`
-		} `json:"price"`
-		ListPrice struct {
-			FormattedAmount string `json:"formattedAmount"`
-		} `json:"listPrice"`
-	} `json:"variant"`
-}
-
-type legoFeed struct {
-	Data struct {
-		ContentPage struct {
-			ContentBody []struct {
-				Section struct {
-					Products struct {
-						Results []legoItem `json:"results"`
-					} `json:"products"`
-				} `json:"section"`
-			} `json:"contentBody"`
-		} `json:"contentPage"`
-	} `json:"data"`
+	Name             string
+	ProductCode      string
+	ProductUrl       string
+	Price            string
+	AgeRange         string
+	PieceCount       string
+	AvailabilityText string
+	ImgUrl           string
 }
 
 func getLegoProductUrl(l *legoItem) string {
-	if l.OverrideUrl != "" {
-		return l.OverrideUrl
+	if l.ProductUrl != "" {
+		return l.ProductUrl
 	}
 	return "https://www.lego.com/en-us/product/" + l.ProductCode
 }
@@ -82,65 +56,64 @@ func LegoParser() parser.Parser {
 	return Lego{}
 }
 
-func getLegoItemsFromFeed(feed *legoFeed) []legoItem {
-	items := []legoItem{}
-	for _, item := range feed.Data.ContentPage.ContentBody {
-		items = append(items, item.Section.Products.Results...)
-	}
-	return items
-}
-
 func buildItemTitle(item *legoItem) string {
 	title := fmt.Sprintf("%s - %s", item.ProductCode, item.Name)
-	if item.Variant.Attributes.OnSale {
-		title = fmt.Sprintf("[SALE] %s", title)
-	}
-	if item.Variant.Attributes.IsNew {
+	available := item.AvailabilityText != "Coming Soon"
+	if available {
 		title = fmt.Sprintf("[NEW] %s", title)
+	} else {
+		title = fmt.Sprintf("[COMING SOON] %s", title)
 	}
-	if item.Variant.Attributes.AvailabilityText != "" {
-		title = fmt.Sprintf("%s - %s", title, item.Variant.Attributes.AvailabilityText)
+	if item.AvailabilityText != "" {
+		title = fmt.Sprintf("%s - %s", title, item.AvailabilityText)
 	}
-	if item.Variant.Price.FormattedAmount != "" {
-		title = fmt.Sprintf("%s - %s", title, item.Variant.Price.FormattedAmount)
+	if item.Price != "" {
+		title = fmt.Sprintf("%s - %s", title, item.Price)
 	}
-	if item.Variant.Attributes.PieceCount != 0 {
-		title = fmt.Sprintf("%s - %d pieces", title, item.Variant.Attributes.PieceCount)
+	if item.PieceCount != "" {
+		title = fmt.Sprintf("%s - %s pieces", title, item.PieceCount)
 	}
-	if item.Variant.Attributes.AgeRange != "" {
-		title = fmt.Sprintf("%s %s", title, item.Variant.Attributes.AgeRange)
+	if item.AgeRange != "" {
+		title = fmt.Sprintf("%s %s", title, item.AgeRange)
 	}
 	return title
 }
 
 func buildItemContent(item *legoItem) string {
 	description := fmt.Sprintf("%s - %s", item.ProductCode, item.Name)
-	if item.Variant.Attributes.IsNew {
+	available := item.AvailabilityText != "Coming Soon"
+	if available {
 		description = fmt.Sprintf("%s (New)", description)
+	} else {
+		description = fmt.Sprintf("%s (Coming Soon)", description)
 	}
-	if item.Variant.Price.FormattedAmount != "" {
-		description = fmt.Sprintf("%s - %s", description, item.Variant.Price.FormattedAmount)
+	if item.Price != "" {
+		description = fmt.Sprintf("%s - %s", description, item.Price)
 	}
-	if item.Variant.Attributes.PieceCount != 0 {
-		description = fmt.Sprintf("%s - %d pieces", description, item.Variant.Attributes.PieceCount)
+	if item.PieceCount != "" {
+		description = fmt.Sprintf("%s - %s pieces", description, item.PieceCount)
 	}
-	if item.Variant.Attributes.AgeRange != "" {
-		description = fmt.Sprintf("%s %s", description, item.Variant.Attributes.AgeRange)
+	if item.AgeRange != "" {
+		description = fmt.Sprintf("%s %s", description, item.AgeRange)
 	}
-	if item.Variant.Attributes.AvailabilityText != "" {
-		description = fmt.Sprintf("%s<br/>%s", description, item.Variant.Attributes.AvailabilityText)
+	if item.AvailabilityText != "" {
+		description = fmt.Sprintf("%s<br/>%s", description, item.AvailabilityText)
 	}
-	if item.BaseImgUrl != "" {
-		description = fmt.Sprintf("%s<br/><img src=\"%s\"/ alt=\"%s\">", description, item.BaseImgUrl, item.Name)
+	if item.ImgUrl != "" {
+		description = fmt.Sprintf("%s<br/><img src=\"%s\"/ alt=\"%s\">", description, item.ImgUrl, item.Name)
 	}
 	return description
 }
 
 func guid(item *legoItem, f feeds.Feed) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(f.Link.Href, item.ProductCode, item.Name, item.Variant.Sku))))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(f.Link.Href, item.ProductCode, item.Name))))
 }
 
-func feedAdapter(l *legoFeed, options *parser.Options) (*feeds.Feed, error) {
+func getUrl(options *parser.Options) string {
+	return fmt.Sprintf("https://www.lego.com/en-us%s", getSlug(options))
+}
+
+func feedAdapter(items []legoItem, options *parser.Options) (*feeds.Feed, error) {
 	feed := feeds.Feed{
 		Title:       fmt.Sprintf("Lego %s", getSlug(options)),
 		Description: fmt.Sprintf("Lego %s Products", getSlug(options)),
@@ -148,11 +121,11 @@ func feedAdapter(l *legoFeed, options *parser.Options) (*feeds.Feed, error) {
 		Author:      &feeds.Author{Name: "lego"},
 		Created:     time.Now(),
 		Link: &feeds.Link{
-			Href: fmt.Sprintf("https://www.lego.com/en-us%s", getSlug(options)),
+			Href: getUrl(options),
 		},
 	}
 
-	for _, item := range getLegoItemsFromFeed(l) {
+	for _, item := range items {
 		newItem := feeds.Item{
 			Title:       buildItemTitle(&item),
 			Content:     buildItemContent(&item),
@@ -175,12 +148,12 @@ func getSlug(options *parser.Options) string {
 	case "coming-soon":
 		return "/categories/coming-soon"
 	default:
-		return "new"
+		return "/categories/new-sets-and-products"
 	}
 }
 
 func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
-	resp, err := legoFeedQuery(options)
+	resp, err := http.Get(getUrl(options))
 
 	if err != nil {
 		return nil, err
@@ -188,17 +161,31 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 
 	defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("unable to fetch the product page, status code: %d", resp.StatusCode)
+	}
 
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	var feed legoFeed
+	products := []legoItem{}
+	doc.Find("li[data-test=product-item]").Each(func(i int, s *goquery.Selection) {
+		l := legoItem{}
+		l.Name = s.Find("a[data-test=product-leaf-title]").First().Text()
+		l.ProductUrl = s.Find("a[data-test=product-leaf-title]").First().AttrOr("href", "")
+		if !strings.HasPrefix(l.ProductUrl, "http") {
+			l.ProductUrl = "https://lego.com" + l.ProductUrl
+		}
+		l.ProductCode = s.Find("article[data-test=product-leaf]").First().AttrOr("data-test-key", "")
+		l.Price = s.Find("span[data-test=product-leaf-price]").First().Text()
+		l.AgeRange = s.Find("span[data-test=product-leaf-age-range-label]").First().Text()
+		l.PieceCount = s.Find("span[data-test=product-leaf-piece-count-label]").First().Text()
+		l.AvailabilityText = s.Find("div[data-test=product-leaf-action-row]").First().Text()
+		l.ImgUrl = strings.Split(s.Find("ul[data-test=product-leaf-image-wrapper]").First().Find("source").First().AttrOr("srcset", ""), " ")[0]
+		products = append(products, l)
+	})
 
-	if err := json.Unmarshal(data, &feed); err != nil {
-		return nil, err
-	}
-
-	return feedAdapter(&feed, options)
+	return feedAdapter(products, options)
 }
