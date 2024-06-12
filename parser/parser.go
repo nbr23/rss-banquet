@@ -276,3 +276,21 @@ func (o Options) AddFlags(f *flag.FlagSet) {
 		}
 	}
 }
+
+func GetFileTypeFromUrl(url string) string {
+	parts := strings.Split(strings.Split(url, "?")[0], ".")
+
+	if len(parts) == 0 {
+		return ""
+	}
+	return parts[len(parts)-1]
+}
+
+func IsImageType(t string) bool {
+	switch t {
+	case "png", "jpg", "jpeg", "gif":
+		return true
+	default:
+		return false
+	}
+}

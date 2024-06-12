@@ -103,9 +103,6 @@ func buildItemContent(item *legoItem, isHtml bool) string {
 	if item.AvailabilityText != "" {
 		description = fmt.Sprintf("%s%s%s", description, separator, item.AvailabilityText)
 	}
-	if item.ImgUrl != "" && isHtml {
-		description = fmt.Sprintf("%s%s<img src=\"%s\"/ alt=\"%s\">", description, separator, item.ImgUrl, item.Name)
-	}
 	return description
 }
 
@@ -136,6 +133,15 @@ func feedAdapter(items []legoItem, options *parser.Options) (*feeds.Feed, error)
 			Description: buildItemContent(&item, false),
 			Link:        &feeds.Link{Href: getLegoProductUrl(&item)},
 			Id:          guid(&item, feed),
+		}
+		imgExt := parser.GetFileTypeFromUrl(item.ImgUrl)
+		if !parser.IsImageType(imgExt) {
+			imgExt = "png"
+		}
+		newItem.Enclosure = &feeds.Enclosure{
+			Url:    item.ImgUrl,
+			Type:   "image/" + imgExt,
+			Length: "0",
 		}
 		feed.Items = append(feed.Items, &newItem)
 	}
