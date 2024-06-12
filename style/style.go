@@ -85,6 +85,12 @@ body {
     margin: 0;
     color: #666;
 }
+
+.thumbnail {
+    width: 200px;
+    height: 200px;
+    object-fit: scale-down;
+}
         </style>
       </head>
       <body>
@@ -102,6 +108,13 @@ body {
         <div class="item-list">
           <xsl:for-each select="/rss/channel/item">
            <div class="item">
+           <xsl:if test="starts-with(enclosure/@type, 'image') and enclosure/@url != ''">
+              <img class="thumbnail">
+                <xsl:attribute name="src">
+                  <xsl:value-of select="enclosure/@url"/>
+                </xsl:attribute>
+              </img>
+            </xsl:if>
             <a class="details" target="_blank" rel="noopener noreferrer">
               <xsl:attribute name="href">
                 <xsl:value-of select="link"/>
@@ -196,6 +209,12 @@ body {
     margin: 0;
     color: #666;
 }
+
+.thumbnail {
+    width: 200px;
+    height: 200px;
+    object-fit: scale-down;
+}
         </style>
       </head>
       <body>
@@ -213,6 +232,13 @@ body {
         <div class="item-list">
           <xsl:for-each select="atom:entry">
            <div class="item">
+           <xsl:if test="starts-with(atom:link[@rel='enclosure']/@type, 'image') and atom:link[@rel='enclosure']/@href != ''">
+              <img class="thumbnail">
+                <xsl:attribute name="src">
+                  <xsl:value-of select="atom:link[@rel='enclosure']/@href"/>
+                </xsl:attribute>
+              </img>
+            </xsl:if>
             <a class="details" target="_blank" rel="noopener noreferrer">
               <xsl:attribute name="href">
                 <xsl:value-of select="atom:link/@href"/>
