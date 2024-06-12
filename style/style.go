@@ -108,7 +108,7 @@ body {
               </xsl:attribute>
               <h3 class="title"><xsl:value-of select="title"/></h3>
               <p class="content">
-                <xsl:value-of select="description" disable-output-escaping="yes"/>
+                <xsl:value-of select="description"/>
               </p>
             </a>
           </div>
@@ -219,7 +219,7 @@ body {
               </xsl:attribute>
               <h3 class="title"><xsl:value-of select="atom:title"/></h3>
               <p class="content">
-                <xsl:value-of select="atom:summary" disable-output-escaping="yes"/>
+                <xsl:value-of select="atom:summary"/>
               </p>
             </a>
           </div>

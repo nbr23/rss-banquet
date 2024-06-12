@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/gorilla/feeds"
@@ -145,18 +146,18 @@ func buildItemTitle(item *hackeroneItem) string {
 }
 
 func buildItemContent(item *hackeroneItem) string {
-	description := fmt.Sprintf("Program: %s<br/>", item.Team.Name)
+	description := fmt.Sprintf("Program: %s\n", item.Team.Name)
 	if item.Reporter.Username != "" {
-		description = fmt.Sprintf("%sReporter: %s<br/>", description, item.Reporter.Username)
+		description = fmt.Sprintf("%sReporter: %s\n", description, item.Reporter.Username)
 	}
 	if item.TotalAwardedAmount != 0 {
-		description = fmt.Sprintf("%sReward: %s%d<br/>", description, hackeroneCurrency[item.Currency], int(item.TotalAwardedAmount))
+		description = fmt.Sprintf("%sReward: %s%d\n", description, hackeroneCurrency[item.Currency], int(item.TotalAwardedAmount))
 	}
 	if item.LatestDisclosableActivityAt != "" && item.LatestDisclosableAction != "" {
-		description = fmt.Sprintf("%s%s on %s<br/>", description, item.LatestDisclosableAction, item.LatestDisclosableActivityAt)
+		description = fmt.Sprintf("%s%s on %s\n", description, item.LatestDisclosableAction, item.LatestDisclosableActivityAt)
 	}
 	if item.Report.ReportGeneratedContent.HacktivitySummary != "" {
-		description = fmt.Sprintf("%sReport: %s<br/>", description, item.Report.ReportGeneratedContent.HacktivitySummary)
+		description = fmt.Sprintf("%sReport: %s\n", description, item.Report.ReportGeneratedContent.HacktivitySummary)
 	}
 	return description
 }
@@ -187,7 +188,7 @@ func feedAdapter(b *hackeroneFeed, options *parser.Options) (*feeds.Feed, error)
 		}
 		newItem := feeds.Item{
 			Title:       buildItemTitle(&item),
-			Content:     buildItemContent(&item),
+			Content:     strings.Replace(buildItemContent(&item), "\n", "<br/>", -1),
 			Description: buildItemContent(&item),
 			Link:        &feeds.Link{Href: item.Report.Url},
 			Created:     updatedAt,

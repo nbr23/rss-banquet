@@ -79,7 +79,11 @@ func buildItemTitle(item *legoItem) string {
 	return title
 }
 
-func buildItemContent(item *legoItem) string {
+func buildItemContent(item *legoItem, isHtml bool) string {
+	separator := "\n"
+	if isHtml {
+		separator = "<br/>"
+	}
 	description := fmt.Sprintf("%s - %s", item.ProductCode, item.Name)
 	available := item.AvailabilityText != "Coming Soon"
 	if available {
@@ -97,10 +101,10 @@ func buildItemContent(item *legoItem) string {
 		description = fmt.Sprintf("%s %s", description, item.AgeRange)
 	}
 	if item.AvailabilityText != "" {
-		description = fmt.Sprintf("%s<br/>%s", description, item.AvailabilityText)
+		description = fmt.Sprintf("%s%s%s", description, separator, item.AvailabilityText)
 	}
-	if item.ImgUrl != "" {
-		description = fmt.Sprintf("%s<br/><img src=\"%s\"/ alt=\"%s\">", description, item.ImgUrl, item.Name)
+	if item.ImgUrl != "" && isHtml {
+		description = fmt.Sprintf("%s%s<img src=\"%s\"/ alt=\"%s\">", description, separator, item.ImgUrl, item.Name)
 	}
 	return description
 }
@@ -128,8 +132,8 @@ func feedAdapter(items []legoItem, options *parser.Options) (*feeds.Feed, error)
 	for _, item := range items {
 		newItem := feeds.Item{
 			Title:       buildItemTitle(&item),
-			Content:     buildItemContent(&item),
-			Description: buildItemContent(&item),
+			Content:     buildItemContent(&item, true),
+			Description: buildItemContent(&item, false),
 			Link:        &feeds.Link{Href: getLegoProductUrl(&item)},
 			Id:          guid(&item, feed),
 		}

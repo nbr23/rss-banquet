@@ -109,12 +109,12 @@ func buildItemTitle(item *hackeroneProgramItem) string {
 
 func buildItemContent(item *hackeroneProgramItem) string {
 	description := fmt.Sprintf(`
-%s launched a program on %s<br/>
-Program type: %s<br/>
-State: %s<br/>
-Resolved reports so far: %d<br/>
-Submission state: %s<br/>
-Program last updated on %s<br/>
+%s launched a program on %s\n
+Program type: %s\n
+State: %s\n
+Resolved reports so far: %d\n
+Submission state: %s\n
+Program last updated on %s\n
 `, item.Name, item.LaunchedAt, item.TeamType, item.State, item.ResolvedReportCount, item.SubmissionState, item.LastUpdatedAt)
 
 	if item.OffersBounties && item.MinimumBountyTableValue != 0 && item.MaximumBountyTableValue != 0 {
@@ -122,9 +122,9 @@ Program last updated on %s<br/>
 	}
 
 	if item.StructuredScopeStats != nil {
-		description = fmt.Sprintf("%s<br/>Scope:<br/>", description)
+		description = fmt.Sprintf("%s\nScope:\n", description)
 		for scope := range item.StructuredScopeStats {
-			description = fmt.Sprintf("%s- %s: %d<br/>", description, scope, item.StructuredScopeStats[scope])
+			description = fmt.Sprintf("%s- %s: %d\n", description, scope, item.StructuredScopeStats[scope])
 		}
 	}
 	return description
@@ -148,7 +148,7 @@ func feedAdapter(b *hackeroneProgramFeed, options *parser.Options) (*feeds.Feed,
 		}
 		newItem := feeds.Item{
 			Title:       buildItemTitle(&item),
-			Content:     buildItemContent(&item),
+			Content:     strings.Replace(buildItemContent(&item), "\n", "<br/>", -1),
 			Description: buildItemContent(&item),
 			Link:        &feeds.Link{Href: fmt.Sprintf("https://hackerone.com/%s?type=team", item.Handle)},
 			Created:     updatedAt,

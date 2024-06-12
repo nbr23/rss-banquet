@@ -172,37 +172,37 @@ func getRewardString(item *bugcrowdItem) string {
 }
 
 func buildItemContent(item *bugcrowdItem) string {
-	description := fmt.Sprintf("Program: %s<br/>", item.ProgramName)
+	description := fmt.Sprintf("Program: %s\n", item.ProgramName)
 	reward := getRewardString(item)
 	if item.Target != "" {
-		description = fmt.Sprintf("%sTarget: %s<br/>", description, item.Target)
+		description = fmt.Sprintf("%sTarget: %s\n", description, item.Target)
 	}
 	if item.ResearcherUsername != "" {
-		description = fmt.Sprintf("%sReporter: %s<br/>", description, item.ResearcherUsername)
+		description = fmt.Sprintf("%sReporter: %s\n", description, item.ResearcherUsername)
 	}
 	if reward != "" {
-		description = fmt.Sprintf("%sReward: %s<br/>", description, reward)
+		description = fmt.Sprintf("%sReward: %s\n", description, reward)
 	}
 	if item.SubmissionStateText != "" {
-		description = fmt.Sprintf("%sState: %s<br/>", description, item.SubmissionStateText)
+		description = fmt.Sprintf("%sState: %s\n", description, item.SubmissionStateText)
 	}
 	if item.SubmissionStateDateText != "" {
-		description = fmt.Sprintf("%sState Date: %s<br/>", description, item.SubmissionStateDateText)
+		description = fmt.Sprintf("%sState Date: %s\n", description, item.SubmissionStateDateText)
 	}
 	if item.DisclosedAt != "" {
-		description = fmt.Sprintf("%sDisclosed At: %s<br/>", description, item.DisclosedAt)
+		description = fmt.Sprintf("%sDisclosed At: %s\n", description, item.DisclosedAt)
 	}
 	if item.ClaimedAt != "" {
-		description = fmt.Sprintf("%sClaimed At: %s<br/>", description, item.ClaimedAt)
+		description = fmt.Sprintf("%sClaimed At: %s\n", description, item.ClaimedAt)
 	}
 	if item.AcceptedAt != "" {
-		description = fmt.Sprintf("%sAccepted At: %s<br/>", description, item.AcceptedAt)
+		description = fmt.Sprintf("%sAccepted At: %s\n", description, item.AcceptedAt)
 	}
 	if item.ClosedAt != "" {
-		description = fmt.Sprintf("%sClosed At: %s<br/>", description, item.ClosedAt)
+		description = fmt.Sprintf("%sClosed At: %s\n", description, item.ClosedAt)
 	}
 	if item.DisclosureReportUrl != "" {
-		description = fmt.Sprintf("%sReport: %s<br/>", description, item.DisclosureReportUrl)
+		description = fmt.Sprintf("%sReport: %s\n", description, item.DisclosureReportUrl)
 	}
 	return description
 }
@@ -221,7 +221,7 @@ func feedAdapter(b *bugcrowdFeed, options *parser.Options) (*feeds.Feed, error) 
 		updatedAt := item.GetUpdatedAt()
 		newItem := feeds.Item{
 			Title:       buildItemTitle(&item),
-			Content:     buildItemContent(&item),
+			Content:     strings.Replace(buildItemContent(&item), "\n", "<br/>", -1),
 			Description: buildItemContent(&item),
 			Link:        buildReportUrl(&item),
 			Created:     updatedAt,
