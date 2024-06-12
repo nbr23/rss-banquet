@@ -183,6 +183,9 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 		l.AgeRange = s.Find("span[data-test=product-leaf-age-range-label]").First().Text()
 		l.PieceCount = s.Find("span[data-test=product-leaf-piece-count-label]").First().Text()
 		l.AvailabilityText = s.Find("div[data-test=product-leaf-action-row]").First().Text()
+		if l.AvailabilityText == "Add to Bag" {
+			l.AvailabilityText = "Available now"
+		}
 		l.ImgUrl = strings.Split(s.Find("ul[data-test=product-leaf-image-wrapper]").First().Find("source").First().AttrOr("srcset", ""), " ")[0]
 		products = append(products, l)
 	})
