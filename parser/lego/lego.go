@@ -176,6 +176,9 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 
 	products := []legoItem{}
 	doc.Find("li[data-test=product-item]").Each(func(i int, s *goquery.Selection) {
+		if s.Find("div[data-test=product-listing-disruptor-static]").Length() > 0 {
+			return
+		}
 		l := legoItem{}
 		l.Name = s.Find("a[data-test=product-leaf-title]").First().Text()
 		l.ProductUrl = s.Find("a[data-test=product-leaf-title]").First().AttrOr("href", "")
