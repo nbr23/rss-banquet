@@ -26,7 +26,25 @@ body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     margin: 0;
-    padding: 20px;
+}
+
+.feed-banner {
+  background-color: #ffc107;
+  color: #000;
+  text-align: center;
+  padding: 5px;
+  margin: 0;
+  border-bottom: 2px solid #e0a800;
+  border-radius: 0 0 10px 10px;
+  font-style: italic;
+  font-family: monospace, monospace;
+  font-weight: bold;
+  font-size: 0.8em;
+}
+
+.feed-content {
+  margin: 0;
+  padding: 20px;
 }
 
 .feed-header {
@@ -94,38 +112,43 @@ body {
         </style>
       </head>
       <body>
-        <div class="feed-header">
-          <h1 class="feed-title">
-            <xsl:value-of select="/rss/channel/title"/>
-            <a target="_blank" rel="noopener noreferrer">
-            <xsl:attribute name="href">
-              <xsl:value-of select="/rss/channel/link"/>
-            </xsl:attribute>
-            🔗
-            </a>
-          </h1>
+        <div class="feed-banner">
+            This page is an RSS Feed, add it to your feed reader!
         </div>
-        <div class="item-list">
-          <xsl:for-each select="/rss/channel/item">
-           <div class="item">
-           <xsl:if test="starts-with(enclosure/@type, 'image') and enclosure/@url != ''">
-              <img class="thumbnail">
-                <xsl:attribute name="src">
-                  <xsl:value-of select="enclosure/@url"/>
-                </xsl:attribute>
-              </img>
-            </xsl:if>
-            <a class="details" target="_blank" rel="noopener noreferrer">
+        <div class="feed-content">
+          <div class="feed-header">
+            <h1 class="feed-title">
+              <xsl:value-of select="/rss/channel/title"/>
+              <a target="_blank" rel="noopener noreferrer">
               <xsl:attribute name="href">
-                <xsl:value-of select="link"/>
+                <xsl:value-of select="/rss/channel/link"/>
               </xsl:attribute>
-              <h3 class="title"><xsl:value-of select="title"/></h3>
-              <p class="content">
-                <xsl:value-of select="description"/>
-              </p>
-            </a>
+              🔗
+              </a>
+            </h1>
           </div>
-          </xsl:for-each>
+          <div class="item-list">
+            <xsl:for-each select="/rss/channel/item">
+            <div class="item">
+            <xsl:if test="starts-with(enclosure/@type, 'image') and enclosure/@url != ''">
+                <img class="thumbnail">
+                  <xsl:attribute name="src">
+                    <xsl:value-of select="enclosure/@url"/>
+                  </xsl:attribute>
+                </img>
+              </xsl:if>
+              <a class="details" target="_blank" rel="noopener noreferrer">
+                <xsl:attribute name="href">
+                  <xsl:value-of select="link"/>
+                </xsl:attribute>
+                <h3 class="title"><xsl:value-of select="title"/></h3>
+                <p class="content">
+                  <xsl:value-of select="description"/>
+                </p>
+              </a>
+            </div>
+            </xsl:for-each>
+          </div>
         </div>
       </body>
     </html>
@@ -150,7 +173,25 @@ body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     margin: 0;
-    padding: 20px;
+}
+
+.feed-banner {
+  background-color: #ffc107;
+  color: #000;
+  text-align: center;
+  padding: 5px;
+  margin: 0;
+  border-bottom: 2px solid #e0a800;
+  border-radius: 0 0 10px 10px;
+  font-style: italic;
+  font-family: monospace, monospace;
+  font-weight: bold;
+  font-size: 0.8em;
+}
+
+.feed-content {
+  margin: 0;
+  padding: 20px;
 }
 
 .feed-header {
@@ -218,38 +259,43 @@ body {
         </style>
       </head>
       <body>
-        <div class="feed-header">
-          <h1 class="feed-title">
-            <xsl:value-of select="atom:title"/>
-            <a target="_blank" rel="noopener noreferrer">
-            <xsl:attribute name="href">
-              <xsl:value-of select="atom:link/@href"/>
-            </xsl:attribute>
-            🔗
-            </a>
-          </h1>
+        <div class="feed-banner">
+          This page is an Atom Feed, add it to your feed reader!
         </div>
-        <div class="item-list">
-          <xsl:for-each select="atom:entry">
-           <div class="item">
-           <xsl:if test="starts-with(atom:link[@rel='enclosure']/@type, 'image') and atom:link[@rel='enclosure']/@href != ''">
-              <img class="thumbnail">
-                <xsl:attribute name="src">
-                  <xsl:value-of select="atom:link[@rel='enclosure']/@href"/>
-                </xsl:attribute>
-              </img>
-            </xsl:if>
-            <a class="details" target="_blank" rel="noopener noreferrer">
+        <div class="feed-content">
+          <div class="feed-header">
+            <h1 class="feed-title">
+              <xsl:value-of select="atom:title"/>
+              <a target="_blank" rel="noopener noreferrer">
               <xsl:attribute name="href">
                 <xsl:value-of select="atom:link/@href"/>
               </xsl:attribute>
-              <h3 class="title"><xsl:value-of select="atom:title"/></h3>
-              <p class="content">
-                <xsl:value-of select="atom:summary"/>
-              </p>
-            </a>
+              🔗
+              </a>
+            </h1>
           </div>
-          </xsl:for-each>
+          <div class="item-list">
+            <xsl:for-each select="atom:entry">
+            <div class="item">
+            <xsl:if test="starts-with(atom:link[@rel='enclosure']/@type, 'image') and atom:link[@rel='enclosure']/@href != ''">
+                <img class="thumbnail">
+                  <xsl:attribute name="src">
+                    <xsl:value-of select="atom:link[@rel='enclosure']/@href"/>
+                  </xsl:attribute>
+                </img>
+              </xsl:if>
+              <a class="details" target="_blank" rel="noopener noreferrer">
+                <xsl:attribute name="href">
+                  <xsl:value-of select="atom:link/@href"/>
+                </xsl:attribute>
+                <h3 class="title"><xsl:value-of select="atom:title"/></h3>
+                <p class="content">
+                  <xsl:value-of select="atom:summary"/>
+                </p>
+              </a>
+            </div>
+            </xsl:for-each>
+          </div>
         </div>
       </body>
     </html>
