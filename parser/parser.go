@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -248,11 +249,18 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 			}
 		}
 		feed, err := p.Parse(o)
+		SortFeedEntries(feed)
 		if err != nil {
 			c.String(500, "error parsing feed")
 			return
 		}
 		ServeFeed(c, feed)
+	})
+}
+
+func SortFeedEntries(f *feeds.Feed) {
+	sort.Slice(f.Items, func(i, j int) bool {
+		return f.Items[i].Created.After(f.Items[j].Created)
 	})
 }
 

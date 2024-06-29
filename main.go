@@ -111,6 +111,8 @@ func runOneShot(args []string) {
 	}
 
 	res, err := m.Parse(o)
+	parser.SortFeedEntries(res)
+
 	if err != nil {
 		fmt.Println(parser.GetFullOptions(m).GetHelp())
 		log.Fatal(err)
