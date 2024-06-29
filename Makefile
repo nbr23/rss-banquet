@@ -1,10 +1,11 @@
+SOURCES :=  $(shell find . -name '*.go')
 BINARY_NAME := rss-banquet
 
 .PHONY: all clean readme docker-dev test
 
 all: $(BINARY_NAME)
 
-$(BINARY_NAME):
+$(BINARY_NAME): $(SOURCES)
 	go build -o $(BINARY_NAME)
 
 readme: $(BINARY_NAME)
