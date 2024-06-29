@@ -199,6 +199,9 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 		if l.AvailabilityText == "Add to Bag" {
 			l.AvailabilityText = "Available now"
 		}
+		if l.AvailabilityText == "Coming Soon" && options.Get("category") == "new" {
+			return
+		}
 		l.ImgUrl = strings.Split(s.Find("ul[data-test=product-leaf-image-wrapper]").First().Find("source").First().AttrOr("srcset", ""), " ")[0]
 		products = append(products, l)
 	})
