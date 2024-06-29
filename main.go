@@ -14,19 +14,12 @@ import (
 
 type runServerFlags struct {
 	showHelp   bool
-	configPath string
 	serverPort string
 }
 
 func getRunServerFlags(f *runServerFlags) *flag.FlagSet {
 	flags := flag.NewFlagSet("server", flag.ExitOnError)
 	flags.BoolVar(&f.showHelp, "h", false, "Show help message")
-	flags.StringVar(&f.configPath, "c", f.configPath, "Path to configuration file")
-	configPath, found := os.LookupEnv(fmt.Sprintf("%sCONFIG_PATH", ENV_PREFIX))
-	if !found {
-		configPath = "./config.yaml"
-	}
-	f.configPath = configPath
 	flags.StringVar(&f.serverPort, "p", os.Getenv("PORT"), "Server port")
 	return flags
 }
