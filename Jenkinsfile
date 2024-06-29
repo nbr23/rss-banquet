@@ -41,14 +41,6 @@ pipeline {
                 }
             }
         }
-        stage('Build Fetcher Docker Image') {
-            when { branch 'master' }
-            steps {
-                sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER --target fetcher --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:latest -t nbr23/rss-banquet:`git rev-parse --short HEAD` --push .
-                    """
-            }
-        }
         stage('Build Server Docker Image') {
             when { branch 'master' }
             steps {

@@ -1,4 +1,4 @@
-FROM --platform=${BUILDOS}/${BUILDARCH} golang:alpine as builder
+FROM --platform=${BUILDOS}/${BUILDARCH} golang:alpine AS builder
 
 WORKDIR /build
 
@@ -12,7 +12,7 @@ RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
 
 # Base
 
-FROM --platform=${TARGETOS}/${TARGETARCH} alpine:latest as base
+FROM --platform=${TARGETOS}/${TARGETARCH} alpine:latest AS base
 ARG TARGETARCH
 ARG TARGETOS
 
@@ -20,7 +20,7 @@ COPY --from=builder /build/rss-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/rss-ba
 
 # Server
 
-FROM base as server
+FROM base AS server
 ENV PORT 8080
 ENV GIN_MODE release
 
@@ -30,7 +30,7 @@ CMD rss-banquet server -p ${PORT}
 
 # Development
 
-FROM builder as dev-server
+FROM builder AS dev-server
 ENV PORT 8080
 ENV GIN_MODE debug
 EXPOSE ${PORT}
@@ -41,7 +41,7 @@ CMD watchexec -w . -e go,sum,mod -r sh -c "date && echo [WATCHEXEC] Building... 
 
 # nginx
 
-FROM base as nginx
+FROM base AS nginx
 ENV PORT 8080
 ENV GIN_MODE release
 
