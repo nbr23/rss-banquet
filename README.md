@@ -8,7 +8,6 @@ A Modular Atom/RSS Feed Generator
 Usage: ./rss-banquet <command> [options]
 Commands:
   server: run rss-banquet in server mode
-  fetcher: run rss-banquet in fetch mode based on a declarative config file
   oneshot: run rss-banquet in oneshot mode to fetch a specific module's results
 ```
 
@@ -21,17 +20,6 @@ Usage of server:
   -h	Show help message
   -p string
     	Server port
-```
-
-### Fetcher mode
-
-```
-Usage of fetcher:
-  -c string
-    	Path to configuration file (default "./config.yaml")
-  -h	Show help message
-  -w int
-    	Number of workers (default 5)
 ```
 
 ### Oneshot mode

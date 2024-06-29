@@ -10,19 +10,17 @@ COPY style style
 RUN GOOS=linux GOARCH=arm64 go build -trimpath -o rss-banquet-linux-arm64
 RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
 
-# Fetcher
+# Base
 
-FROM --platform=${TARGETOS}/${TARGETARCH} alpine:latest as fetcher
+FROM --platform=${TARGETOS}/${TARGETARCH} alpine:latest as base
 ARG TARGETARCH
 ARG TARGETOS
 
 COPY --from=builder /build/rss-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/rss-banquet
 
-CMD rss-banquet fetcher
-
 # Server
 
-FROM fetcher as server
+FROM base as server
 ENV PORT 8080
 ENV GIN_MODE release
 
@@ -43,7 +41,7 @@ CMD watchexec -w . -e go,sum,mod -r sh -c "date && echo [WATCHEXEC] Building... 
 
 # nginx
 
-FROM fetcher as nginx
+FROM base as nginx
 ENV PORT 8080
 ENV GIN_MODE release
 
