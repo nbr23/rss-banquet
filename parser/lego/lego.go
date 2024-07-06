@@ -182,6 +182,9 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 
 	products := []legoItem{}
 	doc.Find("li[data-test=product-item]").Each(func(i int, s *goquery.Selection) {
+		if s.Children().Length() == 0 {
+			return
+		}
 		if s.Find("div[data-test=product-listing-disruptor-static]").Length() > 0 {
 			return
 		}
