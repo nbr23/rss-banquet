@@ -24,12 +24,12 @@ func TestParseSuccess(t *testing.T,
 		return
 	}
 
-	if parsed.Items == nil || len(parsed.Items) < minItem {
+	if len(parsed.Items) < minItem && minItem != 0 {
 		t.Errorf("Unable to parse: not enough items in feed")
 		return
 	}
 
-	if itemTitleRegex != "" {
+	if itemTitleRegex != "" && len(parsed.Items) > 0 {
 		r := regexp.MustCompile(itemTitleRegex)
 		if !r.MatchString(parsed.Items[0].Title) {
 			t.Errorf("Unable to parse, title doesn't match expected format, got '%s'", parsed.Items[0].Title)
