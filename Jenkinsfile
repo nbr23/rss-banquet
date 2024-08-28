@@ -53,7 +53,7 @@ pipeline {
             when { branch 'master' }
             steps {
                 sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target server --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:server-nginx-latest -t nbr23/rss-banquet:server-nginx-`git rev-parse --short HEAD` --push .
+                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target nginx --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:server-nginx-latest -t nbr23/rss-banquet:server-nginx-`git rev-parse --short HEAD` --push .
                     """
             }
         }
