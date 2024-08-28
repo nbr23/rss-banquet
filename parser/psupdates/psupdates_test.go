@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/nbr23/rss-banquet/parser"
-	testsuite "github.com/nbr23/rss-banquet/utils"
+	testsuite "github.com/nbr23/rss-banquet/testsuite"
 )
 
 func TestPS5UpdatesParse(t *testing.T) {

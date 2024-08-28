@@ -1,4 +1,4 @@
-package books
+package googlebooks
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 func TestAmelieNothomb(t *testing.T) {
 	testsuite.TestParseSuccess(
 		t,
-		Books{},
+		Googlebooks{},
 		&parser.Options{
 			OptionsList: parser.OptionsList{
 				&parser.Option{
@@ -26,7 +26,7 @@ func TestAmelieNothomb(t *testing.T) {
 				},
 			},
 		},
-		1,
+		2,
 		`^.* - Amélie Nothomb$`,
 	)
 }
