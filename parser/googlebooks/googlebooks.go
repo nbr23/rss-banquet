@@ -1,12 +1,15 @@
 package googlebooks
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -47,25 +50,55 @@ func getSearchUrl(author string, language string, year_min int, year_max int) st
 	return u
 }
 
-func getBookDetailFromHtml(id string) (*book, error) {
-	bookUrl := fmt.Sprintf("https://books.google.com/books?id=%s", id)
+func generateSOCSCookie() string {
+	currentDate := time.Now().Format("20060102")
 
+	cookieContent := []byte{
+		0x08, 0x02, 0x12, 0x35, 0x08, 0x02, 0x12, 0x2b,
+	}
+	cookieContent = append(cookieContent, []byte(fmt.Sprintf("boq_identityfrontenduiserver_%s.08_p0", currentDate))...)
+	cookieContent = append(cookieContent, 0x1A, 0x02, 'e', 'n', 0x20, 0x02, 0x1A, 0x06, 0x08, 0x80, 0xD1, 0xB9)
+
+	var buf bytes.Buffer
+	encoder := base64.NewEncoder(base64.StdEncoding, &buf)
+	encoder.Write(cookieContent)
+	encoder.Close()
+
+	socsCookie := strings.ReplaceAll(buf.String(), "\n", "")
+
+	return socsCookie
+}
+
+func fetchGoogleBooksPage(u string) (*http.Response, error) {
 	req, err := http.NewRequest(
 		"GET",
-		bookUrl,
+		u,
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "User-Agent: Mozilla/5.0 Firefox/129.0")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:129.0) Gecko/20100101 Firefox/129.0")
 	req.Header.Set("DNT", "1")
+	req.Header.Set("Cookie", fmt.Sprintf("SOCS=%s", generateSOCSCookie()))
+	req.Header.Set("Accept-Language", "en-GB,en;q=0.5")
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func getBookDetailFromHtml(id string) (*book, error) {
+	bookUrl := fmt.Sprintf("https://books.google.com/books?id=%s&redir_esc=y", id)
+
+	resp, err := fetchGoogleBooksPage(bookUrl)
+
 	if err != nil {
 		return nil, err
 	}
@@ -123,20 +156,7 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 
 	searchUrl := getSearchUrl(author, language, year_min, year_max)
 
-	req, err := http.NewRequest(
-		"GET",
-		searchUrl,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", "User-Agent: Mozilla/5.0 Firefox/129.0")
-	req.Header.Set("DNT", "1")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-
+	resp, err := fetchGoogleBooksPage(searchUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -162,8 +182,9 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 	doc.Find(fmt.Sprintf("div[data-async-context='query:%s']", authorQuery)).Each(func(i int, s *goquery.Selection) {
 		s.Children().Each(func(i int, s *goquery.Selection) {
 			s.Find("a").Each(func(i int, s *goquery.Selection) {
-				if strings.HasPrefix(s.AttrOr("href", ""), "https://books.google.com/books?id=") {
-					bookId := strings.Split(strings.Split(s.AttrOr("href", ""), "https://books.google.com/books?id=")[1], "&")[0]
+				bookUrlRe := regexp.MustCompile(`https:\/\/books\.google\.[a-z]+/books\?id=([^&]+)&`)
+				if bookUrlRe.MatchString(s.AttrOr("href", "")) {
+					bookId := bookUrlRe.FindStringSubmatch(s.AttrOr("href", ""))[1]
 					bookIds = utils.InsertUnique[string](bookIds, bookId)
 				}
 			})
