@@ -200,6 +200,18 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 				continue
 			}
 		}
+
+		authorFound := false
+		for _, bookAuthor := range book.Authors {
+			if strings.Contains(strings.ToLower(bookAuthor), strings.ToLower(author)) {
+				authorFound = true
+				break
+			}
+		}
+		if !authorFound {
+			continue
+		}
+
 		if book.Language == "" {
 			book.Language = language
 		}
