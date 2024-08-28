@@ -6,6 +6,7 @@ RUN apk add gcc musl-dev
 COPY go* main.go modules.go config.go /build/
 COPY parser parser
 COPY style style
+COPY utils utils
 
 RUN GOOS=linux GOARCH=arm64 go build -trimpath -o rss-banquet-linux-arm64
 RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
@@ -21,29 +22,29 @@ COPY --from=builder /build/rss-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/rss-ba
 # Server
 
 FROM base AS server
-ENV PORT 8080
-ENV GIN_MODE release
+ENV PORT=8080
+ENV GIN_MODE=release
 
 EXPOSE ${PORT}
 
-CMD rss-banquet server -p ${PORT}
+CMD ["rss-banquet", "server", "-p", "${PORT}"]
 
 # Development
 
 FROM builder AS dev-server
-ENV PORT 8080
-ENV GIN_MODE debug
+ENV PORT=8080
+ENV GIN_MODE=debug
 EXPOSE ${PORT}
 
 RUN apk update && apk add watchexec
 
-CMD watchexec -w . -e go,sum,mod -r sh -c "date && echo [WATCHEXEC] Building... && go build && echo [WATCHEXEC] Built, launching && ./rss-banquet server -p ${PORT}"
+CMD ["watchexec", "-w", ".", "-e", "go,sum,mod", "-r", "sh", "-c", "date && echo [WATCHEXEC] Building... && go build && echo [WATCHEXEC] Built, launching && ./rss-banquet server -p ${PORT}"]
 
 # nginx
 
 FROM base AS nginx
-ENV PORT 8080
-ENV GIN_MODE release
+ENV PORT=8080
+ENV GIN_MODE=release
 
 EXPOSE ${PORT}
 
