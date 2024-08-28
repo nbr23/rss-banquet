@@ -20,7 +20,7 @@ import (
 type Googlebooks struct{}
 
 func (Googlebooks) String() string {
-	return "googlebooks"
+	return "books"
 }
 
 func GooglebooksParser() parser.Parser {

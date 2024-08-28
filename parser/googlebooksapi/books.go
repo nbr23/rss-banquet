@@ -1,4 +1,4 @@
-package books
+package googlebooksapi
 
 import (
 	"crypto/sha256"
@@ -17,11 +17,11 @@ import (
 	"github.com/nbr23/rss-banquet/parser"
 )
 
-func (Books) String() string {
-	return "books"
+func (Googlebooksapi) String() string {
+	return "googlebooksapi"
 }
 
-func (Books) GetOptions() parser.Options {
+func (Googlebooksapi) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
 			&parser.Option{
@@ -40,7 +40,7 @@ func (Books) GetOptions() parser.Options {
 				Value:    "",
 			},
 		},
-		Parser: Books{},
+		Parser: Googlebooksapi{},
 	}
 }
 
@@ -138,7 +138,7 @@ func listBooksByForYear(booksList map[string]*book, author, language string, yea
 	}
 }
 
-func (Books) Parse(options *parser.Options) (*feeds.Feed, error) {
+func (Googlebooksapi) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
 
 	author := options.Get("author").(string)
@@ -179,8 +179,8 @@ func (Books) Parse(options *parser.Options) (*feeds.Feed, error) {
 	return &feed, nil
 }
 
-type Books struct{}
+type Googlebooksapi struct{}
 
-func BooksParser() parser.Parser {
-	return Books{}
+func GooglebooksapiParser() parser.Parser {
+	return Googlebooksapi{}
 }

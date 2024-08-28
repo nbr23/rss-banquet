@@ -1,4 +1,4 @@
-package books
+package googlebooksapi
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 func TestAmelieNothomb(t *testing.T) {
 	testsuite.TestParseSuccess(
 		t,
-		Books{},
+		Googlebooksapi{},
 		&parser.Options{
 			OptionsList: parser.OptionsList{
 				&parser.Option{

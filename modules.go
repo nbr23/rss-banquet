@@ -5,12 +5,12 @@ import (
 	"sort"
 
 	"github.com/nbr23/rss-banquet/parser"
-	"github.com/nbr23/rss-banquet/parser/books"
 	"github.com/nbr23/rss-banquet/parser/bugcrowd"
 	"github.com/nbr23/rss-banquet/parser/dockerhub"
 	garminwearables "github.com/nbr23/rss-banquet/parser/garmin-wearables"
 	"github.com/nbr23/rss-banquet/parser/garminsdk"
 	"github.com/nbr23/rss-banquet/parser/googlebooks"
+	"github.com/nbr23/rss-banquet/parser/googlebooksapi"
 	"github.com/nbr23/rss-banquet/parser/hackerone"
 	"github.com/nbr23/rss-banquet/parser/hackeronePrograms"
 	"github.com/nbr23/rss-banquet/parser/infocon"
@@ -51,10 +51,10 @@ var Modules = map[string]func() parser.Parser{
 	"dockerhub": func() parser.Parser {
 		return dockerhub.DockerHubParser()
 	},
-	"books": func() parser.Parser {
-		return books.BooksParser()
+	"googlebooksapi": func() parser.Parser {
+		return googlebooksapi.GooglebooksapiParser()
 	},
-	"googlebooks": func() parser.Parser {
+	"books": func() parser.Parser {
 		return googlebooks.GooglebooksParser()
 	},
 	"pocorgtfo": func() parser.Parser {
