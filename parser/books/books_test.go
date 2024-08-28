@@ -26,7 +26,7 @@ func TestAmelieNothomb(t *testing.T) {
 				},
 			},
 		},
-		1,
+		0,
 		`^.* - Amélie Nothomb$`,
 	)
 }
