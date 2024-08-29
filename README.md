@@ -15,8 +15,6 @@ Commands:
 
 ```
 Usage of server:
-  -c string
-    	Path to configuration file
   -h	Show help message
   -p string
     	Server port
@@ -62,6 +60,13 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - private: private feed (default: false)
 	 - route: route to expose the feed (default: garminwearables)
+
+  - googlebooksapi
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - private: private feed (default: false)
+	 - route: route to expose the feed (default: googlebooksapi)
+	 - author: author of the books (default: )
+	 - language: language of the books (default: en)
 
   - hackerone
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
