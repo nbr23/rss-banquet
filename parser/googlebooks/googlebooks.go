@@ -246,6 +246,7 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 	}
 	feed.Title = fmt.Sprintf("%s's books - %s", strings.Title(author), language)
 	feed.Description = fmt.Sprintf("%s's books - %s", strings.Title(author), language)
+	feed.Link = &feeds.Link{Href: getSearchUrl(author, language, year_min, year_max)}
 	return &feed, nil
 }
 
