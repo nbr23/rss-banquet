@@ -254,7 +254,7 @@ func (Googlebooks) GetOptions() parser.Options {
 		OptionsList: []*parser.Option{
 			&parser.Option{
 				Flag:     "author",
-				Required: true,
+				Required: false,
 				Type:     "string",
 				Help:     "author of the books",
 				Value:    "",
