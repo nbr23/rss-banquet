@@ -230,6 +230,17 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 			item.Content = fmt.Sprintf("%s by %s announced for %s", book.Title, strings.Join(book.Authors, ", "), book.PublishedDate.Format("2006-01-02"))
 		}
 		item.Description = item.Content
+		imgExt := parser.GetFileTypeFromUrl(book.CoverUrl)
+		if !parser.IsImageType(imgExt) {
+			imgExt = "png"
+		}
+		if book.CoverUrl != "" {
+			item.Enclosure = &feeds.Enclosure{
+				Url:    book.CoverUrl,
+				Type:   "image/" + imgExt,
+				Length: "0",
+			}
+		}
 		feed.Items = append(feed.Items, item)
 
 	}
