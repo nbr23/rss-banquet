@@ -196,6 +196,14 @@ func (o *Options) Get(key string) interface{} {
 	return nil
 }
 
+func (o *Options) Set(key string, value string) {
+	for _, option := range o.OptionsList {
+		if option.Flag == key {
+			option.Value = value
+		}
+	}
+}
+
 func (o Options) GetHelp() string {
 	help := ""
 	for _, option := range o.OptionsList {
