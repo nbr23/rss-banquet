@@ -45,8 +45,7 @@ func getSearchUrl(author string, language string, year_min int, year_max int) st
 	for _, word := range strings.Split(author, " ") {
 		u += "inauthor:" + url.QueryEscape(word) + "+"
 	}
-	u += "&lr=lang_" + language
-	u += fmt.Sprintf("&tbs=cdr:1,cd_min:Jan+1_2+%d,cd_max:Dec+31_2+%d,lr:lang_1%s,bkt:b,bkv:p&tbm=bks&source=lnt", year_min, year_max, language)
+	u += fmt.Sprintf("&lr=lang_%s&tbs=cdr:1,cd_min:Jan+1_2+%d,cd_max:Dec+31_2+%d,lr:lang_1%s,bkt:b,bkv:p&tbm=bks&source=lnt", language, year_min, year_max, language)
 	return u
 }
 
@@ -151,7 +150,7 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 	author := options.Get("author").(string)
 	language := options.Get("language").(string)
 
-	year_min := time.Now().Year() - 1
+	year_min := options.Get("year-min").(int)
 	year_max := time.Now().Year() + 1
 
 	searchUrl := getSearchUrl(author, language, year_min, year_max)
@@ -194,11 +193,8 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 	for _, bookId := range bookIds {
 		book, err := getBookDetailFromHtml(bookId)
 		if err != nil {
-			book, err = getBookDetailFromHtml(bookId)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
+			log.Println(err)
+			continue
 		}
 
 		authorFound := false
@@ -246,7 +242,7 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 	}
 	feed.Title = fmt.Sprintf("%s's books - %s", strings.Title(author), language)
 	feed.Description = fmt.Sprintf("%s's books - %s", strings.Title(author), language)
-	feed.Link = &feeds.Link{Href: getSearchUrl(author, language, year_min, year_max)}
+	feed.Link = &feeds.Link{Href: searchUrl}
 	return &feed, nil
 }
 
@@ -267,6 +263,13 @@ func (Googlebooks) GetOptions() parser.Options {
 				Help:     "language of the books",
 				Default:  "en",
 				Value:    "",
+			},
+			&parser.Option{
+				Flag:     "year-min",
+				Required: false,
+				Type:     "int",
+				Help:     "minimum year of publication",
+				Default:  fmt.Sprintf("%d", time.Now().Year()-1),
 			},
 		},
 		Parser: Googlebooks{},
