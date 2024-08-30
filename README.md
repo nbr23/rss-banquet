@@ -33,6 +33,7 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - route: route to expose the feed (default: books)
 	 - author: author of the books (default: )
 	 - language: language of the books (default: en)
+	 - year-min: minimum year of publication (default: 2023)
 
   - bugcrowd
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
