@@ -31,12 +31,42 @@ func getReleaseNotes(s *goquery.Document) [][]string {
 	return nil
 }
 
-func (GarminWearables) Parse(options *parser.Options) (*feeds.Feed, error) {
-	var feed feeds.Feed
+func BruteForcePossibleVersions() []*feeds.Item {
+	now := time.Now()
+	year := now.Year()
+
+	items := []*feeds.Item{}
+
+	urlFormat := "https://www8.garmin.com/wearables/PDF/WearablesSoftwareUpdate/%d/%s%d.pdf"
+
+	for y := year - 1; y <= year; y++ {
+		for m := 1; m <= 12; m++ {
+			var update feeds.Item
+			var err error
+			update.Link = &feeds.Link{Href: fmt.Sprintf(urlFormat, y, time.Month(m).String(), y)}
+			update.Created, err = parser.GetRemoteFileLastModified(update.Link.Href)
+			if err != nil {
+				continue
+			}
+			update.Title = fmt.Sprintf("[%s%d] Garmin Wearable Update", time.Month(m).String(), y)
+			update.Content = fmt.Sprintf("A Garmin Wearable update was released on %v", update.Created)
+			update.Description = update.Content
+			update.Id = parser.GetGuid([]string{update.Link.Href, fmt.Sprintf("%s%d", time.Month(m).String(), y)})
+			items = append(items, &update)
+		}
+	}
+	return items
+}
+
+func GetLatestVersions() ([]*feeds.Item, error) {
 	resp, err := http.Get("https://www.garmin.com/en-US/support/software/wearables/")
+	items := []*feeds.Item{}
 
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("unable to fetch the Garmin Wearable updates page, status code: %d", resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
@@ -71,11 +101,26 @@ func (GarminWearables) Parse(options *parser.Options) (*feeds.Feed, error) {
 		update.Description = update.Content
 		update.Link = &feeds.Link{Href: releaseNote[0]}
 		update.Id = parser.GetGuid([]string{releaseNote[0], releaseNote[2]})
-		feed.Items = append(feed.Items, &update)
+		items = append(items, &update)
+	}
+	return items, nil
+}
+
+func (GarminWearables) Parse(options *parser.Options) (*feeds.Feed, error) {
+	var feed feeds.Feed
+
+	var items []*feeds.Item
+
+	items, err := GetLatestVersions()
+
+	if err != nil {
+		fmt.Println("Falling back to brute force")
+		items = BruteForcePossibleVersions()
 	}
 
 	feed.Title = "Garmin Wearable Updates"
 	feed.Description = "The latest Garmin Wearable updates"
+	feed.Items = items
 
 	feed.Author = &feeds.Author{
 		Name: "Garmin",
