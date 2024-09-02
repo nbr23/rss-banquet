@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/rs/zerolog/log"
 
+	"github.com/nbr23/rss-banquet/config"
 	"github.com/nbr23/rss-banquet/style"
 )
 
@@ -361,8 +361,8 @@ func HttpGet(url string) (*http.Response, error) {
 		return nil, err
 	}
 
-	userAgent := os.Getenv("BANQUET_GLOBAL_USER_AGENT")
-	if userAgent != "" {
+	userAgent, err := config.GetConfigOption("USER_AGENT")
+	if err == nil && userAgent != "" {
 		req.Header.Set("User-Agent", userAgent)
 	}
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nbr23/rss-banquet/config"
 	"github.com/nbr23/rss-banquet/parser"
 	"github.com/nbr23/rss-banquet/style"
 	"github.com/rs/zerolog"
@@ -174,8 +175,24 @@ A Modular Atom/RSS Feed Generator
 	printModulesHelp()
 }
 
-func main() {
+func initLogging() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	logLevel, err := config.GetConfigOption("LOG_LEVEL")
+	if err != nil {
+		logLevel = "info"
+	}
+	level, err := zerolog.ParseLevel(logLevel)
+	if err != nil {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	} else {
+		zerolog.SetGlobalLevel(level)
+	}
+}
+
+func main() {
+	config.InitConfig()
+	initLogging()
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <command> [options]\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Commands:\n")

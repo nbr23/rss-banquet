@@ -3,10 +3,11 @@ FROM --platform=${BUILDOS}/${BUILDARCH} golang:alpine AS builder
 WORKDIR /build
 
 RUN apk add gcc musl-dev
-COPY go* main.go modules.go config.go /build/
+COPY go* *.go /build/
 COPY parser parser
 COPY style style
 COPY utils utils
+COPY config config
 
 RUN GOOS=linux GOARCH=arm64 go build -trimpath -o rss-banquet-linux-arm64
 RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
