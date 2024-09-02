@@ -23,6 +23,7 @@ func TestDockerHubParse(t *testing.T) {
 		},
 		1,
 		`^nbr23/youtube-dl-server:[-\d\w]+ linux/[\d\w]+$`,
+		``,
 	)
 }
 
@@ -47,6 +48,7 @@ func TestDockerHubParsePlatform(t *testing.T) {
 		},
 		1,
 		`^nbr23/youtube-dl-server:[-\d\w]+ linux/arm64+$`,
+		``,
 	)
 }
 

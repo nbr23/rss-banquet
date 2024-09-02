@@ -12,6 +12,7 @@ func TestParseSuccess(t *testing.T,
 	parserOptions *parser.Options,
 	minItem int,
 	itemTitleRegex string,
+	feedTitleRegex string,
 ) {
 	parsed, err := p.Parse(parserOptions)
 	if err != nil {
@@ -33,6 +34,13 @@ func TestParseSuccess(t *testing.T,
 		r := regexp.MustCompile(itemTitleRegex)
 		if !r.MatchString(parsed.Items[0].Title) {
 			t.Errorf("Unable to parse, title doesn't match expected format, got '%s'", parsed.Items[0].Title)
+		}
+	}
+
+	if feedTitleRegex != "" {
+		r := regexp.MustCompile(feedTitleRegex)
+		if !r.MatchString(parsed.Title) {
+			t.Errorf("Unable to parse, feed title doesn't match expected format, got '%s'", parsed.Title)
 		}
 	}
 }

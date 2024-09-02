@@ -14,5 +14,6 @@ func TestGarminWearablesParse(t *testing.T) {
 		&parser.Options{},
 		1,
 		`^\[[\w]+\] Garmin Wearable Update$`,
+		``,
 	)
 }

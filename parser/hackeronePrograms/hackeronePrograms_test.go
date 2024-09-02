@@ -19,5 +19,6 @@ func TestH1ProgramParse(t *testing.T) {
 		},
 		1,
 		`^\[[^]]+\] .* launched a program on [-\d:.TZ]+.*$`,
+		``,
 	)
 }

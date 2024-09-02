@@ -20,5 +20,6 @@ func TestAmelieNothomb(t *testing.T) {
 		&options,
 		2,
 		`^.* - Amélie Nothomb$`,
+		``,
 	)
 }

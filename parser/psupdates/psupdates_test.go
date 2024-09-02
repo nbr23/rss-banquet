@@ -20,6 +20,7 @@ func TestPS5UpdatesParse(t *testing.T) {
 		},
 		1,
 		`^PS5 Update: [^\s]+.*$`,
+		``,
 	)
 }
 
@@ -36,6 +37,7 @@ func TestPS4UpdatesParse(t *testing.T) {
 		},
 		1,
 		`^PS4 Update: [^\s]+.*$`,
+		``,
 	)
 }
 

@@ -23,6 +23,7 @@ func TestLegoParseNew(t *testing.T) {
 		},
 		1,
 		`^\[\w+\] [0-9]+ - .* - (Available now|Pre-order this item today,|Will ship by|Backorder) .*$`,
+		``,
 	)
 }
 
@@ -42,5 +43,6 @@ func TestLegoParseComingSoon(t *testing.T) {
 		},
 		1,
 		`^\[COMING SOON\] [0-9]+ - .* - Coming Soon .*$`,
+		``,
 	)
 }
