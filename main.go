@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nbr23/rss-banquet/parser"
 	"github.com/nbr23/rss-banquet/style"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type runServerFlags struct {
@@ -26,18 +27,29 @@ func getRunServerFlags(f *runServerFlags) *flag.FlagSet {
 
 func responseLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		t := time.Now()
+		start := time.Now()
 		c.Next()
-		duration := time.Since(t)
-		fmt.Printf("%v | %d | %d | %s | %s | %s \"%s\"\n",
-			time.Now().Format("2006/01/02 - 15:04:05"),
-			c.Writer.Status(),
-			c.Writer.Size(),
-			duration,
-			c.ClientIP(),
-			c.Request.Method,
-			c.Request.RequestURI,
-		)
+		duration := time.Since(start)
+
+		var logger *zerolog.Event
+		if c.Writer.Status() >= 400 && c.Writer.Status() < 600 {
+			logger = log.Error()
+		} else {
+			logger = log.Info()
+		}
+
+		event := logger.
+			Int("status", c.Writer.Status()).
+			Int("size", c.Writer.Size()).
+			Dur("duration", duration).
+			Str("client_ip", c.ClientIP()).
+			Str("method", c.Request.Method).
+			Str("path", c.Request.RequestURI)
+
+		if len(c.Errors) > 0 {
+			event = event.Err(c.Errors.Last())
+		}
+		event.Msg(fmt.Sprintf("%s %s", c.Request.Method, c.Request.RequestURI))
 	}
 }
 
@@ -93,7 +105,7 @@ func runOneShot(args []string) {
 
 	m := getModule(args[0])
 	if m == nil {
-		log.Fatal(fmt.Errorf("module `%s` not found", args[0]))
+		log.Fatal().Msg(fmt.Sprintf("module `%s` not found", args[0]))
 	}
 	flags := flag.NewFlagSet(fmt.Sprintf("oneshot %s", m), flag.ExitOnError)
 	o := parser.GetFullOptions(m)
@@ -105,7 +117,7 @@ func runOneShot(args []string) {
 		if option.Required {
 			if o.Get(option.Flag) == "" {
 				flags.Usage()
-				log.Fatalf("missing required parameter: %s", option.Flag)
+				log.Fatal().Msg(fmt.Sprintf("missing required parameter: %s", option.Flag))
 			}
 		}
 	}
@@ -114,7 +126,7 @@ func runOneShot(args []string) {
 
 	if err != nil {
 		fmt.Println(parser.GetFullOptions(m).GetHelp())
-		log.Fatal(err)
+		log.Fatal().Msg(err.Error())
 		return
 	}
 
@@ -133,7 +145,7 @@ func runOneShot(args []string) {
 		s = fmt.Sprintf("%v", res)
 	}
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Msg(err.Error())
 	}
 	fmt.Println(s)
 }
@@ -163,6 +175,7 @@ A Modular Atom/RSS Feed Generator
 }
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <command> [options]\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Commands:\n")

@@ -117,6 +117,10 @@ func (GarminWearables) Parse(options *parser.Options) (*feeds.Feed, error) {
 		items = BruteForcePossibleVersions()
 	}
 
+	if len(items) == 0 {
+		return nil, parser.NewNotFoundError("no updates found")
+	}
+
 	feed.Title = "Garmin Wearable Updates"
 	feed.Description = "The latest Garmin Wearable updates"
 	feed.Items = items
