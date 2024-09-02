@@ -91,6 +91,10 @@ func getBooksList(url string, bookLanguage string, yearMin int) ([]GRBook, strin
 
 	title := doc.Find("h1").First().Text()
 
+	if title == "" {
+		return nil, "", parser.NewNotFoundError("book list page not found")
+	}
+
 	pubRe := regexp.MustCompile(`published[\s]+(\d{4})`)
 	expectedRe := regexp.MustCompile(`expected[\s]+publication[\s]+(\d{4})`)
 
