@@ -10,6 +10,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/rss-banquet/parser"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 )
@@ -53,7 +54,7 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 			var bookJson GRBookJson
 			err := json.Unmarshal([]byte(s.Text()), &bookJson)
 			if err != nil {
-				fmt.Println(err)
+				log.Error().Msg(fmt.Sprintf("unable to parse book json: %s", err.Error()))
 				return
 			}
 			book.Language = bookJson.InLanguage
@@ -108,7 +109,7 @@ func getBooksList(url string, bookLanguage string, yearMin int) ([]GRBook, strin
 		}
 		published := pubRe.MatchString(s.Text())
 		if !published && !expectedRe.MatchString(s.Text()) {
-			fmt.Println(title, s.Text())
+			log.Warn().Msg(fmt.Sprintf("Unexpected publishing info for %s: %s", title, s.Text()))
 			return
 		}
 		var pubYear string
@@ -128,7 +129,7 @@ func getBooksList(url string, bookLanguage string, yearMin int) ([]GRBook, strin
 		}
 		book, err := getBookDetails(bookLink)
 		if err != nil {
-			fmt.Println(err)
+			log.Error().Msg(fmt.Sprintf("unable to fetch book details: %s", err.Error()))
 			return
 		}
 		if book.Language != bookLanguage {
