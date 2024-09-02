@@ -62,6 +62,15 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - private: private feed (default: false)
 	 - route: route to expose the feed (default: garminwearables)
 
+  - goodreads
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - private: private feed (default: false)
+	 - route: route to expose the feed (default: goodreads)
+	 - authorId: Goodreads author ID (default: )
+	 - seriesId: Goodreads series ID (default: )
+	 - year-min: minimum year of publication (default: 2023)
+	 - language: language of the book (default: en)
+
   - googlebooksapi
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - private: private feed (default: false)
