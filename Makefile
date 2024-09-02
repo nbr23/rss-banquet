@@ -8,7 +8,7 @@ all: $(BINARY_NAME)
 dist: linux-arm64 linux-amd64 macos-amd64 macos-arm64
 
 $(BINARY_NAME): $(SOURCES)
-	go build -o $(BINARY_NAME)
+	go build -o dist/$(BINARY_NAME)
 
 linux-arm64: $(SOURCES)
 	GOOS=linux GOARCH=arm64 go build -trimpath -o dist/$(BINARY_NAME)-arm64
