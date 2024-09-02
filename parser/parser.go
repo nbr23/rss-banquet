@@ -259,11 +259,44 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 		feed, err := p.Parse(o)
 		SortFeedEntries(feed)
 		if err != nil {
-			c.String(500, "error parsing feed")
-			return
+			switch err.(type) {
+			case *NotFoundError:
+				c.String(404, err.Error())
+				return
+			case *InternalError:
+				c.String(500, err.Error())
+				return
+			default:
+				c.String(500, "error parsing feed")
+				return
+			}
 		}
 		ServeFeed(c, feed)
 	})
+}
+
+type NotFoundError struct {
+	message string
+}
+
+type InternalError struct {
+	message string
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("NotFoundError: %s", e.message)
+}
+
+func (e *InternalError) Error() string {
+	return fmt.Sprintf("InternalError: %s", e.message)
+}
+
+func NewNotFoundError(message string) *NotFoundError {
+	return &NotFoundError{message: message}
+}
+
+func NewInternalError(message string) *InternalError {
+	return &InternalError{message: message}
 }
 
 func SortFeedEntries(f *feeds.Feed) {

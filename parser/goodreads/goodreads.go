@@ -78,14 +78,14 @@ func getSeriesBooksList(seriesId string, bookLanguage string, yearMin int) (stri
 func getBooksList(url string, bookLanguage string, yearMin int) ([]GRBook, string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, "", err
+		return nil, "", parser.NewInternalError("unable to fetch the page")
 	}
 
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return nil, "", err
+		return nil, "", parser.NewInternalError("unable to parse the page")
 	}
 
 	title := doc.Find("h1").First().Text()
@@ -165,7 +165,7 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	if bookLanguage != "" {
 		tag, err := language.Parse(bookLanguage)
 		if err != nil {
-			return nil, err
+			return nil, parser.NewNotFoundError("language not found")
 		}
 		bookLanguage = display.English.Languages().Name(tag)
 	}
@@ -180,7 +180,7 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	} else if seriesId != "" {
 		url, title, books, err = getSeriesBooksList(seriesId, bookLanguage, yearMin)
 	} else {
-		return nil, fmt.Errorf("no authorId or seriesId provided")
+		return nil, parser.NewNotFoundError("authorId or seriesId required")
 	}
 	if err != nil {
 		return nil, err
