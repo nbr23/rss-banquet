@@ -200,7 +200,7 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 		feed.Items = append(feed.Items, &item)
 	}
 
-	feed.Title = title
+	feed.Title = fmt.Sprintf("%s - %s", title, bookLanguage)
 	feed.Description = feed.Title
 	feed.Link = &feeds.Link{Href: url}
 
