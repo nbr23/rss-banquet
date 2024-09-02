@@ -47,8 +47,8 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 	book.Author = strings.Join(strings.Fields(doc.Find("div[class='BookPageMetadataSection__contributor']").Text()), " ")
 	book.PageFormat = strings.Join(strings.Fields(doc.Find("p[data-testid='pagesFormat']").First().Text()), " ")
 	book.Description = strings.Join(strings.Fields(doc.Find("div[class='BookPageMetadataSection__description']").First().Text()), " ")
-	book.Year = pubInfo
-	book.ID = bookLink
+	book.PublicationDate = pubInfo
+	book.Link = bookLink
 	doc.Find("script[type='application/ld+json']").Each(func(i int, s *goquery.Selection) {
 		if strings.Contains(s.Text(), "inLanguage") {
 			var bookJson GRBookJson
@@ -151,15 +151,15 @@ type GRBookJson struct {
 }
 
 type GRBook struct {
-	Title       string
-	SubTitle    string
-	Year        string
-	ID          string
-	Author      string
-	PageFormat  string
-	Description string
-	Language    string
-	CoverUrl    string
+	Title           string
+	SubTitle        string
+	PublicationDate string
+	Link            string
+	Author          string
+	PageFormat      string
+	Description     string
+	Language        string
+	CoverUrl        string
 }
 
 func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
@@ -197,10 +197,10 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	for _, book := range books {
 		var item feeds.Item
 		item.Title = fmt.Sprintf("%s - %s", book.Title, book.Author)
-		item.Content = fmt.Sprintf("%s by %s published on %s", book.Title, book.Author, book.Year)
+		item.Content = fmt.Sprintf("%s by %s published on %s", book.Title, book.Author, book.PublicationDate)
 		item.Description = item.Content
-		item.Link = &feeds.Link{Href: book.ID}
-		item.Id = fmt.Sprintf("%x", book.ID)
+		item.Link = &feeds.Link{Href: book.Link}
+		item.Id = fmt.Sprintf("%s|%s", book.Link, book.PublicationDate)
 		item.Created = time.Now()
 		item.Updated = time.Now()
 		feed.Items = append(feed.Items, &item)
