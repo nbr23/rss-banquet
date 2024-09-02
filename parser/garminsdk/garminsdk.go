@@ -9,6 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/rss-banquet/parser"
+	"github.com/rs/zerolog/log"
 )
 
 func (GarminSDK) String() string {
@@ -57,6 +58,7 @@ func getValidUrl(sdkName string) (string, *http.Response, error) {
 	url := fmt.Sprintf("https://developer.garmin.com/%s/download/", strings.ToLower(sdkName))
 	resp, err := parser.HttpGet(url)
 	if err != nil {
+		log.Error().Msgf("unable to fetch the update page: %v", err)
 		return "", nil, err
 	}
 	if resp.StatusCode == 404 {
@@ -69,6 +71,7 @@ func getValidUrl(sdkName string) (string, *http.Response, error) {
 	if resp.StatusCode != 200 {
 		return "", nil, fmt.Errorf("unable to fetch the update page, status code: %d", resp.StatusCode)
 	}
+	log.Debug().Msg(fmt.Sprintf("fetched the update page %s", url))
 	return url, resp, nil
 }
 

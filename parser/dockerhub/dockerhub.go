@@ -256,12 +256,12 @@ func (DockerHub) Parse(options *parser.Options) (*feeds.Feed, error) {
 	if imageName.Tag != "" {
 		images, err = getDockerTagImagesDetails(imageName)
 		if err != nil {
-			return nil, fmt.Errorf("image not found")
+			return nil, parser.NewNotFoundError("image not found")
 		}
 	} else {
 		images, err = getDockerTagsImages(imageName)
 		if err != nil {
-			return nil, fmt.Errorf("tag not found")
+			return nil, parser.NewNotFoundError("tag not found")
 		}
 	}
 
