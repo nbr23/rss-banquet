@@ -257,7 +257,6 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 			}
 		}
 		feed, err := p.Parse(o)
-		SortFeedEntries(feed)
 		if err != nil {
 			switch err.(type) {
 			case *NotFoundError:
@@ -271,6 +270,7 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 				return
 			}
 		}
+		SortFeedEntries(feed)
 		ServeFeed(c, feed)
 	})
 }
