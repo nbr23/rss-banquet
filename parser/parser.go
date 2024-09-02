@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
+	"github.com/rs/zerolog/log"
 
 	"github.com/nbr23/rss-banquet/style"
 )
@@ -247,6 +248,7 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 		for _, option := range o.OptionsList {
 			if option.Required {
 				if c.Param(option.Flag) == "" {
+					log.Error().Msgf("missing required parameter: %s", option.Flag)
 					c.String(400, "missing required parameter: %s", option.Flag)
 					return
 				} else {
@@ -270,6 +272,7 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 				c.String(500, err.Error())
 				return
 			default:
+				log.Error().Msgf("error parsing feed: %s", err)
 				c.String(500, "error parsing feed")
 				return
 			}
@@ -296,10 +299,12 @@ func (e *InternalError) Error() string {
 }
 
 func NewNotFoundError(message string) *NotFoundError {
+	log.Error().Msgf("NotFoundError: %s", message)
 	return &NotFoundError{message: message}
 }
 
 func NewInternalError(message string) *InternalError {
+	log.Error().Msgf("InternalError: %s", message)
 	return &InternalError{message: message}
 }
 
