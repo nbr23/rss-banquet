@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"time"
 
@@ -259,7 +258,7 @@ func getCrowdStreamUrl(options *parser.Options) string {
 func (Bugcrowd) Parse(options *parser.Options) (*feeds.Feed, error) {
 	url := getCrowdStreamUrl(options)
 
-	resp, err := http.Get(url)
+	resp, err := parser.HttpGet(url)
 
 	if err != nil {
 		return nil, err

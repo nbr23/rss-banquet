@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -90,7 +89,7 @@ func listBooksByForYear(booksList map[string]*book, author, language string, yea
 	for page := 0; ; page++ {
 		url := fmt.Sprintf("https://www.googleapis.com/books/v1/volumes?q=inauthor:%%22%s%%22+%d&langRestrict=%s&printType=books&orderBy=relevance&showPreorders=true&maxResults=%d&startIndex=%d", url.QueryEscape(author), year, language, pageSize, page*pageSize)
 
-		res, err := http.Get(url)
+		res, err := parser.HttpGet(url)
 		if err != nil {
 			log.Fatal(err)
 		}

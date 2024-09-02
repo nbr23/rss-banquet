@@ -2,7 +2,6 @@ package infocon
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -44,7 +43,7 @@ func (InfoCon) Parse(options *parser.Options) (*feeds.Feed, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error unescaping url")
 	}
-	resp, err := http.Get(url)
+	resp, err := parser.HttpGet(url)
 	regexesIgnore := []*regexp.Regexp{
 		regexp.MustCompile(`Thumbs\.db`),
 		regexp.MustCompile(`.*\.jpg`),

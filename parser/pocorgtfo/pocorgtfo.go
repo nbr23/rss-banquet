@@ -3,7 +3,6 @@ package pocorgtfo
 import (
 	"crypto/sha256"
 	"fmt"
-	"net/http"
 	"regexp"
 	"time"
 
@@ -30,7 +29,7 @@ func (PoCOrGTFO) Parse(options *parser.Options) (*feeds.Feed, error) {
 	pubRegex := regexp.MustCompile(`(?i)^(PoC\|\|GTFO 0x[0-9a-fA-F]{2})`)
 	dateRegex := regexp.MustCompile(`(?i)^PoC\|\|GTFO 0x[0-9a-fA-F]{2}, ([^,]+),`)
 
-	resp, err := http.Get(url)
+	resp, err := parser.HttpGet(url)
 
 	if err != nil {
 		return nil, err

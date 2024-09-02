@@ -3,7 +3,6 @@ package lego
 import (
 	"crypto/sha256"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -163,7 +162,7 @@ func getSlug(options *parser.Options) string {
 }
 
 func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
-	resp, err := http.Get(getUrl(options))
+	resp, err := parser.HttpGet(getUrl(options))
 
 	if err != nil {
 		return nil, err

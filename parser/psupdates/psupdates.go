@@ -3,7 +3,6 @@ package psupdates
 import (
 	"crypto/sha256"
 	"fmt"
-	"net/http"
 	"regexp"
 
 	"strings"
@@ -70,7 +69,7 @@ func getHardwareURL(hardware string, local string) string {
 
 func getUpdateFileUrl(hardware string, local string) (string, error) {
 	url := fmt.Sprintf("https://www.playstation.com/%s/support/hardware/%s/system-software/", strings.ToLower(local), strings.ToLower(hardware))
-	resp, err := http.Get(url)
+	resp, err := parser.HttpGet(url)
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +103,7 @@ func (PSUpdates) Parse(options *parser.Options) (*feeds.Feed, error) {
 	local := options.Get("local").(string)
 	url := getHardwareURL(hardware, local)
 
-	resp, err := http.Get(url)
+	resp, err := parser.HttpGet(url)
 
 	if err != nil {
 		return nil, err

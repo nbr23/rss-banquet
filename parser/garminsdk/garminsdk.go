@@ -55,13 +55,13 @@ func getDownloadButtons(s *goquery.Document) []*goquery.Selection {
 
 func getValidUrl(sdkName string) (string, *http.Response, error) {
 	url := fmt.Sprintf("https://developer.garmin.com/%s/download/", strings.ToLower(sdkName))
-	resp, err := http.Get(url)
+	resp, err := parser.HttpGet(url)
 	if err != nil {
 		return "", nil, err
 	}
 	if resp.StatusCode == 404 {
 		url = fmt.Sprintf("https://developer.garmin.com/%s/sdk/", strings.ToLower(sdkName))
-		resp, err = http.Get(url)
+		resp, err = parser.HttpGet(url)
 	}
 	if err != nil {
 		return "", nil, err

@@ -2,7 +2,6 @@ package garminwearables
 
 import (
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -59,7 +58,7 @@ func BruteForcePossibleVersions() []*feeds.Item {
 }
 
 func GetLatestVersions() ([]*feeds.Item, error) {
-	resp, err := http.Get("https://www.garmin.com/en-US/support/software/wearables/")
+	resp, err := parser.HttpGet("https://www.garmin.com/en-US/support/software/wearables/")
 	items := []*feeds.Item{}
 
 	if err != nil {
