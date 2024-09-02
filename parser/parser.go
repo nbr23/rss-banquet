@@ -164,6 +164,9 @@ func (o OptionsList) Get(key string) (interface{}, error) {
 				if stri, ok := option.Value.(int); ok {
 					return stri, nil
 				}
+				if option.Value == nil {
+					return nil, fmt.Errorf("option not found")
+				}
 				return *(option.Value.(*int)), nil
 			case "bool":
 				if option.Value == nil {
