@@ -3,7 +3,6 @@ package goodreads
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -26,7 +25,7 @@ func GoodReadsParser() parser.Parser {
 }
 
 func getBookDetails(bookLink string) (*GRBook, error) {
-	resp, err := http.Get(bookLink)
+	resp, err := parser.HttpGet(bookLink)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +76,7 @@ func getSeriesBooksList(seriesId string, bookLanguage string, yearMin int) (stri
 }
 
 func getBooksList(url string, bookLanguage string, yearMin int) ([]GRBook, string, error) {
-	resp, err := http.Get(url)
+	resp, err := parser.HttpGet(url)
 	if err != nil {
 		return nil, "", parser.NewInternalError("unable to fetch the page")
 	}

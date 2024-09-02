@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -345,4 +346,29 @@ func IsImageType(t string) bool {
 	default:
 		return false
 	}
+}
+
+func HttpGet(url string) (*http.Response, error) {
+	req, err := http.NewRequest(
+		"GET",
+		url,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	userAgent := os.Getenv("BANQUET_GLOBAL_USER_AGENT")
+	if userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
+	}
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
