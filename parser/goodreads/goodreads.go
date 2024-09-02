@@ -58,6 +58,7 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 				return
 			}
 			book.Language = bookJson.InLanguage
+			book.CoverUrl = bookJson.Image
 		}
 	})
 	return &book, nil
@@ -154,6 +155,7 @@ type GRBook struct {
 	PageFormat  string
 	Description string
 	Language    string
+	CoverUrl    string
 }
 
 func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
@@ -198,6 +200,18 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 		item.Created = time.Now()
 		item.Updated = time.Now()
 		feed.Items = append(feed.Items, &item)
+
+		if book.CoverUrl != "" {
+			imgExt := parser.GetFileTypeFromUrl(book.CoverUrl)
+			if !parser.IsImageType(imgExt) {
+				imgExt = "png"
+			}
+			item.Enclosure = &feeds.Enclosure{
+				Url:    book.CoverUrl,
+				Type:   "image/" + imgExt,
+				Length: "0",
+			}
+		}
 	}
 
 	feed.Title = fmt.Sprintf("%s - %s", title, bookLanguage)
