@@ -49,7 +49,7 @@ func responseLogger() gin.HandlerFunc {
 		if len(c.Errors) > 0 {
 			event = event.Err(c.Errors.Last())
 		}
-		event.Msg(fmt.Sprintf("%s %s", c.Request.Method, c.Request.RequestURI))
+		event.Msgf("%s %s", c.Request.Method, c.Request.RequestURI)
 	}
 }
 

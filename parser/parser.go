@@ -299,12 +299,10 @@ func (e *InternalError) Error() string {
 }
 
 func NewNotFoundError(message string) *NotFoundError {
-	log.Error().Msgf("NotFoundError: %s", message)
 	return &NotFoundError{message: message}
 }
 
 func NewInternalError(message string) *InternalError {
-	log.Error().Msgf("InternalError: %s", message)
 	return &InternalError{message: message}
 }
 
