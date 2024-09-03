@@ -17,6 +17,7 @@ The following environment variables can be used to configure the application:
 
 -  BANQUET_GLOBAL_LOG_LEVEL: Log level (trace, debug, info, warn, error, fatal, panic, disabled) (default: info)
 -  BANQUET_GLOBAL_USER_AGENT: User agent to use for HTTP requests
+-  BANQUET_SERVER_SERVER_PORT: Port to listen on in server mode (default: 8080)
 
 
 ### Server mode
