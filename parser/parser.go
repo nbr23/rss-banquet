@@ -361,8 +361,8 @@ func HttpGet(url string) (*http.Response, error) {
 		return nil, err
 	}
 
-	userAgent, err := config.GetConfigOption("USER_AGENT")
-	if err == nil && userAgent != "" {
+	userAgent := config.GetConfigOption("USER_AGENT")
+	if userAgent != "" {
 		req.Header.Set("User-Agent", userAgent)
 	}
 

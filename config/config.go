@@ -28,6 +28,12 @@ var CONFIG_OPTIONS = []ConfigOption{
 		Scope:       "GLOBAL",
 		Description: "User agent to use for HTTP requests",
 	},
+	{
+		Name:        "SERVER_PORT",
+		Value:       "8080",
+		Scope:       "SERVER",
+		Description: "Port to listen on in server mode",
+	},
 }
 
 func ReadmeText() string {
@@ -53,11 +59,20 @@ func InitConfig() {
 	}
 }
 
-func GetConfigOption(name string) (string, error) {
+func GetConfigOptionIfExists(name string) (string, error) {
 	for _, option := range CONFIG_OPTIONS {
 		if option.Name == name {
 			return option.Value, nil
 		}
 	}
 	return "", fmt.Errorf("option not found")
+}
+
+func GetConfigOption(name string) string {
+	for _, option := range CONFIG_OPTIONS {
+		if option.Name == name {
+			return option.Value
+		}
+	}
+	return ""
 }

@@ -22,7 +22,7 @@ type runServerFlags struct {
 func getRunServerFlags(f *runServerFlags) *flag.FlagSet {
 	flags := flag.NewFlagSet("server", flag.ExitOnError)
 	flags.BoolVar(&f.showHelp, "h", false, "Show help message")
-	flags.StringVar(&f.serverPort, "p", os.Getenv("PORT"), "Server port")
+	flags.StringVar(&f.serverPort, "p", config.GetConfigOption("BANQUET_SERVER_PORT"), "Server port")
 	return flags
 }
 
@@ -65,10 +65,6 @@ func runServer(args []string) {
 		fmt.Println("Modules available:")
 		printModulesHelp()
 		return
-	}
-
-	if f.serverPort == "" {
-		f.serverPort = "8080"
 	}
 
 	r := gin.New()
@@ -181,10 +177,7 @@ A Modular Atom/RSS Feed Generator
 
 func initLogging() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	logLevel, err := config.GetConfigOption("LOG_LEVEL")
-	if err != nil {
-		logLevel = "info"
-	}
+	logLevel := config.GetConfigOption("LOG_LEVEL")
 	level, err := zerolog.ParseLevel(logLevel)
 	if err != nil {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
