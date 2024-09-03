@@ -41,7 +41,7 @@ func ReadmeText() string {
 	for _, option := range CONFIG_OPTIONS {
 		envVarName := strings.Join([]string{ENV_PREFIX, option.Scope, option.Name}, "_")
 
-		s += fmt.Sprintf("-  %s: %s", envVarName, option.Description)
+		s += fmt.Sprintf("-  `%s`: %s", envVarName, option.Description)
 		if option.Value != "" {
 			s += fmt.Sprintf(" (default: %s)", option.Value)
 		}
