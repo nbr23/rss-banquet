@@ -23,7 +23,7 @@ macos-arm64: $(SOURCES)
 	GOOS=darwin GOARCH=arm64 go build -trimpath -o dist/$(BINARY_NAME)-macos-arm64
 
 readme: $(BINARY_NAME)
-	./$(BINARY_NAME) readme > README.md 2>&1
+	@PATH=./dist:${PATH} $(BINARY_NAME) readme > README.md 2>&1
 
 clean:
 	rm -f $(BINARY_NAME) dist/$(BINARY_NAME)-*
