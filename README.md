@@ -5,11 +5,19 @@ A Modular Atom/RSS Feed Generator
 ## Usage
 
 ```
-Usage: ./rss-banquet <command> [options]
+Usage: rss-banquet <command> [options]
 Commands:
   server: run rss-banquet in server mode
   oneshot: run rss-banquet in oneshot mode to fetch a specific module's results
 ```
+
+## Global options
+
+The following environment variables can be used to configure the application:
+
+-  BANQUET_GLOBAL_LOG_LEVEL: Log level (trace, debug, info, warn, error, fatal, panic, disabled) (default: info)
+-  BANQUET_GLOBAL_USER_AGENT: User agent to use for HTTP requests
+
 
 ### Server mode
 

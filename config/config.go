@@ -9,22 +9,39 @@ import (
 const ENV_PREFIX = "BANQUET"
 
 type ConfigOption struct {
-	Name  string
-	Value string
-	Scope string
+	Name        string
+	Value       string
+	Scope       string
+	Description string
 }
 
 var CONFIG_OPTIONS = []ConfigOption{
 	{
-		Name:  "LOG_LEVEL",
-		Value: "info",
-		Scope: "GLOBAL",
+		Name:        "LOG_LEVEL",
+		Value:       "info",
+		Scope:       "GLOBAL",
+		Description: "Log level (trace, debug, info, warn, error, fatal, panic, disabled)",
 	},
 	{
-		Name:  "USER_AGENT",
-		Value: "",
-		Scope: "GLOBAL",
+		Name:        "USER_AGENT",
+		Value:       "",
+		Scope:       "GLOBAL",
+		Description: "User agent to use for HTTP requests",
 	},
+}
+
+func ReadmeText() string {
+	s := "The following environment variables can be used to configure the application:\n\n"
+	for _, option := range CONFIG_OPTIONS {
+		envVarName := strings.Join([]string{ENV_PREFIX, option.Scope, option.Name}, "_")
+
+		s += fmt.Sprintf("-  %s: %s", envVarName, option.Description)
+		if option.Value != "" {
+			s += fmt.Sprintf(" (default: %s)", option.Value)
+		}
+		s += "\n"
+	}
+	return s
 }
 
 func InitConfig() {

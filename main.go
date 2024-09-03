@@ -165,6 +165,10 @@ A Modular Atom/RSS Feed Generator
 
 	usage()
 	fmt.Println("```\n" + `
+## Global options
+
+` + config.ReadmeText() + `
+
 ### Server mode
 
 ` + "```")
