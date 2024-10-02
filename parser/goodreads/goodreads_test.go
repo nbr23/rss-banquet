@@ -19,7 +19,7 @@ func TestAmelieNothomb(t *testing.T) {
 		GoodReads{},
 		&options,
 		1,
-		`^.* - Amélie Nothomb$`,
+		`^.* - Amélie Nothomb.*$`,
 		`^Books by Amélie Nothomb - French$`,
 	)
 }
