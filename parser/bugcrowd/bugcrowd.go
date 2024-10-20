@@ -18,14 +18,14 @@ func (Bugcrowd) String() string {
 func (Bugcrowd) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "disclosures",
 				Required: false,
 				Type:     "bool",
 				Help:     "Show disclosure reports",
 				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "accepted",
 				Required: false,
 				Type:     "bool",
@@ -33,7 +33,7 @@ func (Bugcrowd) GetOptions() parser.Options {
 				Default:  "en",
 				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "title",
 				Required: false,
 				Type:     "string",
@@ -41,7 +41,7 @@ func (Bugcrowd) GetOptions() parser.Options {
 				Default:  "Bugcrowd",
 				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "description",
 				Required: false,
 				Type:     "string",
@@ -152,8 +152,14 @@ func buildItemTitle(item *bugcrowdItem) string {
 	if item.Title != "" {
 		title = fmt.Sprintf("%s | %s", title, item.Title)
 	}
-	if item.SubmissionStateText != "" {
+	if !item.Disclosed && item.SubmissionStateText != "" {
 		title = fmt.Sprintf("%s | %s", title, item.SubmissionStateText)
+	} else if item.Disclosed {
+		if item.SubmissionStateDateText != "" {
+			title = fmt.Sprintf("%s | %s", title, item.SubmissionStateDateText)
+		} else {
+			title = fmt.Sprintf("%s | Disclosed", title)
+		}
 	}
 	return title
 }
@@ -182,7 +188,7 @@ func buildItemContent(item *bugcrowdItem) string {
 	if reward != "" {
 		description = fmt.Sprintf("%sReward: %s\n", description, reward)
 	}
-	if item.SubmissionStateText != "" {
+	if !item.Disclosed && item.SubmissionStateText != "" {
 		description = fmt.Sprintf("%sState: %s\n", description, item.SubmissionStateText)
 	}
 	if item.SubmissionStateDateText != "" {
@@ -241,15 +247,15 @@ func BugcrowdParser() parser.Parser {
 
 func getCrowdStreamUrl(options *parser.Options) string {
 	filters := []string{}
-	disclosures, _ := options.Get("disclosures").(bool)
-	accepted, _ := options.Get("accepted").(bool)
-	if accepted {
+	disclosures, _ := options.Get("disclosures").(*bool)
+	accepted, _ := options.Get("accepted").(*bool)
+	if *accepted {
 		filters = append(filters, "accepted")
 	}
-	if disclosures {
+	if *disclosures {
 		filters = append(filters, "disclosures")
 	}
-	if !disclosures && !accepted {
+	if !*disclosures && !*accepted {
 		filters = []string{"accepted", "disclosures"}
 	}
 	return fmt.Sprintf("https://bugcrowd.com/crowdstream.json?page=1&filter_by=%s", strings.Join(filters, "%2C"))
