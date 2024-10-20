@@ -180,7 +180,7 @@ func (o OptionsList) Get(key string) (interface{}, error) {
 				if str, ok := option.Value.(string); ok {
 					return str == "true" || str == "1", nil
 				}
-				return (option.Value.(bool)), nil
+				return (option.Value.(*bool)), nil
 			default:
 				return option.Value, nil
 			}
