@@ -180,7 +180,7 @@ func feedAdapter(b *hackeroneFeed, options *parser.Options) (*feeds.Feed, error)
 			continue
 		}
 		if item.Report.Url == "" {
-			if options.Get("disclosed_only").(bool) {
+			if *options.Get("disclosed_only").(*bool) {
 				fmt.Printf("skipping disclosed item without a report url %v\n", item)
 				continue
 			}

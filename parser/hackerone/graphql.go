@@ -9,7 +9,7 @@ import (
 )
 
 func hacktivityFeedQuery(options *parser.Options) (*http.Response, error) {
-	disclosed_only := options.Get("disclosed_only").(bool)
+	disclosed_only := *options.Get("disclosed_only").(*bool)
 	reports_count := options.Get("reports_count").(int)
 
 	query := `query HacktivityPageQuery($querystring: String, $orderBy: HacktivityItemOrderInput, $secureOrderBy: FiltersHacktivityItemFilterOrder, $where: FiltersHacktivityItemFilterInput, $count: Int, $cursor: String) {

@@ -171,16 +171,26 @@ func (o OptionsList) Get(key string) (interface{}, error) {
 				}
 				return *(option.Value.(*int)), nil
 			case "bool":
+				var b bool
 				if option.Value == nil {
-					return false, nil
+					b = false
+					return &b, nil
 				}
 				if strp, ok := option.Value.(*string); ok {
-					return *strp == "true" || *strp == "1", nil
+					b = *strp == "true" || *strp == "1"
+					return &b, nil
 				}
 				if str, ok := option.Value.(string); ok {
-					return str == "true" || str == "1", nil
+					b = str == "true" || str == "1"
+					return &b, nil
 				}
-				return (option.Value.(*bool)), nil
+				if b, ok := option.Value.(bool); ok {
+					return &b, nil
+				}
+				if b, ok := option.Value.(*bool); ok {
+					return b, nil
+				}
+				return nil, fmt.Errorf("incorrect type for option %s", key)
 			default:
 				return option.Value, nil
 			}

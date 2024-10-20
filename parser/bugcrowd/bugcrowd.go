@@ -23,6 +23,7 @@ func (Bugcrowd) GetOptions() parser.Options {
 				Required: false,
 				Type:     "bool",
 				Help:     "Show disclosure reports",
+				Default:  "true",
 				Value:    "",
 			},
 			{
@@ -30,7 +31,7 @@ func (Bugcrowd) GetOptions() parser.Options {
 				Required: false,
 				Type:     "bool",
 				Help:     "Show accepted reports",
-				Default:  "en",
+				Default:  "false",
 				Value:    "",
 			},
 			{
