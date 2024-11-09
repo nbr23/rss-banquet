@@ -215,6 +215,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 
 			editions, err := getBookEditions(editionsUrl)
 			if err != nil {
+				log.Warn().Msg(fmt.Sprintf("unable to fetch book editions %s: %s", editionsUrl, err.Error()))
 				return
 			}
 			var earliestEdition *GRBook
@@ -223,28 +224,36 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			for _, e := range editions {
 				fmt.Println("Edition:", e.Link, e.PublicationDate, e.BookFormat, e.Language)
 				if e.Language != bookLanguage {
+					log.Debug().Msg(fmt.Sprintf("Skipping edition with language %s %s", e.Language, e.Link))
 					continue
 				}
 				if e.BookFormat == "" {
+					log.Debug().Msg(fmt.Sprintf("Skipping edition with missing format %s", e.Link))
 					continue
 				}
 				if !isAcceptedBookFormat(bookFormats, e.BookFormat) {
+					log.Debug().Msg(fmt.Sprintf("Skipping edition with format %s %s", e.BookFormat, e.Link))
 					continue
 				}
 
 				if e.PublicationDate != "" {
 					year, err := time.Parse("2006", e.PublicationDate)
 					if err != nil {
+						log.Debug().Msg(fmt.Sprintf("Skipping edition with invalid year %s %s", e.PublicationDate, e.Link))
 						continue
 					}
 					if year.Year() <= earliestEditionYear || earliestEdition == nil {
+						log.Debug().Msg(fmt.Sprintf("Found edition with year %d %s %s", year.Year(), e.BookFormat, e.Link))
 						earliestEdition = e
 						earliestEditionYear = year.Year()
 					}
+				} else {
+					log.Debug().Msg(fmt.Sprintf("Skipping edition with missing year %s", e.Link))
 				}
 			}
 
 			if earliestEdition != nil {
+				log.Debug().Msg(fmt.Sprintf("Substituting with earliest edition of book: %s", earliestEdition.Link))
 				bookLink = earliestEdition.Link
 			}
 		}
@@ -259,9 +268,11 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			return
 		}
 		if book.Language != bookLanguage {
+			log.Debug().Msg(fmt.Sprintf("Skipping book with language %s", book.Language))
 			return
 		}
 		if !isAcceptedBookFormat(bookFormats, book.BookFormat) {
+			log.Debug().Msg(fmt.Sprintf("Skipping book with format %s", book.BookFormat))
 			return
 		}
 		books = append(books, *book)

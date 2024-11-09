@@ -14,6 +14,7 @@ func TestAmelieNothomb(t *testing.T) {
 	options.Set("authorId", "40416.Am_lie_Nothomb")
 	options.Set("language", "fr")
 	options.Set("year-min", fmt.Sprintf("%d", time.Now().Year()-1))
+	options.Set("bookFormats", "paperback,hardcover,kindle")
 	testsuite.TestParseSuccess(
 		t,
 		GoodReads{},
