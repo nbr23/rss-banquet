@@ -18,29 +18,26 @@ func (HackeronePrograms) String() string {
 func (HackeronePrograms) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "results_count",
 				Required: false,
 				Type:     "int",
 				Help:     "Number of programs to display",
 				Default:  "50",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "title",
 				Required: false,
 				Type:     "string",
 				Help:     "Feed title",
 				Default:  "HackerOne Programs",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "description",
 				Required: false,
 				Type:     "string",
 				Help:     "Feed description",
 				Default:  "Hackerone Program Launch",
-				Value:    "",
 			},
 		},
 		Parser: HackeronePrograms{},

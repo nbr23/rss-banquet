@@ -24,7 +24,6 @@ func (Lego) GetOptions() parser.Options {
 				Type:     "string",
 				Help:     "category of the lego products (new, coming-soon)",
 				Default:  "new",
-				Value:    "",
 			},
 		},
 		Parser: Lego{},

@@ -18,37 +18,33 @@ func (Hackerone) String() string {
 func (Hackerone) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "disclosed_only",
 				Required: false,
 				Type:     "bool",
 				Help:     "Show only disclosed reports",
 				Default:  "true",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "reports_count",
 				Required: false,
 				Type:     "int",
 				Help:     "Number of reports to display",
 				Default:  "50",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "title",
 				Required: false,
 				Type:     "string",
 				Help:     "Feed title",
 				Default:  "HackerOne",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "description",
 				Required: false,
 				Type:     "string",
 				Help:     "Feed description",
 				Default:  "Hackerone Hacktivity",
-				Value:    "",
 			},
 		},
 		Parser: Hackerone{},

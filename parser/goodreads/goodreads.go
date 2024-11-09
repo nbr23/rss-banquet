@@ -391,14 +391,12 @@ func (GoodReads) GetOptions() parser.Options {
 				Required: false,
 				Type:     "string",
 				Help:     "Goodreads author ID",
-				Value:    "",
 			},
 			{
 				Flag:     "seriesId",
 				Required: false,
 				Type:     "string",
 				Help:     "Goodreads series ID",
-				Value:    "",
 			},
 			{
 				Flag:     "year-min",

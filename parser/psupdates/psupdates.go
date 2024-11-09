@@ -19,21 +19,19 @@ func (PSUpdates) String() string {
 func (PSUpdates) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "hardware",
 				Required: true,
 				Type:     "string",
 				Help:     "hardware of the updates",
 				Default:  "ps5",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "local",
 				Required: false,
 				Type:     "string",
 				Help:     "local of the updates",
 				Default:  "en-us",
-				Value:    "",
 			},
 		},
 		Parser: PSUpdates{},

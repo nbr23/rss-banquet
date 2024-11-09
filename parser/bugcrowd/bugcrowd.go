@@ -24,7 +24,6 @@ func (Bugcrowd) GetOptions() parser.Options {
 				Type:     "bool",
 				Help:     "Show disclosure reports",
 				Default:  "true",
-				Value:    "",
 			},
 			{
 				Flag:     "accepted",
@@ -32,7 +31,6 @@ func (Bugcrowd) GetOptions() parser.Options {
 				Type:     "bool",
 				Help:     "Show accepted reports",
 				Default:  "false",
-				Value:    "",
 			},
 			{
 				Flag:     "title",
@@ -40,7 +38,6 @@ func (Bugcrowd) GetOptions() parser.Options {
 				Type:     "string",
 				Help:     "Feed title",
 				Default:  "Bugcrowd",
-				Value:    "",
 			},
 			{
 				Flag:     "description",
@@ -48,7 +45,6 @@ func (Bugcrowd) GetOptions() parser.Options {
 				Type:     "string",
 				Help:     "Feed description",
 				Default:  "Bugcrowd Crowdstream",
-				Value:    "",
 			},
 		},
 		Parser: Bugcrowd{},

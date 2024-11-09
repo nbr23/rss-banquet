@@ -20,20 +20,18 @@ func (DockerHub) String() string {
 func (DockerHub) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "image",
 				Required: true,
 				Type:     "string",
 				Help:     "image name (eg nbr23/rss-banquet:latest)",
-				Value:    "",
 				IsPath:   true,
 			},
-			&parser.Option{
+			{
 				Flag:     "platform",
 				Required: false,
 				Type:     "string",
 				Help:     "image platform filter (linux/arm64, ...)",
-				Value:    "",
 			},
 		},
 		Parser: DockerHub{},

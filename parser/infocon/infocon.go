@@ -19,12 +19,11 @@ func (InfoCon) String() string {
 func (InfoCon) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "url",
 				Required: true,
 				Type:     "string",
 				Help:     "url of the infocon",
-				Value:    "",
 			},
 		},
 		Parser: InfoCon{},

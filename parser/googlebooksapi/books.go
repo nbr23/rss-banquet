@@ -23,20 +23,18 @@ func (Googlebooksapi) String() string {
 func (Googlebooksapi) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "author",
 				Required: true,
 				Type:     "string",
 				Help:     "author of the books",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "language",
 				Required: false,
 				Type:     "string",
 				Help:     "language of the books",
 				Default:  "en",
-				Value:    "",
 			},
 		},
 		Parser: Googlebooksapi{},

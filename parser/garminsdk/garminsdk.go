@@ -19,13 +19,12 @@ func (GarminSDK) String() string {
 func (GarminSDK) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "sdks",
 				Required: false,
 				Type:     "stringSlice",
 				Help:     "list of names of the sdks to watch: fit, connect-iq",
 				Default:  "fit",
-				Value:    "",
 			},
 		},
 		Parser: GarminSDK{},

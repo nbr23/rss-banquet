@@ -249,22 +249,20 @@ func (Googlebooks) Parse(options *parser.Options) (*feeds.Feed, error) {
 func (Googlebooks) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "author",
 				Required: false,
 				Type:     "string",
 				Help:     "author of the books",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "language",
 				Required: false,
 				Type:     "string",
 				Help:     "language of the books",
 				Default:  "en",
-				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "year-min",
 				Required: false,
 				Type:     "int",
