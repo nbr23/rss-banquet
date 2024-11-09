@@ -75,7 +75,7 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 	book.SubTitle = strings.Join(strings.Fields(titleSection.Find("h3").Text()), " ")
 	book.Title = strings.Join(strings.Fields(doc.Find("h1[data-testid='bookTitle']").Text()), " ")
 	book.Author = strings.Join(strings.Fields(doc.Find("div[class='BookPageMetadataSection__contributor']").Text()), " ")
-	book.PageFormat = strings.Join(strings.Fields(doc.Find("p[data-testid='pagesFormat']").First().Text()), " ")
+	book.BookFormat = getBookFormatFromPageFormat(strings.Join(strings.Fields(doc.Find("p[data-testid='pagesFormat']").First().Text()), " "))
 	book.Description = strings.Join(strings.Fields(doc.Find("div[class='BookPageMetadataSection__description']").First().Text()), " ")
 	book.PublicationDate = pubInfo
 	book.Link = bookLink
@@ -94,19 +94,19 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 	return &book, nil
 }
 
-func getAuthorBooksList(authorId string, bookLanguage string, yearMin int) (string, string, []GRBook, error) {
+func getAuthorBooksList(authorId string, bookLanguage string, yearMin int, bookFormats []string) (string, string, []GRBook, error) {
 	url := fmt.Sprintf("https://www.goodreads.com/author/list/%s?utf8=%%E2%%9C%%93&sort=original_publication_year", authorId)
-	books, title, err := getBooksList(url, bookLanguage, yearMin)
+	books, title, err := getBooksList(url, bookLanguage, yearMin, bookFormats)
 	return url, title, books, err
 }
 
-func getSeriesBooksList(seriesId string, bookLanguage string, yearMin int) (string, string, []GRBook, error) {
+func getSeriesBooksList(seriesId string, bookLanguage string, yearMin int, bookFormats []string) (string, string, []GRBook, error) {
 	url := fmt.Sprintf("https://www.goodreads.com/series/%s", seriesId)
-	books, title, err := getBooksList(url, bookLanguage, yearMin)
+	books, title, err := getBooksList(url, bookLanguage, yearMin, bookFormats)
 	return url, title, books, err
 }
 
-func getBooksList(url string, bookLanguage string, yearMin int) ([]GRBook, string, error) {
+func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []string) ([]GRBook, string, error) {
 	resp, err := parser.HttpGet(url)
 	if err != nil {
 		return nil, "", parser.NewInternalError("unable to fetch the page")
@@ -165,10 +165,22 @@ func getBooksList(url string, bookLanguage string, yearMin int) ([]GRBook, strin
 		if book.Language != bookLanguage {
 			return
 		}
+		if !isAcceptedBookFormat(bookFormats, book.BookFormat) {
+			return
+		}
 		books = append(books, *book)
 	})
 
 	return books, title, nil
+}
+
+func isAcceptedBookFormat(acceptedFormats []string, bookFormat string) bool {
+	for _, f := range acceptedFormats {
+		if strings.Contains(strings.ToLower(bookFormat), strings.ToLower(f)) {
+			return true
+		}
+	}
+	return false
 }
 
 type GRBookJson struct {
@@ -186,7 +198,7 @@ type GRBook struct {
 	PublicationDate string
 	Link            string
 	Author          string
-	PageFormat      string
+	BookFormat      string
 	Description     string
 	Language        string
 	CoverUrl        string
@@ -205,6 +217,7 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	seriesId := options.Get("seriesId").(string)
 	yearMin := options.Get("year-min").(int)
 	bookLanguage := options.Get("language").(string)
+	bookFormats := options.Get("bookFormats").([]string)
 
 	if bookLanguage != "" {
 		var err error
@@ -220,9 +233,9 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var title string
 
 	if authorId != "" {
-		url, title, books, err = getAuthorBooksList(authorId, bookLanguage, yearMin)
+		url, title, books, err = getAuthorBooksList(authorId, bookLanguage, yearMin, bookFormats)
 	} else if seriesId != "" {
-		url, title, books, err = getSeriesBooksList(seriesId, bookLanguage, yearMin)
+		url, title, books, err = getSeriesBooksList(seriesId, bookLanguage, yearMin, bookFormats)
 	} else {
 		return nil, parser.NewNotFoundError("authorId or seriesId required")
 	}
@@ -293,6 +306,13 @@ func (GoodReads) GetOptions() parser.Options {
 				Type:     "string",
 				Help:     "language of the book",
 				Default:  "en",
+			},
+			{
+				Flag:     "bookFormats",
+				Required: false,
+				Type:     "stringSlice",
+				Help:     "seeked formats of the book (paperback, hardcover, ebook, audiobook, etc.)",
+				Default:  "paperback,hardcover,kindle,ebook",
 			},
 		},
 		Parser: GoodReads{},
