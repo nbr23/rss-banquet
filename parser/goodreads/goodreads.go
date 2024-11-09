@@ -46,6 +46,15 @@ var EditionTypes = []string{
 	"Unknown Binding",
 }
 
+func getBookFormatFromPageFormat(pageformat string) string {
+	for _, t := range EditionTypes {
+		if strings.Contains(pageformat, t) {
+			return t
+		}
+	}
+	return ""
+}
+
 func getBookDetails(bookLink string) (*GRBook, error) {
 	resp, err := parser.HttpGet(bookLink)
 	if err != nil {
