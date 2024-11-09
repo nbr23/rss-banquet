@@ -33,7 +33,6 @@ func GetFullOptions(p Parser) *Options {
 			Type:     "string",
 			Help:     "feed output format (rss, atom, json)",
 			Default:  "rss",
-			Value:    "",
 		},
 		{
 			Flag:     "private",
@@ -41,7 +40,6 @@ func GetFullOptions(p Parser) *Options {
 			Type:     "bool",
 			Help:     "private feed",
 			Default:  "false",
-			Value:    false,
 		},
 		{
 			Flag:     "route",
@@ -49,7 +47,6 @@ func GetFullOptions(p Parser) *Options {
 			Type:     "string",
 			Help:     "route to expose the feed",
 			Default:  p.String(),
-			Value:    p.String(),
 			IsStatic: true,
 		},
 	}, opts.OptionsList...)
@@ -141,74 +138,86 @@ type Options struct {
 
 type OptionsList []*Option
 
-func (o OptionsList) Get(key string) (interface{}, error) {
+func (o OptionsList) Get(key string) (interface{}, bool, error) {
 	for _, option := range o {
 		if option.Flag == key {
 			switch option.Type {
 			case "string":
 				if str, ok := option.Value.(string); ok {
-					return str, nil
+					return str, false, nil
 				}
-				return *(option.Value.(*string)), nil
+				if str, ok := option.Value.(*string); ok {
+					return *str, false, nil
+				}
+				return option.Default, true, nil
 			case "stringSlice":
 				if str, ok := option.Value.(string); ok {
-					return strings.Split(str, ","), nil
+					return strings.Split(str, ","), false, nil
 				}
-				return strings.Split(*(option.Value.(*string)), ","), nil
+				if str, ok := option.Value.(*string); ok {
+					return strings.Split(*str, ","), false, nil
+				}
+				return strings.Split(option.Default, ","), true, nil
 			case "int":
 				if str, ok := option.Value.(string); ok {
 					i, err := strconv.Atoi(str)
-					if err != nil {
-						return 0, nil
+					if err == nil {
+						return i, false, nil
 					}
-					return i, nil
 				}
 				if stri, ok := option.Value.(int); ok {
-					return stri, nil
+					return stri, false, nil
 				}
-				if option.Value == nil {
-					return nil, fmt.Errorf("option not found")
+				if stri, ok := option.Value.(*int); ok {
+					return *stri, false, nil
 				}
-				return *(option.Value.(*int)), nil
+				i, err := strconv.Atoi(option.Default)
+				if err != nil {
+					log.Error().Msgf("error parsing default value for option %s: %s", key, err)
+					return 0, true, err
+				}
+				return i, true, nil
 			case "bool":
 				var b bool
-				if option.Value == nil {
-					b = false
-					return &b, nil
-				}
 				if strp, ok := option.Value.(*string); ok {
 					b = *strp == "true" || *strp == "1"
-					return &b, nil
+					return &b, false, nil
 				}
 				if str, ok := option.Value.(string); ok {
 					b = str == "true" || str == "1"
-					return &b, nil
+					return &b, false, nil
 				}
 				if b, ok := option.Value.(bool); ok {
-					return &b, nil
+					return &b, false, nil
 				}
 				if b, ok := option.Value.(*bool); ok {
-					return b, nil
+					return b, false, nil
 				}
-				return nil, fmt.Errorf("incorrect type for option %s", key)
+				b = option.Default == "true" || option.Default == "1"
+				return &b, true, nil
 			default:
-				return option.Value, nil
+				return nil, true, fmt.Errorf("unknown type: %s", option.Type)
 			}
 		}
 	}
-	return nil, fmt.Errorf("option not found")
+	return nil, true, fmt.Errorf("option not found")
 }
 
 func (o *Options) Get(key string) interface{} {
-	v, err := o.OptionsList.Get(key)
+	v, _ := o.GeWithDefaultFlag(key)
+	return v
+}
+
+func (o *Options) GeWithDefaultFlag(key string) (interface{}, bool) {
+	v, isDefault, err := o.OptionsList.Get(key)
 	if err == nil {
-		return v
+		return v, isDefault
 	}
-	v, err = o.Parser.GetOptions().OptionsList.Get(key)
+	v, isDefault, err = o.Parser.GetOptions().OptionsList.Get(key)
 	if err == nil {
-		return v
+		return v, isDefault
 	}
-	return nil
+	return nil, true
 }
 
 func (o *Options) Set(key string, value string) {
@@ -265,9 +274,7 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 					option.Value = c.Param(option.Flag)
 				}
 			} else {
-				if c.Query(option.Flag) == "" {
-					option.Value = option.Default
-				} else {
+				if c.Query(option.Flag) != "" {
 					option.Value = c.Query(option.Flag)
 				}
 			}
