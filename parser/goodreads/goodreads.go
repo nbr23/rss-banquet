@@ -25,6 +25,27 @@ func GoodReadsParser() parser.Parser {
 	return GoodReads{}
 }
 
+var EditionTypes = []string{
+	"Paperback",
+	"Hardcover",
+	"Mass Market Paperback",
+	"Kindle Edition",
+	"Nook",
+	"ebook",
+	"Library Binding",
+	"Audiobook",
+	"Audio CD",
+	"Audio Cassette",
+	"Audible Audio",
+	"CD-ROM",
+	"MP3 CD",
+	"Board book",
+	"Leather Bound",
+	"Unbound",
+	"Spiral-bound",
+	"Unknown Binding",
+}
+
 func getBookDetails(bookLink string) (*GRBook, error) {
 	resp, err := parser.HttpGet(bookLink)
 	if err != nil {
