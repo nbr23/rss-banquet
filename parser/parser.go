@@ -236,17 +236,6 @@ func (o Options) GetHelp() string {
 	return help
 }
 
-func (o *Options) ParseYaml(m map[string]any) error {
-	for _, option := range o.OptionsList {
-		if v, ok := m[option.Flag]; ok {
-			option.Value = v
-		} else {
-			option.Value = option.Default
-		}
-	}
-	return nil
-}
-
 func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 	urlPath := []string{o.Get("route").(string)}
 	for _, option := range o.OptionsList {
