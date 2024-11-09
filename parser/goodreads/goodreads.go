@@ -202,9 +202,51 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 		} else {
 			pubYear = expectedRe.FindStringSubmatch(s.Text())[1]
 		}
-
 		if pubYear == "" {
 			return
+		}
+
+		var editionsUrl string
+		s.Find("a[href^='/work/editions/']").Each(func(i int, s *goquery.Selection) {
+			editionsUrl = s.AttrOr("href", "")
+		})
+		if editionsUrl != "" {
+			editionsUrl = fmt.Sprintf("https://www.goodreads.com%s", editionsUrl)
+
+			editions, err := getBookEditions(editionsUrl)
+			if err != nil {
+				return
+			}
+			var earliestEdition *GRBook
+			var earliestEditionYear int
+
+			for _, e := range editions {
+				fmt.Println("Edition:", e.Link, e.PublicationDate, e.BookFormat, e.Language)
+				if e.Language != bookLanguage {
+					continue
+				}
+				if e.BookFormat == "" {
+					continue
+				}
+				if !isAcceptedBookFormat(bookFormats, e.BookFormat) {
+					continue
+				}
+
+				if e.PublicationDate != "" {
+					year, err := time.Parse("2006", e.PublicationDate)
+					if err != nil {
+						continue
+					}
+					if year.Year() <= earliestEditionYear || earliestEdition == nil {
+						earliestEdition = e
+						earliestEditionYear = year.Year()
+					}
+				}
+			}
+
+			if earliestEdition != nil {
+				bookLink = earliestEdition.Link
+			}
 		}
 
 		year, err := time.Parse("2006", pubYear)
