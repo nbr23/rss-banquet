@@ -46,6 +46,60 @@ var EditionTypes = []string{
 	"Unknown Binding",
 }
 
+// Grabs rudimentary book details from the editions page
+func getBookEditions(editionsUrl string) ([]*GRBook, error) {
+	resp, err := parser.HttpGet(editionsUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	books := []*GRBook{}
+	var pubRe = regexp.MustCompile(`Published[\s]+[A-Za-z\s0-9]*(\d{4})`)
+	var expectedRe = regexp.MustCompile(`expected[\s]+publication[\s]+(\d{4})`)
+
+	doc.Find("div[class='editionData']").Each(func(i int, s *goquery.Selection) {
+		book := GRBook{}
+		book.Link = s.Find("a.bookTitle").First().AttrOr("href", "")
+		if book.Link == "" {
+			return
+		}
+		book.Link = fmt.Sprintf("https://www.goodreads.com%s", book.Link)
+
+		s.Find("div[class='dataRow']").Each(func(i int, s *goquery.Selection) {
+			dataTitle := s.Find("div[class='dataTitle']").First().Text()
+			if dataTitle != "" {
+				if strings.Contains(dataTitle, "Edition language:") {
+					book.Language = strings.TrimSpace(s.Find("div[class='dataValue']").First().Text())
+					if book.Language == "" {
+						book.Language = "English"
+					}
+				}
+			} else {
+				bookFormat := getBookFormatFromPageFormat(strings.Join(strings.Fields(s.Text()), " "))
+				if bookFormat != "" {
+					book.BookFormat = bookFormat
+				}
+
+				published := pubRe.MatchString(s.Text())
+				if published {
+					book.PublicationDate = pubRe.FindStringSubmatch(s.Text())[1]
+				} else if expectedRe.MatchString(s.Text()) {
+					book.PublicationDate = expectedRe.FindStringSubmatch(s.Text())[1]
+				}
+			}
+		})
+		books = append(books, &book)
+	})
+	return books, nil
+}
+
 func getBookFormatFromPageFormat(pageformat string) string {
 	for _, t := range EditionTypes {
 		if strings.Contains(pageformat, t) {
