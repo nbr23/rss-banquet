@@ -183,6 +183,14 @@ type GRBook struct {
 	CoverUrl        string
 }
 
+func getBookLanguage(bookLanguage string) (string, error) {
+	tag, err := language.Parse(bookLanguage)
+	if err != nil {
+		return "", parser.NewNotFoundError("language not found")
+	}
+	return display.English.Languages().Name(tag), nil
+}
+
 func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	authorId := options.Get("authorId").(string)
 	seriesId := options.Get("seriesId").(string)
@@ -190,11 +198,11 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	bookLanguage := options.Get("language").(string)
 
 	if bookLanguage != "" {
-		tag, err := language.Parse(bookLanguage)
+		var err error
+		bookLanguage, err = getBookLanguage(bookLanguage)
 		if err != nil {
-			return nil, parser.NewNotFoundError("language not found")
+			return nil, err
 		}
-		bookLanguage = display.English.Languages().Name(tag)
 	}
 
 	var books []GRBook
@@ -249,28 +257,28 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 func (GoodReads) GetOptions() parser.Options {
 	return parser.Options{
 		OptionsList: []*parser.Option{
-			&parser.Option{
+			{
 				Flag:     "authorId",
 				Required: false,
 				Type:     "string",
 				Help:     "Goodreads author ID",
 				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "seriesId",
 				Required: false,
 				Type:     "string",
 				Help:     "Goodreads series ID",
 				Value:    "",
 			},
-			&parser.Option{
+			{
 				Flag:     "year-min",
 				Required: false,
 				Type:     "int",
 				Help:     "minimum year of publication",
 				Default:  fmt.Sprintf("%d", time.Now().Year()-1),
 			},
-			&parser.Option{
+			{
 				Flag:     "language",
 				Required: false,
 				Type:     "string",
