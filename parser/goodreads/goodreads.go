@@ -222,7 +222,6 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			var earliestEditionYear int
 
 			for _, e := range editions {
-				fmt.Println("Edition:", e.Link, e.PublicationDate, e.BookFormat, e.Language)
 				if e.Language != bookLanguage {
 					log.Debug().Msg(fmt.Sprintf("Skipping edition with language %s %s", e.Language, e.Link))
 					continue
