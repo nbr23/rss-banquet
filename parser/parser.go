@@ -131,6 +131,24 @@ type Option struct {
 	IsStatic  bool // static options are exposed through the API
 }
 
+func (o Options) GetOptionsCopy() OptionsList {
+	var opts []*Option
+	for _, option := range o.OptionsList {
+		opts = append(opts, &Option{
+			Flag:      option.Flag,
+			Value:     option.Value,
+			Required:  option.Required,
+			Default:   option.Default,
+			Help:      option.Help,
+			ShortFlag: option.ShortFlag,
+			Type:      option.Type,
+			IsPath:    option.IsPath,
+			IsStatic:  option.IsStatic,
+		})
+	}
+	return opts
+}
+
 type Options struct {
 	OptionsList OptionsList
 	Parser      Parser
@@ -253,7 +271,8 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 	route := fmt.Sprintf("/%s", strings.Join(urlPath, "/"))
 
 	return g.GET(route, func(c *gin.Context) {
-		for _, option := range o.OptionsList {
+		options := o.GetOptionsCopy()
+		for _, option := range options {
 			if option.Required {
 				if c.Param(option.Flag) == "" {
 					log.Error().Msgf("missing required parameter: %s", option.Flag)
@@ -268,7 +287,7 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 				}
 			}
 		}
-		feed, err := p.Parse(o)
+		feed, err := p.Parse(&Options{OptionsList: options, Parser: p})
 		if err != nil {
 			switch err.(type) {
 			case *NotFoundError:
