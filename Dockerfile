@@ -28,7 +28,7 @@ ENV GIN_MODE=release
 
 EXPOSE ${PORT}
 
-CMD ["rss-banquet", "server", "-p", "${PORT}"]
+CMD rss-banquet server -p ${PORT}
 
 # Development
 
