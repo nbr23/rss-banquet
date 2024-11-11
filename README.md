@@ -48,8 +48,8 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - private: private feed (default: false)
 	 - route: route to expose the feed (default: bugcrowd)
-	 - disclosures: Show disclosure reports (default: )
-	 - accepted: Show accepted reports (default: en)
+	 - disclosures: Show disclosure reports (default: true)
+	 - accepted: Show accepted reports (default: false)
 	 - title: Feed title (default: Bugcrowd)
 	 - description: Feed description (default: Bugcrowd Crowdstream)
 
@@ -79,6 +79,7 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - seriesId: Goodreads series ID (default: )
 	 - year-min: minimum year of publication (default: 2023)
 	 - language: language of the book (default: en)
+	 - bookFormats: seeked formats of the book (paperback, hardcover, ebook, audiobook, etc.) (default: paperback,hardcover,kindle,ebook)
 
   - googlebooksapi
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
