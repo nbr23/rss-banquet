@@ -193,7 +193,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 		}
 		published := pubRe.MatchString(s.Text())
 		if !published && !expectedRe.MatchString(s.Text()) {
-			log.Warn().Msg(fmt.Sprintf("Unexpected publishing info for %s: %s", title, s.Text()))
+			log.Warn().Msg(fmt.Sprintf("Unexpected publishing info for %s - %s", title, bookLink))
 			return
 		}
 		var pubYear string
@@ -354,7 +354,7 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	for _, book := range books {
 		var item feeds.Item
 		item.Title = fmt.Sprintf("%s - %s", book.Title, book.Author)
-		item.Content = fmt.Sprintf("%s by %s published on %s", book.Title, book.Author, book.PublicationDate)
+		item.Content = fmt.Sprintf("%s by %s - %s", book.Title, book.Author, book.PublicationDate)
 		item.Description = item.Content
 		item.Link = &feeds.Link{Href: book.Link}
 		item.Id = fmt.Sprintf("%s|%s", book.Link, book.PublicationDate)
