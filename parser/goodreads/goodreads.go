@@ -205,6 +205,10 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 		if pubYear == "" {
 			return
 		}
+		year, err := time.Parse("2006", pubYear)
+		if err != nil || year.Year() < yearMin {
+			return
+		}
 
 		var editionsUrl string
 		s.Find("a[href^='/work/editions/']").Each(func(i int, s *goquery.Selection) {
@@ -257,10 +261,6 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			}
 		}
 
-		year, err := time.Parse("2006", pubYear)
-		if err != nil || year.Year() < yearMin {
-			return
-		}
 		book, err := getBookDetails(bookLink)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("unable to fetch book details: %s", err.Error()))
