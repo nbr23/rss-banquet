@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/rss-banquet/parser"
@@ -125,6 +127,10 @@ func feedAdapter(items []legoItem, options *parser.Options) (*feeds.Feed, error)
 	}
 
 	for _, item := range items {
+		if item.ProductCode == "" && item.Name == "" {
+			log.Warn().Msgf("Skipping item with empty product code and name %v", item)
+			continue
+		}
 		newItem := feeds.Item{
 			Title:       buildItemTitle(&item),
 			Content:     buildItemContent(&item, true),
