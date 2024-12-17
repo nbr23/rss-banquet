@@ -203,6 +203,9 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 		l.AgeRange = s.Find("span[data-test=product-leaf-age-range-label]").First().Text()
 		l.PieceCount = s.Find("span[data-test=product-leaf-piece-count-label]").First().Text()
 		l.AvailabilityText = s.Find("div[data-test=product-leaf-action-row]").First().Find("button[data-test^=add-to-cart]").Text()
+		if l.AvailabilityText == "" {
+			l.AvailabilityText = s.Find("div[data-test=product-leaf-action-row]").First().Find("a[data-test$=-coming-soon]").Text()
+		}
 		if l.AvailabilityText == "Add to Bag" {
 			l.AvailabilityText = "Available now"
 		}
