@@ -87,6 +87,17 @@ func GetRemoteFileLastModified(url string) (time.Time, error) {
 	return lastModified, nil
 }
 
+func FeedToText(f *feeds.Feed) *string {
+	var md string
+	md += fmt.Sprintf("# %s | %s\n", f.Title, f.Link.Href)
+	for _, i := range f.Items {
+		md += fmt.Sprintf("- %s\n", i.Title)
+		md += fmt.Sprintf("\t%s\n", i.Link.Href)
+		md += fmt.Sprintf("\t%s\n", strings.TrimSpace(strings.ReplaceAll(i.Description, "\n", "\n\t")))
+	}
+	return &md
+}
+
 func ServeFeed(c *gin.Context, f *feeds.Feed) {
 	switch c.Query("feedFormat") {
 	case "json":
@@ -105,6 +116,10 @@ func ServeFeed(c *gin.Context, f *feeds.Feed) {
 		}
 		atom = style.InjectAtomStyle(atom)
 		c.Data(200, "application/xml", []byte(atom))
+		return
+	case "text":
+		text := FeedToText(f)
+		c.Data(200, "text/plain", []byte(*text))
 		return
 	// case "rss":
 	default:
