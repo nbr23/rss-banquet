@@ -124,6 +124,7 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 
 	book := GRBook{}
 
+	preReleaseInfo := doc.Find("div[class='PreReleaseDetails']").First().Text()
 	pubInfo := doc.Find("p[data-testid='publicationInfo']").First().Text()
 	titleSection := doc.Find("div[class='BookPageTitleSection__title']").First()
 	book.SubTitle = strings.Join(strings.Fields(titleSection.Find("h3").Text()), " ")
@@ -131,6 +132,9 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 	book.Author = strings.Join(strings.Fields(doc.Find("div[class='BookPageMetadataSection__contributor']").Text()), " ")
 	book.BookFormat = getBookFormatFromPageFormat(strings.Join(strings.Fields(doc.Find("p[data-testid='pagesFormat']").First().Text()), " "))
 	book.Description = strings.Join(strings.Fields(doc.Find("div[class='BookPageMetadataSection__description']").First().Text()), " ")
+	if preReleaseInfo != "" {
+		pubInfo = preReleaseInfo
+	}
 	book.PublicationDate = pubInfo
 	book.Link = bookLink
 	doc.Find("script[type='application/ld+json']").Each(func(i int, s *goquery.Selection) {
@@ -318,6 +322,22 @@ func getBookLanguage(bookLanguage string) (string, error) {
 	return display.English.Languages().Name(tag), nil
 }
 
+func getDateFromBook(book *GRBook) time.Time {
+	if book.PublicationDate == "" {
+		return time.Now()
+	}
+	pubDateSplit := strings.Split(book.PublicationDate, " ")
+	if len(pubDateSplit) < 3 {
+		return time.Now()
+	}
+
+	pubDate, err := time.Parse("2 Jan 06", fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
+	if err != nil {
+		return time.Now()
+	}
+	return pubDate
+}
+
 func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 	authorId := options.Get("authorId").(string)
 	seriesId := options.Get("seriesId").(string)
@@ -358,8 +378,8 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 		item.Description = item.Content
 		item.Link = &feeds.Link{Href: book.Link}
 		item.Id = fmt.Sprintf("%s|%s", book.Link, book.PublicationDate)
-		item.Created = time.Now()
-		item.Updated = time.Now()
+		item.Created = getDateFromBook(&book)
+		item.Updated = getDateFromBook(&book)
 		feed.Items = append(feed.Items, &item)
 
 		if book.CoverUrl != "" {
