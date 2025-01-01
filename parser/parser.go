@@ -87,15 +87,15 @@ func GetRemoteFileLastModified(url string) (time.Time, error) {
 	return lastModified, nil
 }
 
-func FeedToText(f *feeds.Feed) *string {
-	var md string
-	md += fmt.Sprintf("# %s | %s\n", f.Title, f.Link.Href)
+func FeedToText(f *feeds.Feed) string {
+	var txt string
+	txt += fmt.Sprintf("# %s | %s\n", f.Title, f.Link.Href)
 	for _, i := range f.Items {
-		md += fmt.Sprintf("- %s\n", i.Title)
-		md += fmt.Sprintf("\t%s\n", i.Link.Href)
-		md += fmt.Sprintf("\t%s\n", strings.TrimSpace(strings.ReplaceAll(i.Description, "\n", "\n\t")))
+		txt += fmt.Sprintf("- %s\n", i.Title)
+		txt += fmt.Sprintf("\t%s\n", i.Link.Href)
+		txt += fmt.Sprintf("\t%s\n", strings.TrimSpace(strings.ReplaceAll(i.Description, "\n", "\n\t")))
 	}
-	return &md
+	return strings.TrimSpace(txt)
 }
 
 func ServeFeed(c *gin.Context, f *feeds.Feed) {
@@ -119,7 +119,7 @@ func ServeFeed(c *gin.Context, f *feeds.Feed) {
 		return
 	case "text":
 		text := FeedToText(f)
-		c.Data(200, "text/plain", []byte(*text))
+		c.Data(200, "text/plain", []byte(text))
 		return
 	// case "rss":
 	default:
