@@ -139,7 +139,7 @@ func runOneShot(args []string) {
 	case "json":
 		s, err = res.ToJSON()
 	case "text":
-		s = *parser.FeedToText(res)
+		s = parser.FeedToText(res)
 	default:
 		s = fmt.Sprintf("%v", res)
 	}
