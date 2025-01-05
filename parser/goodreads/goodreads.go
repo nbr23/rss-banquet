@@ -324,17 +324,27 @@ func getBookLanguage(bookLanguage string) (string, error) {
 
 func getDateFromBook(book *GRBook) time.Time {
 	if book.PublicationDate == "" {
+		log.Warn().Msg("No publication date found")
 		return time.Now()
 	}
 	pubDateSplit := strings.Split(book.PublicationDate, " ")
 	if len(pubDateSplit) < 3 {
+		log.Warn().Msg(fmt.Sprint("Invalid publication date, defaulting to now", book.PublicationDate))
 		return time.Now()
 	}
 
 	pubDate, err := time.Parse("2 Jan 06", fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
+	if err == nil {
+		return pubDate
+	}
+	log.Warn().Msg(fmt.Sprintf("Invalid publication date, attempting different format %s", err.Error()))
+
+	pubDate, err = time.Parse("Jan 2, 2006", fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
 	if err != nil {
+		log.Warn().Msg(fmt.Sprintf("Invalid publication date, defaulting to now: %s", err.Error()))
 		return time.Now()
 	}
+
 	return pubDate
 }
 
