@@ -56,6 +56,7 @@ func responseLogger() gin.HandlerFunc {
 
 func runServer(args []string) {
 	var f runServerFlags
+	var moduleNames []string
 
 	flags := getRunServerFlags(&f)
 	flags.Parse(args)
@@ -79,8 +80,23 @@ func runServer(args []string) {
 
 	for _, module := range Modules {
 		p := module()
+		moduleNames = append(moduleNames, p.String())
 		parser.Route(r, p, parser.GetFullOptions(p))
+		r.GET(fmt.Sprintf("/api/help/%s", p.String()), func(c *gin.Context) {
+			opts := parser.GetFullOptions(p).OptionsList
+			c.JSON(200, map[string]any{
+				"options": opts,
+				"status":  "ok",
+			})
+		})
 	}
+
+	r.GET("/api/modules/list", func(c *gin.Context) {
+		c.JSON(200, map[string]any{
+			"modules": moduleNames,
+		})
+	})
+
 	r.GET("/rss-style.xsl", func(c *gin.Context) {
 		c.Header("Content-Type", "text/xsl")
 		c.String(200, style.RssStyle)
