@@ -42,7 +42,7 @@ func parseLatestVersion(s *goquery.Selection) (string, error) {
 	var latestVersion string
 	var err error
 
-	r := regexp.MustCompile(`[Vv]ersion:?[ ]*([^ ]+)`)
+	r := regexp.MustCompile(`[Vv]ersion[ ]*:?[ ]*([^ ]+)`)
 	matches := r.FindStringSubmatch(s.Text())
 
 	if (matches == nil) || (len(matches) != 2) {
