@@ -283,7 +283,7 @@ func Route(g *gin.Engine, p Parser, o *Options) gin.IRoutes {
 			urlPath = append(urlPath, fmt.Sprintf("%s%s", prefix, option.Flag))
 		}
 	}
-	route := fmt.Sprintf("/%s", strings.Join(urlPath, "/"))
+	route := fmt.Sprintf("/feed/%s", strings.Join(urlPath, "/"))
 
 	return g.GET(route, func(c *gin.Context) {
 		options := o.GetOptionsCopy()
