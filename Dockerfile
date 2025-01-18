@@ -4,6 +4,7 @@ WORKDIR /build
 
 RUN apk add gcc musl-dev
 COPY go* *.go /build/
+COPY static static
 COPY parser parser
 COPY style style
 COPY utils utils
