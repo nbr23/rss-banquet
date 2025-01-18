@@ -22,7 +22,7 @@ type runServerFlags struct {
 func getRunServerFlags(f *runServerFlags) *flag.FlagSet {
 	flags := flag.NewFlagSet("server", flag.ExitOnError)
 	flags.BoolVar(&f.showHelp, "h", false, "Show help message")
-	flags.StringVar(&f.serverPort, "p", config.GetConfigOption("BANQUET_SERVER_PORT"), "Server port")
+	flags.StringVar(&f.serverPort, "p", config.GetConfigOption("BANQUET_SERVER_PORT"), "Server port (default: 8080)")
 	return flags
 }
 
@@ -60,6 +60,9 @@ func runServer(args []string) {
 
 	flags := getRunServerFlags(&f)
 	flags.Parse(args)
+	if f.serverPort == "" {
+		f.serverPort = "8080"
+	}
 
 	if f.showHelp {
 		flags.Usage()
