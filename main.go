@@ -1,8 +1,10 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -13,6 +15,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+//go:embed static/*
+var staticFiles embed.FS
 
 type runServerFlags struct {
 	showHelp   bool
@@ -98,6 +103,20 @@ func runServer(args []string) {
 		c.JSON(200, map[string]any{
 			"modules": moduleNames,
 		})
+	})
+
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusTemporaryRedirect, "/html/feed_url_generator")
+	})
+
+	r.GET("/html/feed_url_generator", func(c *gin.Context) {
+		filepath := c.Param("filepath")
+		data, err := staticFiles.ReadFile("static/feed_url_generator.html" + filepath)
+		if err != nil {
+			c.String(http.StatusNotFound, "File not found")
+			return
+		}
+		c.Data(http.StatusOK, "text/html", data)
 	})
 
 	r.GET("/rss-style.xsl", func(c *gin.Context) {
