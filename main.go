@@ -75,7 +75,7 @@ func runServer(args []string) {
 	r.Use(responseLogger())
 	r.Use(gin.Recovery())
 
-	r.GET("/healthcheck", func(c *gin.Context) {
+	r.GET("/api/healthcheck", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": "ok",
 		})
