@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed Url Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .help-text {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        .required {
+            color: red;
+            margin-left: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #moduleSelector {
+            margin-bottom: 2rem;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        #configFormContainer {
+            display: none;
+        }
+        #urlDisplay {
+            margin-top: 20px;
+            display: none;
+        }
+        #urlInput {
+            font-family: monospace;
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Feed Url Generator</h1>
+    
+    <div id="moduleSelector" class="form-group">
+        <label for="moduleSelect">Select Module:</label>
+        <select id="moduleSelect"></select>
+    </div>
+
+    <div id="configFormContainer">
+        <form id="configForm"></form>
+    </div>
+    
+    <div id="urlDisplay" class="form-group">
+        <label for="urlInput">Generated URL:</label>
+        <input type="text" id="urlInput" readonly>
+    </div>
+    
+
+    <script>
+        let moduleOptions = {};
+        async function fetchModules() {
+            try {
+                const response = await fetch('/api/modules/list');
+                const data = await response.json();
+                return data?.modules?.sort();
+            } catch (error) {
+                console.error('Error fetching modules:', error);
+                throw error;
+            }
+        }
+
+        async function fetchModuleOptions(moduleId) {
+            try {
+                const response = await fetch(`/api/help/${moduleId}`);
+                const data = await response.json();
+                return data.options;
+            } catch (error) {
+                console.error('Error fetching module options:', error);
+                throw error;
+            }
+        }
+
+        function createFormField(option) {
+            const formGroup = document.createElement('div');
+            formGroup.className = 'form-group';
+
+            const label = document.createElement('label');
+            label.htmlFor = option.flag;
+            label.textContent = option.flag;
+            if (option.required) {
+                const required = document.createElement('span');
+                required.className = 'required';
+                required.textContent = '*';
+                label.appendChild(required);
+            }
+
+            let input;
+            if (option.type === 'bool') {
+                input = document.createElement('select');
+                ['true', 'false'].forEach(value => {
+                    const opt = document.createElement('option');
+                    opt.value = value;
+                    opt.textContent = value;
+                    if (value === option.default) {
+                        opt.selected = true;
+                    }
+                    input.appendChild(opt);
+                });
+            } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.value = option.default;
+            }
+
+            input.id = option.flag;
+            input.name = option.flag;
+            if (option.required) {
+                input.required = true;
+            }
+
+            const helpText = document.createElement('div');
+            helpText.className = 'help-text';
+            helpText.textContent = option.help;
+
+            formGroup.appendChild(label);
+            formGroup.appendChild(input);
+            formGroup.appendChild(helpText);
+
+            return formGroup;
+        }
+
+        async function initializeModuleForm(moduleId) {
+            const formContainer = document.getElementById('configFormContainer');
+            const form = document.getElementById('configForm');
+            form.innerHTML = '';
+
+            try {
+                options = await fetchModuleOptions(moduleId);
+                
+                options.forEach(option => {
+                    moduleOptions[option.flag] = option;
+                    const field = createFormField(option);
+                    form.appendChild(field);
+                });
+
+                const submitButton = document.createElement('button');
+                submitButton.type = 'submit';
+                submitButton.textContent = 'Get URL';
+                form.appendChild(submitButton);
+
+                formContainer.style.display = 'block';
+            } catch (error) {
+                form.innerHTML = '<p class="error">Error loading module options. Please try again.</p>';
+            }
+        }
+
+        function handleModuleChange(event) {
+            const moduleId = event.target.value;
+            if (moduleId) {
+                initializeModuleForm(moduleId);
+                document.getElementById('urlDisplay').style.display = 'none';
+            } else {
+                const formContainer = document.getElementById('configFormContainer');
+                formContainer.style.display = 'none';
+            }
+        }
+
+        function generateURL(moduleId, options) {
+            const urlParts = [window.location.origin, 'feed', options.route || moduleId];
+            const params = new URLSearchParams();
+            const skipFlags = ['route'];
+            
+            for (const [key, value] of Object.entries(options)) {
+                if (value !== '' && !skipFlags.includes(key)) {
+                    console.log(moduleOptions);
+                    if (moduleOptions[key].required) {
+                        urlParts.push(value);
+                    } else {
+                        params.append(key, value);
+                    }
+                }
+            }
+            
+            const queryString = params.toString();
+            return queryString ? `${urlParts.join('/')}?${queryString}` : baseUrl;
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            const moduleId = document.getElementById('moduleSelect').value;
+            
+            const url = generateURL(moduleId, data);
+            const urlInput = document.getElementById('urlInput');
+            const urlDisplay = document.getElementById('urlDisplay');
+            
+            urlInput.value = url;
+            urlDisplay.style.display = 'block';
+        }
+
+        async function initializePage() {
+            const moduleSelect = document.getElementById('moduleSelect');
+            const configForm = document.getElementById('configForm');
+            
+            try {
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Select a module...';
+                moduleSelect.appendChild(placeholder);
+
+                const modules = await fetchModules();
+                modules.forEach(module => {
+                    const option = document.createElement('option');
+                    option.value = module;
+                    option.textContent = module;
+                    moduleSelect.appendChild(option);
+                });
+                moduleSelect.addEventListener('change', handleModuleChange);
+                configForm.addEventListener('submit', handleSubmit);
+            } catch (error) {
+                moduleSelect.innerHTML = '<option>Error loading modules</option>';
+                moduleSelect.disabled = true;
+            }
+        }
+        initializePage();
+    </script>
+</body>
+</html>
