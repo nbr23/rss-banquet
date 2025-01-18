@@ -128,15 +128,15 @@ func ServeFeed(c *gin.Context, f *feeds.Feed) {
 }
 
 type Option struct {
-	Flag      string
-	Value     interface{}
-	Required  bool
-	Default   string
-	Help      string
-	ShortFlag string
-	Type      string
-	IsPath    bool
-	IsStatic  bool // static options are exposed through the API
+	Flag      string      `json:"flag"`
+	Value     interface{} `json:"-"`
+	Required  bool        `json:"required"`
+	Default   string      `json:"default"`
+	Help      string      `json:"help"`
+	ShortFlag string      `json:"shortFlag"`
+	Type      string      `json:"type"`
+	IsPath    bool        `json:"isPath"`
+	IsStatic  bool        `json:"isStatic"` // static options are exposed through the API
 }
 
 func (o Options) GetOptionsCopy() OptionsList {
