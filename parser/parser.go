@@ -35,13 +35,6 @@ func GetFullOptions(p Parser) *Options {
 			Default:  "rss",
 		},
 		{
-			Flag:     "private",
-			Required: false,
-			Type:     "bool",
-			Help:     "private feed",
-			Default:  "false",
-		},
-		{
 			Flag:     "route",
 			Required: false,
 			Type:     "string",
