@@ -204,7 +204,9 @@
                     if (moduleOptions[key].required) {
                         urlParts.push(value);
                     } else {
-                        params.append(key, value);
+                        if (value !== moduleOptions[key].default) {
+                            params.append(key, value);
+                        }
                     }
                 }
             }
