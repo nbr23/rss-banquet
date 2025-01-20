@@ -212,7 +212,7 @@
             }
             
             const queryString = params.toString();
-            return queryString ? `${urlParts.join('/')}?${queryString}` : baseUrl;
+            return queryString ? `${urlParts.join('/')}?${queryString}` : urlParts.join('/');
         }
 
         function handleSubmit(event) {
