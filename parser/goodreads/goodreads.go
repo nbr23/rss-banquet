@@ -61,7 +61,7 @@ func getBookEditions(editionsUrl string) ([]*GRBook, error) {
 	}
 
 	books := []*GRBook{}
-	var pubRe = regexp.MustCompile(`Published[\s]+[A-Za-z\s0-9]*(\d{4})`)
+	var pubRe = regexp.MustCompile(`Published[\s]+([A-Za-z\s0-9]*\d{4})`)
 	var expectedRe = regexp.MustCompile(`expected[\s]+publication[\s]+(\d{4})`)
 
 	doc.Find("div[class='editionData']").Each(func(i int, s *goquery.Selection) {
@@ -109,8 +109,8 @@ func getBookFormatFromPageFormat(pageformat string) string {
 	return ""
 }
 
-func getBookDetails(bookLink string) (*GRBook, error) {
-	resp, err := parser.HttpGet(bookLink)
+func getBookDetails(book *GRBook) (*GRBook, error) {
+	resp, err := parser.HttpGet(book.Link)
 	if err != nil {
 		return nil, err
 	}
@@ -122,10 +122,7 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 		return nil, err
 	}
 
-	book := GRBook{}
-
 	preReleaseInfo := doc.Find("div[class='PreReleaseDetails']").First().Text()
-	pubInfo := doc.Find("p[data-testid='publicationInfo']").First().Text()
 	titleSection := doc.Find("div[class='BookPageTitleSection__title']").First()
 	book.SubTitle = strings.Join(strings.Fields(titleSection.Find("h3").Text()), " ")
 	book.Title = strings.Join(strings.Fields(doc.Find("h1[data-testid='bookTitle']").Text()), " ")
@@ -133,10 +130,10 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 	book.BookFormat = getBookFormatFromPageFormat(strings.Join(strings.Fields(doc.Find("p[data-testid='pagesFormat']").First().Text()), " "))
 	book.Description = strings.Join(strings.Fields(doc.Find("div[class='BookPageMetadataSection__description']").First().Text()), " ")
 	if preReleaseInfo != "" {
-		pubInfo = preReleaseInfo
+		book.PublicationDate = preReleaseInfo
+	} else if book.PublicationDate == "" {
+		book.PublicationDate = doc.Find("p[data-testid='publicationInfo']").First().Text()
 	}
-	book.PublicationDate = pubInfo
-	book.Link = bookLink
 	doc.Find("script[type='application/ld+json']").Each(func(i int, s *goquery.Selection) {
 		if strings.Contains(s.Text(), "inLanguage") {
 			var bookJson GRBookJson
@@ -149,7 +146,7 @@ func getBookDetails(bookLink string) (*GRBook, error) {
 			book.CoverUrl = bookJson.Image
 		}
 	})
-	return &book, nil
+	return book, nil
 }
 
 func getAuthorBooksList(authorId string, bookLanguage string, yearMin int, bookFormats []string) (string, string, []GRBook, error) {
@@ -191,13 +188,14 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 	doc.Find("[itemtype='http://schema.org/Book']").Each(func(i int, s *goquery.Selection) {
 		titleSection := s.Find("a[itemprop='url']").First()
 		title := strings.Join(strings.Fields(titleSection.Text()), " ")
-		bookLink := titleSection.AttrOr("href", "")
-		if strings.HasPrefix(bookLink, "/") {
-			bookLink = fmt.Sprintf("https://www.goodreads.com%s", bookLink)
+		var b = GRBook{Link: titleSection.AttrOr("href", "")}
+		var book = &b
+		if strings.HasPrefix(book.Link, "/") {
+			book.Link = fmt.Sprintf("https://www.goodreads.com%s", book.Link)
 		}
 		published := pubRe.MatchString(s.Text())
 		if !published && !expectedRe.MatchString(s.Text()) {
-			log.Warn().Msg(fmt.Sprintf("Unexpected publishing info for %s - %s", title, bookLink))
+			log.Warn().Msg(fmt.Sprintf("Unexpected publishing info for %s - %s", title, book.Link))
 			return
 		}
 		var pubYear string
@@ -227,7 +225,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 				return
 			}
 			var earliestEdition *GRBook
-			var earliestEditionYear int
+			var earliestEditionDate time.Time
 
 			for _, e := range editions {
 				if e.Language != bookLanguage {
@@ -244,15 +242,14 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 				}
 
 				if e.PublicationDate != "" {
-					year, err := time.Parse("2006", e.PublicationDate)
+					publicationDate, err := getDateFromPubDateErr(e.PublicationDate)
 					if err != nil {
-						log.Debug().Msg(fmt.Sprintf("Skipping edition with invalid year %s %s", e.PublicationDate, e.Link))
+						log.Info().Msg(fmt.Sprintf("Skipping edition with invalid date %v %s", e.PublicationDate, e.Link))
 						continue
 					}
-					if year.Year() <= earliestEditionYear || earliestEdition == nil {
-						log.Debug().Msg(fmt.Sprintf("Found edition with year %d %s %s", year.Year(), e.BookFormat, e.Link))
+					if earliestEdition == nil || publicationDate.Before(earliestEditionDate) || publicationDate.Equal(earliestEditionDate) {
 						earliestEdition = e
-						earliestEditionYear = year.Year()
+						earliestEditionDate = publicationDate
 					}
 				} else {
 					log.Debug().Msg(fmt.Sprintf("Skipping edition with missing year %s", e.Link))
@@ -261,11 +258,12 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 
 			if earliestEdition != nil {
 				log.Debug().Msg(fmt.Sprintf("Substituting with earliest edition of book: %s", earliestEdition.Link))
-				bookLink = earliestEdition.Link
+				book.Link = earliestEdition.Link
+				book.PublicationDate = earliestEdition.PublicationDate
 			}
 		}
 
-		book, err := getBookDetails(bookLink)
+		book, err = getBookDetails(book)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("unable to fetch book details: %s", err.Error()))
 			return
@@ -322,39 +320,45 @@ func getBookLanguage(bookLanguage string) (string, error) {
 	return display.English.Languages().Name(tag), nil
 }
 
-func getDateFromBook(book *GRBook) time.Time {
-	if book.PublicationDate == "" {
+func getDateFromPubDate(publicationDate string) time.Time {
+	d, _ := getDateFromPubDateErr(publicationDate)
+	return d
+}
+
+func getDateFromPubDateErr(publicationDate string) (time.Time, error) {
+
+	if publicationDate == "" {
 		log.Warn().Msg("No publication date found")
-		return time.Now()
+		return time.Now(), fmt.Errorf("no publication date found")
 	}
-	pubDateSplit := strings.Split(book.PublicationDate, " ")
+
+	re := regexp.MustCompile(`(\d+)(st|nd|rd|th)`)
+	publicationDate = re.ReplaceAllString(publicationDate, "$1")
+
+	pubDateSplit := strings.Split(publicationDate, " ")
 	if len(pubDateSplit) < 3 {
-		log.Warn().Msg(fmt.Sprint("Invalid publication date, defaulting to now", book.PublicationDate))
-		return time.Now()
+		log.Warn().Msg(fmt.Sprint("Invalid publication date, defaulting to now", publicationDate))
+		return time.Now(), fmt.Errorf("invalid publication date")
 	}
 
-	pubDate, err := time.Parse("2 Jan 06", fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
-	if err == nil {
-		log.Info().Msg(fmt.Sprintf("Found publication date %s", pubDate))
-		return pubDate
-	}
-	log.Warn().Msg(fmt.Sprintf("Invalid publication date, attempting different format %s", err.Error()))
-
-	pubDate, err = time.Parse("2 Jan 06", fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
-	if err == nil {
-		log.Info().Msg(fmt.Sprintf("Found publication date %s", pubDate))
-		return pubDate
-	}
-	log.Warn().Msg(fmt.Sprintf("Invalid publication date, attempting different format %s", err.Error()))
-
-	pubDate, err = time.Parse("January 2, 2006", fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
-	if err != nil {
-		log.Warn().Msg(fmt.Sprintf("Invalid publication date, defaulting to now: %s", err.Error()))
-		return time.Now()
+	possibleFormats := []string{
+		"2 Jan 06",
+		"2 Jan 2006",
+		"January 2, 2006",
+		"January 2 2006",
 	}
 
-	log.Info().Msg(fmt.Sprintf("Found publication date %s", pubDate))
-	return pubDate
+	for _, format := range possibleFormats {
+		pubDate, err := time.Parse(format, fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
+		if err == nil {
+			log.Info().Msg(fmt.Sprintf("Found publication date %s", pubDate))
+			return pubDate, nil
+		}
+		log.Debug().Msg(fmt.Sprintf("Failed to parse date %s with format %s", publicationDate, format))
+	}
+
+	log.Warn().Msg(fmt.Sprintf("Unhandled publication date format `%s`", publicationDate))
+	return time.Now(), fmt.Errorf("invalid publication date")
 }
 
 func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
@@ -397,8 +401,8 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 		item.Description = item.Content
 		item.Link = &feeds.Link{Href: book.Link}
 		item.Id = fmt.Sprintf("%s|%s", book.Link, book.PublicationDate)
-		item.Created = getDateFromBook(&book)
-		item.Updated = getDateFromBook(&book)
+		item.Created = getDateFromPubDate(book.PublicationDate)
+		item.Updated = item.Created
 		feed.Items = append(feed.Items, &item)
 
 		if book.CoverUrl != "" {
