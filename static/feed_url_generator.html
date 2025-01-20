@@ -201,7 +201,6 @@
             
             for (const [key, value] of Object.entries(options)) {
                 if (value !== '' && !skipFlags.includes(key)) {
-                    console.log(moduleOptions);
                     if (moduleOptions[key].required) {
                         urlParts.push(value);
                     } else {
