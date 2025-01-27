@@ -187,29 +187,33 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 
 	doc.Find("[itemtype='http://schema.org/Book']").Each(func(i int, s *goquery.Selection) {
 		titleSection := s.Find("a[itemprop='url']").First()
+		// log.Debug().Msg(fmt.Sprintf("Book title: %s", titleSection.Text()))
 		title := strings.Join(strings.Fields(titleSection.Text()), " ")
 		var b = GRBook{Link: titleSection.AttrOr("href", "")}
 		var book = &b
 		if strings.HasPrefix(book.Link, "/") {
 			book.Link = fmt.Sprintf("https://www.goodreads.com%s", book.Link)
 		}
-		published := pubRe.MatchString(s.Text())
-		if !published && !expectedRe.MatchString(s.Text()) {
-			log.Warn().Msg(fmt.Sprintf("Unexpected publishing info for %s - %s", title, book.Link))
-			return
-		}
-		var pubYear string
-		if published {
-			pubYear = pubRe.FindStringSubmatch(s.Text())[1]
+		hasPublishedInfo := pubRe.MatchString(s.Text())
+		hasExpectedInfo := expectedRe.MatchString(s.Text())
+		if hasPublishedInfo || hasExpectedInfo {
+			var pubYear string
+			if hasPublishedInfo {
+				pubYear = pubRe.FindStringSubmatch(s.Text())[1]
+			} else {
+				pubYear = expectedRe.FindStringSubmatch(s.Text())[1]
+			}
+			if pubYear == "" {
+				log.Warn().Msg(fmt.Sprintf("No publication year found for %s", title))
+				return
+			}
+			year, err := time.Parse("2006", pubYear)
+			if err != nil || year.Year() < yearMin {
+				log.Debug().Msg(fmt.Sprintf("Skipping book with year %d %s", year.Year(), book.Link))
+				return
+			}
 		} else {
-			pubYear = expectedRe.FindStringSubmatch(s.Text())[1]
-		}
-		if pubYear == "" {
-			return
-		}
-		year, err := time.Parse("2006", pubYear)
-		if err != nil || year.Year() < yearMin {
-			return
+			log.Debug().Msg(fmt.Sprintf("No publication year found for %s, grabbing more detail", title))
 		}
 
 		var editionsUrl string
@@ -274,6 +278,10 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 		}
 		if !isAcceptedBookFormat(bookFormats, book.BookFormat) {
 			log.Debug().Msg(fmt.Sprintf("Skipping book with format %s", book.BookFormat))
+			return
+		}
+		if book.PublicationDate == "" || getDateFromPubDate(book.PublicationDate).Year() < yearMin {
+			log.Debug().Msg(fmt.Sprintf("Skipping book with year %s", book.PublicationDate))
 			return
 		}
 		books = append(books, *book)
