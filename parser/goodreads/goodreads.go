@@ -48,7 +48,7 @@ var EditionTypes = []string{
 
 // Grabs rudimentary book details from the editions page
 func getBookEditions(editionsUrl string) ([]*GRBook, error) {
-	resp, err := parser.HttpGet(editionsUrl)
+	resp, err := parser.HttpGet(editionsUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func getBookFormatFromPageFormat(pageformat string) string {
 }
 
 func getBookDetails(book *GRBook) (*GRBook, error) {
-	resp, err := parser.HttpGet(book.Link)
+	resp, err := parser.HttpGet(book.Link, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func getSeriesBooksList(seriesId string, bookLanguage string, yearMin int, bookF
 }
 
 func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []string) ([]GRBook, string, error) {
-	resp, err := parser.HttpGet(url)
+	resp, err := parser.HttpGet(url, nil)
 	if err != nil {
 		return nil, "", parser.NewInternalError("unable to fetch the page")
 	}

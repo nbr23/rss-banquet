@@ -58,7 +58,7 @@ func BruteForcePossibleVersions() []*feeds.Item {
 }
 
 func GetLatestVersions() ([]*feeds.Item, error) {
-	resp, err := parser.HttpGet("https://www.garmin.com/en-US/support/software/wearables/")
+	resp, err := parser.HttpGet("https://www.garmin.com/en-US/support/software/wearables/", nil)
 	items := []*feeds.Item{}
 
 	if err != nil {

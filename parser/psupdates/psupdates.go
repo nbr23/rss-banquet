@@ -67,7 +67,7 @@ func getHardwareURL(hardware string, local string) string {
 
 func getUpdateFileUrl(hardware string, local string) (string, error) {
 	url := fmt.Sprintf("https://www.playstation.com/%s/support/hardware/%s/system-software/", strings.ToLower(local), strings.ToLower(hardware))
-	resp, err := parser.HttpGet(url)
+	resp, err := parser.HttpGet(url, nil)
 	if err != nil {
 		return "", err
 	}
@@ -101,7 +101,7 @@ func (PSUpdates) Parse(options *parser.Options) (*feeds.Feed, error) {
 	local := options.Get("local").(string)
 	url := getHardwareURL(hardware, local)
 
-	resp, err := parser.HttpGet(url)
+	resp, err := parser.HttpGet(url, nil)
 
 	if err != nil {
 		return nil, err

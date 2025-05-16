@@ -167,7 +167,7 @@ func getSlug(options *parser.Options) string {
 }
 
 func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
-	resp, err := parser.HttpGet(getUrl(options))
+	resp, err := parser.HttpGet(getUrl(options), nil)
 
 	if err != nil {
 		return nil, err

@@ -180,7 +180,7 @@ func parseDockerImage(imageName string) dockerImageName {
 
 func getDockerTagImagesDetails(image dockerImageName) ([]dockerhubImage, error) {
 	var images []dockerhubImage
-	res, err := parser.HttpGet(fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/%s", image, image.Tag))
+	res, err := parser.HttpGet(fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/%s", image, image.Tag), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func getDockerTagImagesDetails(image dockerImageName) ([]dockerhubImage, error) 
 
 func getDockerTagsImages(image dockerImageName) ([]dockerhubImage, error) {
 	var images []dockerhubImage
-	res, err := parser.HttpGet(fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/?page_size=25&page=1&ordering=last_updated", image))
+	res, err := parser.HttpGet(fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/?page_size=25&page=1&ordering=last_updated", image), nil)
 	if err != nil {
 		return nil, err
 	}

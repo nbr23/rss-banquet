@@ -261,7 +261,7 @@ func getCrowdStreamUrl(options *parser.Options) string {
 func (Bugcrowd) Parse(options *parser.Options) (*feeds.Feed, error) {
 	url := getCrowdStreamUrl(options)
 
-	resp, err := parser.HttpGet(url)
+	resp, err := parser.HttpGet(url, nil)
 
 	if err != nil {
 		return nil, err

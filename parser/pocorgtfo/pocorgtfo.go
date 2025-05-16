@@ -29,7 +29,7 @@ func (PoCOrGTFO) Parse(options *parser.Options) (*feeds.Feed, error) {
 	pubRegex := regexp.MustCompile(`(?i)^(PoC\|\|GTFO 0x[0-9a-fA-F]{2})`)
 	dateRegex := regexp.MustCompile(`(?i)^PoC\|\|GTFO 0x[0-9a-fA-F]{2}, ([^,]+),`)
 
-	resp, err := parser.HttpGet(url)
+	resp, err := parser.HttpGet(url, nil)
 
 	if err != nil {
 		return nil, err

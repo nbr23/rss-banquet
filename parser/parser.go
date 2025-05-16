@@ -384,7 +384,7 @@ func IsImageType(t string) bool {
 	}
 }
 
-func HttpGet(url string) (*http.Response, error) {
+func HttpGet(url string, options map[string]any) (*http.Response, error) {
 	req, err := http.NewRequest(
 		"GET",
 		url,
@@ -397,6 +397,12 @@ func HttpGet(url string) (*http.Response, error) {
 	userAgent := config.GetConfigOption("USER_AGENT")
 	if userAgent != "" {
 		req.Header.Set("User-Agent", userAgent)
+	}
+
+	if headers, ok := options["headers"].(map[string]string); ok {
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
 	}
 
 	client := &http.Client{}
