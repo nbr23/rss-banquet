@@ -6,6 +6,7 @@ import (
 
 	"github.com/nbr23/rss-banquet/parser"
 	"github.com/nbr23/rss-banquet/parser/bugcrowd"
+	"github.com/nbr23/rss-banquet/parser/costco"
 	"github.com/nbr23/rss-banquet/parser/dockerhub"
 	garminwearables "github.com/nbr23/rss-banquet/parser/garmin-wearables"
 	"github.com/nbr23/rss-banquet/parser/garminsdk"
@@ -63,6 +64,9 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"goodreads": func() parser.Parser {
 		return goodreads.GoodReadsParser()
+	},
+	"costco": func() parser.Parser {
+		return costco.CostcoParser()
 	},
 }
 
