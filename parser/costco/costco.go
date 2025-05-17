@@ -36,12 +36,12 @@ func CostcoParser() parser.Parser {
 	return Costco{}
 }
 
-var SKUPattern = regexp.MustCompile(`(?m)^[\s]*SKU: '([^']+)'`)
-var NamePattern = regexp.MustCompile(`(?m)^[\s]*name: '([^']+)'`)
-var PricePattern = regexp.MustCompile(`(?m)^\s+priceTotal: (.+[^,]),?$`)
-var ImagePattern = regexp.MustCompile(`(?m)^\s+productImageUrl: '([^']+)'`)
-
 func (Costco) Parse(options *parser.Options) (*feeds.Feed, error) {
+	var skuPattern = regexp.MustCompile(`(?m)^[\s]*SKU: '([^']+)'`)
+	var namePattern = regexp.MustCompile(`(?m)^[\s]*name: '([^']+)'`)
+	var pricePattern = regexp.MustCompile(`(?m)^\s+priceTotal: (.+[^,]),?$`)
+	var imagePattern = regexp.MustCompile(`(?m)^\s+productImageUrl: '([^']+)'`)
+
 	url := options.Get("url").(string)[1:]
 	if url == "" {
 		return nil, fmt.Errorf("url is required")
@@ -81,31 +81,38 @@ func (Costco) Parse(options *parser.Options) (*feeds.Feed, error) {
 		Description: "Latest products from Costco",
 	}
 
+	// parse title of page
+	title := doc.Find("title").First().Text()
+	if len(title) > 0 {
+		feed.Title = title
+		feed.Description = title
+	}
+
 	doc.Find(".product-tile-set").Each(func(i int, s *goquery.Selection) {
 		script := s.Find("script[type='text/javascript']").First().Text()
 		if len(script) == 0 {
 			return
 		}
 
-		SKUMatches := SKUPattern.FindStringSubmatch(script)
+		SKUMatches := skuPattern.FindStringSubmatch(script)
 		if len(SKUMatches) < 2 || SKUMatches[1] == "" {
 			return
 		}
 		SKU := SKUMatches[1]
 
-		titleMatches := NamePattern.FindStringSubmatch(script)
+		titleMatches := namePattern.FindStringSubmatch(script)
 		if len(titleMatches) < 2 || titleMatches[1] == "" {
 			return
 		}
 		title := titleMatches[1]
 
-		priceMatches := PricePattern.FindStringSubmatch(script)
+		priceMatches := pricePattern.FindStringSubmatch(script)
 		if len(priceMatches) < 2 || priceMatches[1] == "" {
 			return
 		}
 		price := priceMatches[1]
 
-		imageMatches := ImagePattern.FindStringSubmatch(script)
+		imageMatches := imagePattern.FindStringSubmatch(script)
 		if len(imageMatches) < 2 || imageMatches[1] == "" {
 			return
 		}
