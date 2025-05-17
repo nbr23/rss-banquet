@@ -23,6 +23,7 @@ func (Costco) GetOptions() parser.Options {
 				Required: true,
 				Type:     "string",
 				Help:     "URL of the Costco page to scrape",
+				IsPath:   true,
 			},
 		},
 		Parser: Costco{},
@@ -41,7 +42,7 @@ var PricePattern = regexp.MustCompile(`(?m)^\s+priceTotal: (.+[^,]),?$`)
 var ImagePattern = regexp.MustCompile(`(?m)^\s+productImageUrl: '([^']+)'`)
 
 func (Costco) Parse(options *parser.Options) (*feeds.Feed, error) {
-	url := options.Get("url").(string)
+	url := options.Get("url").(string)[1:]
 	if url == "" {
 		return nil, fmt.Errorf("url is required")
 	}
