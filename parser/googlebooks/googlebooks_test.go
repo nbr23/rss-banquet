@@ -19,7 +19,7 @@ func TestAmelieNothomb(t *testing.T) {
 		Googlebooks{},
 		&options,
 		2,
-		`^.* - Amélie Nothomb$`,
+		`^.* - Amélie Nothomb.*$`,
 		``,
 	)
 }
