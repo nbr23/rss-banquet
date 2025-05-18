@@ -42,7 +42,11 @@ func (Costco) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var pricePattern = regexp.MustCompile(`(?m)^\s+priceTotal: (.+[^,]),?$`)
 	var imagePattern = regexp.MustCompile(`(?m)^\s+productImageUrl: '([^']+)'`)
 
-	url := options.Get("url").(string)[1:]
+	url := options.Get("url").(string)
+	if url[0] == '/' {
+		url = url[1:]
+	}
+
 	if url == "" {
 		return nil, fmt.Errorf("url is required")
 	}
