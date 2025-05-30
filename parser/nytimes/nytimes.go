@@ -37,19 +37,25 @@ func (NYTimes) Parse(options *parser.Options) (*feeds.Feed, error) {
 	if !ok || author == "" {
 		return nil, fmt.Errorf("author is required")
 	}
-	feed := &feeds.Feed{
-		Title:       fmt.Sprintf("Articles by %s - The New York Times", author),
-		Link:        &feeds.Link{Href: fmt.Sprintf("https://www.nytimes.com/by/%s#latest", author)},
-		Description: fmt.Sprintf("Latest articles by %s on The New York Times", author),
-		Author:      &feeds.Author{Name: author},
-	}
 
-	articles, err := getGraphQLResponse(author)
+	work, err := getGraphQLResponse(author)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch articles: %w", err)
 	}
 
-	for _, edge := range articles {
+	authorName := work.DisplayName
+	if authorName == "" {
+		authorName = author
+	}
+
+	feed := &feeds.Feed{
+		Title:       fmt.Sprintf("Articles by %s - The New York Times", authorName),
+		Link:        &feeds.Link{Href: fmt.Sprintf("https://www.nytimes.com/by/%s#latest", author)},
+		Description: fmt.Sprintf("Latest articles by %s on The New York Times", authorName),
+		Author:      &feeds.Author{Name: authorName},
+	}
+
+	for _, edge := range work.ContentSearch.Hits.Edges {
 		node := edge.Node
 		if node.ID == "" || node.Headline.Default == "" || node.URL == "" {
 			continue

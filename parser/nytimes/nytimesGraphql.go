@@ -47,7 +47,7 @@ func getGraphQLQuery(author string) (string, string) {
 	return url.QueryEscape(variables), url.QueryEscape(extensions)
 }
 
-func getGraphQLResponse(author string) ([]Edge, error) {
+func getGraphQLResponse(author string) (*AnyWork, error) {
 	token, err := getNYTimesToken()
 	if err != nil {
 		return nil, err
@@ -107,5 +107,5 @@ func getGraphQLResponse(author string) ([]Edge, error) {
 	if err != nil {
 		return nil, err
 	}
-	return graphqlResponse.Data.AnyWork.ContentSearch.Hits.Edges, nil
+	return &graphqlResponse.Data.AnyWork, nil
 }

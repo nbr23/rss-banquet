@@ -10,6 +10,7 @@ type Data struct {
 
 type AnyWork struct {
 	ContentSearch ContentSearch `json:"contentSearch"`
+	DisplayName   string        `json:"displayName,omitempty"`
 }
 
 type ContentSearch struct {
