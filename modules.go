@@ -17,6 +17,7 @@ import (
 	"github.com/nbr23/rss-banquet/parser/hackeronePrograms"
 	"github.com/nbr23/rss-banquet/parser/infocon"
 	"github.com/nbr23/rss-banquet/parser/lego"
+	"github.com/nbr23/rss-banquet/parser/nytimes"
 	"github.com/nbr23/rss-banquet/parser/pentesterland"
 	"github.com/nbr23/rss-banquet/parser/pocorgtfo"
 	"github.com/nbr23/rss-banquet/parser/psupdates"
@@ -67,6 +68,9 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"costco": func() parser.Parser {
 		return costco.CostcoParser()
+	},
+	"nytimes": func() parser.Parser {
+		return nytimes.NYTimesParser()
 	},
 }
 
