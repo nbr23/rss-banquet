@@ -51,6 +51,11 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - title: Feed title (default: Bugcrowd)
 	 - description: Feed description (default: Bugcrowd Crowdstream)
 
+  - costco
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: costco)
+	 - url: URL of the Costco page to scrape (default: )
+
   - dockerhub
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: dockerhub)
@@ -105,6 +110,11 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: lego)
 	 - category: category of the lego products (new, coming-soon) (default: new)
+
+  - nytimes
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: nytimes)
+	 - author: author of the articles to fetch (default: )
 
   - pentesterland
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
