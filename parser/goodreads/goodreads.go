@@ -3,6 +3,7 @@ package goodreads
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,6 +17,8 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 )
+
+var CACHE_EXPIRY_RANGE = []int{50, 70}
 
 type GoodReads struct{}
 
@@ -48,8 +51,13 @@ var EditionTypes = []string{
 	"Unknown Binding",
 }
 
+type cachedBook struct {
+	book     *GRBook
+	expireAt time.Time
+}
+
 var (
-	bookDetailsCache   = make(map[string]*GRBook)
+	bookDetailsCache   = make(map[string]cachedBook)
 	bookDetailsCacheMu sync.RWMutex
 )
 
@@ -175,22 +183,33 @@ func getBookDetailsCached(book *GRBook) (*GRBook, error) {
 	bookDetailsCacheMu.RLock()
 	cached, ok := bookDetailsCache[book.Link]
 	bookDetailsCacheMu.RUnlock()
-	if ok && isReleased(cached.PublicationDate) {
-		log.Debug().Msg(fmt.Sprintf("Using cached book details for %s %s", book.Link, cached.PublicationDate))
-		return cached, nil
+	if ok {
+		if time.Now().After(cached.expireAt) {
+			bookDetailsCacheMu.Lock()
+			delete(bookDetailsCache, book.Link)
+			bookDetailsCacheMu.Unlock()
+			log.Info().Msg(fmt.Sprintf("Cache expired for %s", book.Link))
+		} else if isReleased(cached.book.PublicationDate) {
+			log.Info().Msg(fmt.Sprintf("Using cached book details for %s %s", book.Link, cached.book.PublicationDate))
+			return cached.book, nil
+		}
 	}
-	log.Debug().Msg(fmt.Sprintf("Fetching book details for %s %s", book.Link, book.PublicationDate))
+	log.Info().Msg(fmt.Sprintf("Fetching book details for %s %s", book.Link, book.PublicationDate))
 	b, err := getBookDetails(book)
 	if err != nil {
 		return nil, err
 	}
 	if isReleased(b.PublicationDate) {
-		log.Debug().Msg(fmt.Sprintf("Caching book details for %s %s", b.Link, b.PublicationDate))
+		minDays := CACHE_EXPIRY_RANGE[0]
+		maxDays := CACHE_EXPIRY_RANGE[1]
+		days := rand.Intn(maxDays-minDays+1) + minDays
+		expireAt := time.Now().Add(time.Duration(days) * 24 * time.Hour)
+		log.Info().Msg(fmt.Sprintf("Caching book details for %s %s, expires in %d days", b.Link, b.PublicationDate, days))
 		bookDetailsCacheMu.Lock()
-		bookDetailsCache[book.Link] = b
+		bookDetailsCache[book.Link] = cachedBook{book: b, expireAt: expireAt}
 		bookDetailsCacheMu.Unlock()
 	} else {
-		log.Debug().Msg(fmt.Sprintf("Not caching book details for %s %s", b.Link, b.PublicationDate))
+		log.Info().Msg(fmt.Sprintf("Not caching book details for %s %s", b.Link, b.PublicationDate))
 	}
 	return b, nil
 }
