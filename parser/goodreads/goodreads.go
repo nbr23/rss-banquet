@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -44,6 +46,26 @@ var EditionTypes = []string{
 	"Unbound",
 	"Spiral-bound",
 	"Unknown Binding",
+}
+
+var (
+	bookDetailsCache   = make(map[string]*GRBook)
+	bookDetailsCacheMu sync.RWMutex
+)
+
+func isReleased(publicationDate string) bool {
+	d, err := getDateFromPubDateErr(publicationDate)
+	if err != nil {
+		return false
+	}
+	trimmed := strings.TrimSpace(publicationDate)
+	if len(trimmed) == 4 && regexp.MustCompile(`^\d{4}$`).MatchString(trimmed) {
+		year, _ := strconv.Atoi(trimmed)
+		if year == time.Now().Year() {
+			return false
+		}
+	}
+	return d.Before(time.Now())
 }
 
 // Grabs rudimentary book details from the editions page
@@ -147,6 +169,30 @@ func getBookDetails(book *GRBook) (*GRBook, error) {
 		}
 	})
 	return book, nil
+}
+
+func getBookDetailsCached(book *GRBook) (*GRBook, error) {
+	bookDetailsCacheMu.RLock()
+	cached, ok := bookDetailsCache[book.Link]
+	bookDetailsCacheMu.RUnlock()
+	if ok && isReleased(cached.PublicationDate) {
+		log.Debug().Msg(fmt.Sprintf("Using cached book details for %s %s", book.Link, cached.PublicationDate))
+		return cached, nil
+	}
+	log.Debug().Msg(fmt.Sprintf("Fetching book details for %s %s", book.Link, book.PublicationDate))
+	b, err := getBookDetails(book)
+	if err != nil {
+		return nil, err
+	}
+	if isReleased(b.PublicationDate) {
+		log.Debug().Msg(fmt.Sprintf("Caching book details for %s %s", b.Link, b.PublicationDate))
+		bookDetailsCacheMu.Lock()
+		bookDetailsCache[book.Link] = b
+		bookDetailsCacheMu.Unlock()
+	} else {
+		log.Debug().Msg(fmt.Sprintf("Not caching book details for %s %s", b.Link, b.PublicationDate))
+	}
+	return b, nil
 }
 
 func getAuthorBooksList(authorId string, bookLanguage string, yearMin int, bookFormats []string) (string, string, []GRBook, error) {
@@ -267,7 +313,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			}
 		}
 
-		book, err = getBookDetails(book)
+		book, err = getBookDetailsCached(book)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("unable to fetch book details: %s", err.Error()))
 			return
