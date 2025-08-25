@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const NYT_GRAPHQL_HASH = "f9d85c0c99ec31bf5aac7d6e20a3f7beadbf7478877c56d4be4504aca19490c4"
+const NYT_GRAPHQL_HASH = "57cb59fc351b816edf094c214f5ef56532145dd548fdf88103396b349640aa62"
 
 func getNYTimesToken() (string, error) {
 	resp, err := http.Get(fmt.Sprintf("https://www.nytimes.com/"))
