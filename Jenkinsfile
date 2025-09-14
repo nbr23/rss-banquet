@@ -18,6 +18,9 @@ pipeline {
             }
         }
         stage('Test') {
+            when {
+                not { changelog '^skip-tests.*' }
+            }
             steps {
                 script {
                     env.REAL_PWD = getDockerPWD();
