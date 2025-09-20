@@ -13,7 +13,7 @@ pipeline {
             when { branch 'master' }
             steps {
                 sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target base -t rss-banquet-test .
+                    docker build --pull --target base -t rss-banquet-test .
                     """
             }
         }
