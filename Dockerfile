@@ -19,6 +19,8 @@ FROM --platform=${TARGETOS}/${TARGETARCH} alpine:latest AS base
 ARG TARGETARCH
 ARG TARGETOS
 
+RUN apk add --no-cache ca-certificates && rm -rf /var/cache/apk/*
+
 COPY --from=builder /build/rss-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/rss-banquet
 
 # Server
