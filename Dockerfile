@@ -13,6 +13,11 @@ COPY config config
 RUN GOOS=linux GOARCH=arm64 go build -trimpath -o rss-banquet-linux-arm64
 RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
 
+FROM builder AS test
+
+COPY testsuite testsuite
+RUN apk add --no-cache ca-certificates && rm -rf /var/cache/apk/*
+
 # Base
 
 FROM --platform=${TARGETOS}/${TARGETARCH} alpine:latest AS base
