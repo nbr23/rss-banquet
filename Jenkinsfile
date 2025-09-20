@@ -9,12 +9,12 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build') {
+        stage('Build Test Docker Image') {
+            when { branch 'master' }
             steps {
-                script {
-                    env.REAL_PWD = getDockerPWD();
-                    sh 'docker run --rm -w /app -v $REAL_PWD:/app golang:alpine go build'
-                }
+                sh """
+                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target base -t rss-banquet-test .
+                    """
             }
         }
         stage('Test') {
@@ -24,7 +24,7 @@ pipeline {
             steps {
                 script {
                     env.REAL_PWD = getDockerPWD();
-                    sh 'docker run --rm -w /app -v $REAL_PWD:/app golang:alpine go test ./...'
+                    sh 'docker run --rm -w /app -v $REAL_PWD:/app rss-banquet-test go test ./...'
                 }
             }
         }
