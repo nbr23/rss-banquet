@@ -24,7 +24,7 @@ RUN go test ./...
 
 # Base
 
-FROM --platform=${TARGETOS}/${TARGETARCH} alpine:$ALPINE_VERSION AS base
+FROM --platform=${TARGETOS}/${TARGETARCH} alpine:3.18 AS base
 ARG TARGETARCH
 ARG TARGETOS
 
