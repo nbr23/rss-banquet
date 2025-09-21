@@ -1,4 +1,5 @@
-FROM --platform=${BUILDOS}/${BUILDARCH} golang:1-alpine3.21 AS base
+ARG ALPINE_VERSION=3.20
+FROM --platform=${BUILDOS}/${BUILDARCH} golang:1-alpine$ALPINE_VERSION AS source
 
 WORKDIR /build
 
@@ -10,12 +11,12 @@ COPY style style
 COPY utils utils
 COPY config config
 
-FROM base AS builder
+FROM source AS builder
 
 RUN GOOS=linux GOARCH=arm64 go build -trimpath -o rss-banquet-linux-arm64
 RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
 
-FROM base AS test
+FROM source AS test
 
 COPY testsuite testsuite
 
@@ -23,7 +24,7 @@ RUN go test ./...
 
 # Base
 
-FROM --platform=${TARGETOS}/${TARGETARCH} alpine:3.21 AS base
+FROM --platform=${TARGETOS}/${TARGETARCH} alpine:$ALPINE_VERSION AS base
 ARG TARGETARCH
 ARG TARGETOS
 
