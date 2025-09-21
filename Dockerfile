@@ -1,4 +1,4 @@
-FROM --platform=${BUILDOS}/${BUILDARCH} golang:alpine AS builder
+FROM --platform=${BUILDOS}/${BUILDARCH} golang:1-alpine3.21 AS base
 
 WORKDIR /build
 
@@ -10,21 +10,22 @@ COPY style style
 COPY utils utils
 COPY config config
 
+FROM base AS builder
+
 RUN GOOS=linux GOARCH=arm64 go build -trimpath -o rss-banquet-linux-arm64
 RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
 
-FROM builder AS test
+FROM base AS test
 
 COPY testsuite testsuite
-RUN apk add --no-cache ca-certificates && rm -rf /var/cache/apk/*
+
+RUN go test ./...
 
 # Base
 
-FROM --platform=${TARGETOS}/${TARGETARCH} alpine:latest AS base
+FROM --platform=${TARGETOS}/${TARGETARCH} alpine:3.21 AS base
 ARG TARGETARCH
 ARG TARGETOS
-
-RUN apk add --no-cache ca-certificates && rm -rf /var/cache/apk/*
 
 COPY --from=builder /build/rss-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/rss-banquet
 

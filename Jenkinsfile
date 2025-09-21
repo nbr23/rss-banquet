@@ -9,23 +9,12 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build Test Docker Image') {
+        stage('Test') {
             when { branch 'master' }
             steps {
                 sh """
                     docker build --pull --target test -t rss-banquet-test .
                     """
-            }
-        }
-        stage('Test') {
-            when {
-                not { changelog '^skip-tests.*' }
-            }
-            steps {
-                script {
-                    env.REAL_PWD = getDockerPWD();
-                    sh 'docker run --rm -w /app -v $REAL_PWD:/app rss-banquet-test go test ./...'
-                }
             }
         }
         stage('Prep buildx') {
