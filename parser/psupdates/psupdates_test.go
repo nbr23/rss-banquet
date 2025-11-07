@@ -41,6 +41,23 @@ func TestPS4UpdatesParse(t *testing.T) {
 	)
 }
 
+func TestPSPortalUpdatesParse(t *testing.T) {
+	testsuite.TestParseSuccess(
+		t,
+		PSUpdates{},
+		&parser.Options{
+			OptionsList: parser.OptionsList{
+				&parser.Option{Flag: "hardware", Type: "string", Value: "psportal"},
+				&parser.Option{Flag: "local", Type: "string", Value: "en-us"},
+			},
+			Parser: PSUpdates{},
+		},
+		1,
+		`^PSPORTAL Update: [^\s]+.*$`,
+		``,
+	)
+}
+
 func TestPSUpdatesBadOptions(t *testing.T) {
 	testsuite.TestParseFailure(
 		t,
