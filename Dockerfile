@@ -19,7 +19,10 @@ RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
 FROM source AS test
 
 COPY testsuite testsuite
+ARG USER_AGENT
+ENV USER_AGENT=$USER_AGENT
 
+RUN go get
 RUN go test ./...
 
 # Base

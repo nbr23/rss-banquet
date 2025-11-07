@@ -13,7 +13,7 @@ pipeline {
             when { branch 'master' }
             steps {
                 sh """
-                    docker build --pull --target test -t rss-banquet-test .
+                    docker build --pull --build-arg USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0' --target test -t rss-banquet-test .
                     """
             }
         }
