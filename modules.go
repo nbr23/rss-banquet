@@ -10,6 +10,7 @@ import (
 	"github.com/nbr23/rss-banquet/parser/dockerhub"
 	garminwearables "github.com/nbr23/rss-banquet/parser/garmin-wearables"
 	"github.com/nbr23/rss-banquet/parser/garminsdk"
+	githubnotifications "github.com/nbr23/rss-banquet/parser/github-notifications"
 	"github.com/nbr23/rss-banquet/parser/goodreads"
 	"github.com/nbr23/rss-banquet/parser/googlebooks"
 	"github.com/nbr23/rss-banquet/parser/googlebooksapi"
@@ -71,6 +72,9 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"nytimes": func() parser.Parser {
 		return nytimes.NYTimesParser()
+	},
+	"github-notifications": func() parser.Parser {
+		return githubnotifications.GitHubNotificationsParser()
 	},
 }
 
