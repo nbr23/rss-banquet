@@ -67,6 +67,18 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: gemini-api-changelog)
 
+  - github-notifications
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: github-notifications)
+	 - all: Include read notifications (default: false)
+	 - participating: Only show notifications where user is directly participating or mentioned (default: false)
+	 - age: Only show notifications from the past duration (e.g., 24h, 7d, 2w) (default: )
+	 - before: Only show notifications updated before this ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ) (default: )
+	 - org: Filter by organization/owner name (client-side filter) (default: )
+	 - reason: Filter by notification reason: assign, author, comment, ci_activity, invitation, manual, mention, review_requested, security_alert, state_change, subscribed, team_mention (client-side filter) (default: )
+	 - title: Feed title (default: GitHub Notifications)
+	 - description: Feed description (default: GitHub Notifications Feed)
+
   - goodreads
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: goodreads)
@@ -105,6 +117,14 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: nytimes)
 	 - author: author of the articles to fetch (default: )
+
+  - openai-api-changelog
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: openai-api-changelog)
+
+  - openai-chatgpt-release-notes
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: openai-chatgpt-release-notes)
 
   - pentesterland
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)

@@ -1,10 +1,12 @@
 package parser
 
 import (
+	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"sort"
 	"strconv"
@@ -13,7 +15,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
+	utls "github.com/refraction-networking/utls"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/net/http2"
 
 	"github.com/nbr23/rss-banquet/config"
 	"github.com/nbr23/rss-banquet/style"
@@ -383,6 +387,49 @@ func IsImageType(t string) bool {
 	default:
 		return false
 	}
+}
+
+// func CachedHttpGet(url string, ttl int) (*http.Response, error) {
+// }
+
+func HttpGetUtls(url string, options map[string]any) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	userAgent := config.GetConfigOption("USER_AGENT")
+	if userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
+	}
+
+	if headers, ok := options["headers"].(map[string]string); ok {
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+	}
+
+	transport := &http2.Transport{
+		DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
+			rawConn, err := (&net.Dialer{}).DialContext(ctx, network, addr)
+			if err != nil {
+				return nil, err
+			}
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				host = addr
+			}
+			uconn := utls.UClient(rawConn, &utls.Config{ServerName: host}, utls.HelloChrome_Auto)
+			if err := uconn.HandshakeContext(ctx); err != nil {
+				rawConn.Close()
+				return nil, err
+			}
+			return uconn, nil
+		},
+	}
+
+	client := &http.Client{Transport: transport}
+	return client.Do(req)
 }
 
 func HttpGet(url string, options map[string]any) (*http.Response, error) {

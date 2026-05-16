@@ -18,6 +18,8 @@ import (
 	"github.com/nbr23/rss-banquet/parser/infocon"
 	"github.com/nbr23/rss-banquet/parser/lego"
 	"github.com/nbr23/rss-banquet/parser/nytimes"
+	openaiapichangelog "github.com/nbr23/rss-banquet/parser/openai-api-changelog"
+	openaichatgptreleasenotes "github.com/nbr23/rss-banquet/parser/openai-chatgpt-release-notes"
 	"github.com/nbr23/rss-banquet/parser/pentesterland"
 	"github.com/nbr23/rss-banquet/parser/pocorgtfo"
 	"github.com/nbr23/rss-banquet/parser/psupdates"
@@ -71,6 +73,12 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"anthropic-api-changelog": func() parser.Parser {
 		return anthropicapichangelog.AnthropicAPIChangelogParser()
+	},
+	"openai-api-changelog": func() parser.Parser {
+		return openaiapichangelog.OpenAIAPIChangelogParser()
+	},
+	"openai-chatgpt-release-notes": func() parser.Parser {
+		return openaichatgptreleasenotes.OpenAIChatGPTReleaseNotesParser()
 	},
 }
 
