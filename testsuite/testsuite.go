@@ -4,8 +4,13 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/nbr23/rss-banquet/config"
 	"github.com/nbr23/rss-banquet/parser"
 )
+
+func init() {
+	config.InitConfig()
+}
 
 func TestParseSuccess(t *testing.T,
 	p parser.Parser,
