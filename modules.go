@@ -10,6 +10,7 @@ import (
 	"github.com/nbr23/rss-banquet/parser/dockerhub"
 	garminwearables "github.com/nbr23/rss-banquet/parser/garmin-wearables"
 	"github.com/nbr23/rss-banquet/parser/garminsdk"
+	geminiapichangelog "github.com/nbr23/rss-banquet/parser/gemini-api-changelog"
 	githubnotifications "github.com/nbr23/rss-banquet/parser/github-notifications"
 	"github.com/nbr23/rss-banquet/parser/goodreads"
 	"github.com/nbr23/rss-banquet/parser/googlebooks"
@@ -75,6 +76,9 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"github-notifications": func() parser.Parser {
 		return githubnotifications.GitHubNotificationsParser()
+	},
+	"gemini-api-changelog": func() parser.Parser {
+		return geminiapichangelog.GeminiAPIChangelogParser()
 	},
 }
 
