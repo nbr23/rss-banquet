@@ -33,4 +33,4 @@ docker-dev:
 	docker run --rm -v $$PWD:/build -p 8080:8080 rss-banquet-dev
 
 test:
-	@go test -v ./... | sed '/PASS/s//\x1b[32m&\x1b[0m/' | sed '/FAIL/s//\x1b[31m&\x1b[0m/'
+	@BANQUET_GLOBAL_USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:150.0) Gecko/20100101 Firefox/150.0" go test -v ./... | sed '/PASS/s//\x1b[32m&\x1b[0m/' | sed '/FAIL/s//\x1b[31m&\x1b[0m/'
