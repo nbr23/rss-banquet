@@ -2,6 +2,7 @@ package parser
 
 import (
 	"crypto/sha256"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/http"
@@ -406,6 +407,14 @@ func HttpGet(url string, options map[string]any) (*http.Response, error) {
 	}
 
 	client := &http.Client{}
+
+	if trans, ok := client.Transport.(*http.Transport); ok {
+		trans.TLSClientConfig.CurvePreferences = []tls.CurveID{
+			tls.X25519,
+			tls.CurveP256,
+			tls.CurveP384,
+		}
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
