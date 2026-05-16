@@ -24,7 +24,7 @@ var CONFIG_OPTIONS = []ConfigOption{
 	},
 	{
 		Name:        "USER_AGENT",
-		Value:       "",
+		Value:       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:150.0) Gecko/20100101 Firefox/150.0",
 		Scope:       "GLOBAL",
 		Description: "User agent to use for HTTP requests",
 	},
