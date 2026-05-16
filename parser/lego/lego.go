@@ -176,7 +176,7 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("unable to fetch the product page, status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("unable to fetch the product page (%s), status code: %d", getUrl(options), resp.StatusCode)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
