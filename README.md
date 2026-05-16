@@ -76,12 +76,6 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - language: language of the book (default: en)
 	 - bookFormats: seeked formats of the book (paperback, hardcover, ebook, audiobook, etc.) (default: paperback,hardcover,kindle,ebook)
 
-  - googlebooksapi
-	 - feedFormat: feed output format (rss, atom, json) (default: rss)
-	 - route: route to expose the feed (default: googlebooksapi)
-	 - author: author of the books (default: )
-	 - language: language of the books (default: en)
-
   - hackerone
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: hackerone)

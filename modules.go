@@ -13,7 +13,6 @@ import (
 	geminiapichangelog "github.com/nbr23/rss-banquet/parser/gemini-api-changelog"
 	githubnotifications "github.com/nbr23/rss-banquet/parser/github-notifications"
 	"github.com/nbr23/rss-banquet/parser/goodreads"
-	"github.com/nbr23/rss-banquet/parser/googlebooksapi"
 	"github.com/nbr23/rss-banquet/parser/hackerone"
 	"github.com/nbr23/rss-banquet/parser/hackeronePrograms"
 	"github.com/nbr23/rss-banquet/parser/infocon"
@@ -51,9 +50,6 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"dockerhub": func() parser.Parser {
 		return dockerhub.DockerHubParser()
-	},
-	"googlebooksapi": func() parser.Parser {
-		return googlebooksapi.GooglebooksapiParser()
 	},
 	"pocorgtfo": func() parser.Parser {
 		return pocorgtfo.PoCOrGTFOParser()
