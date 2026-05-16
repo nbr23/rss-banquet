@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/nbr23/rss-banquet/parser"
+	anthropicapichangelog "github.com/nbr23/rss-banquet/parser/anthropic-api-changelog"
 	"github.com/nbr23/rss-banquet/parser/bugcrowd"
 	"github.com/nbr23/rss-banquet/parser/costco"
 	"github.com/nbr23/rss-banquet/parser/dockerhub"
@@ -79,6 +80,9 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"gemini-api-changelog": func() parser.Parser {
 		return geminiapichangelog.GeminiAPIChangelogParser()
+	},
+	"anthropic-api-changelog": func() parser.Parser {
+		return anthropicapichangelog.AnthropicAPIChangelogParser()
 	},
 }
 

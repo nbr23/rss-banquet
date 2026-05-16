@@ -36,6 +36,10 @@ Usage: `rss-banquet oneshot <module> [module options]`
 
 ## Modules available:
 
+  - anthropic-api-changelog
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: anthropic-api-changelog)
+
   - books
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: books)
