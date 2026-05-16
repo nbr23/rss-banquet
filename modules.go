@@ -10,7 +10,6 @@ import (
 	"github.com/nbr23/rss-banquet/parser/costco"
 	"github.com/nbr23/rss-banquet/parser/dockerhub"
 	garminwearables "github.com/nbr23/rss-banquet/parser/garmin-wearables"
-	"github.com/nbr23/rss-banquet/parser/garminsdk"
 	geminiapichangelog "github.com/nbr23/rss-banquet/parser/gemini-api-changelog"
 	githubnotifications "github.com/nbr23/rss-banquet/parser/github-notifications"
 	"github.com/nbr23/rss-banquet/parser/goodreads"
@@ -47,9 +46,6 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"pentesterland": func() parser.Parser {
 		return pentesterland.PentesterLandParser()
-	},
-	"garmin-sdk": func() parser.Parser {
-		return garminsdk.GarminSDKParser()
 	},
 	"garmin-wearables": func() parser.Parser {
 		return garminwearables.GarminWearablesParser()

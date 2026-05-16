@@ -213,6 +213,8 @@ A Modular Atom/RSS Feed Generator
 	fmt.Print("### Oneshot mode\n\nUsage: `rss-banquet oneshot <module> [module options]`\n\n")
 	fmt.Print("\n## Modules available:\n\n")
 	printModulesHelp()
+	fmt.Print("\n## Removed modules\n\n")
+	fmt.Print("- `garmin-sdk`: removed because developer.garmin.com no longer hosts the FIT SDK download page. Subscribe to the upstream GitHub releases atom feed instead: https://github.com/garmin/fit-sdk-tools/releases.atom\n")
 }
 
 func initLogging() {

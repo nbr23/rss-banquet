@@ -66,11 +66,6 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - image: image name (eg nbr23/rss-banquet:latest) (default: )
 	 - platform: image platform filter (linux/arm64, ...) (default: )
 
-  - garmin-sdk
-	 - feedFormat: feed output format (rss, atom, json) (default: rss)
-	 - route: route to expose the feed (default: garminsdk)
-	 - sdks: list of names of the sdks to watch: fit, connect-iq (default: fit)
-
   - garmin-wearables
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: garminwearables)
@@ -138,3 +133,7 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - hardware: hardware of the updates (default: ps5)
 	 - local: local of the updates (default: en-us)
 
+
+## Removed modules
+
+- `garmin-sdk`: removed because developer.garmin.com no longer hosts the FIT SDK download page. Subscribe to the upstream GitHub releases atom feed instead: https://github.com/garmin/fit-sdk-tools/releases.atom
