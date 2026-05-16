@@ -41,7 +41,7 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - route: route to expose the feed (default: books)
 	 - author: author of the books (default: )
 	 - language: language of the books (default: en)
-	 - year-min: minimum year of publication (default: 2024)
+	 - year-min: minimum year of publication (default: 2025)
 
   - bugcrowd
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
@@ -71,12 +71,16 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: garminwearables)
 
+  - gemini-api-changelog
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: gemini-api-changelog)
+
   - goodreads
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: goodreads)
 	 - authorId: Goodreads author ID (default: )
 	 - seriesId: Goodreads series ID (default: )
-	 - year-min: minimum year of publication (default: 2024)
+	 - year-min: minimum year of publication (default: 2025)
 	 - language: language of the book (default: en)
 	 - bookFormats: seeked formats of the book (paperback, hardcover, ebook, audiobook, etc.) (default: paperback,hardcover,kindle,ebook)
 
