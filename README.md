@@ -103,6 +103,12 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - title: Feed title (default: HackerOne Programs)
 	 - description: Feed description (default: Hackerone Program Launch)
 
+  - imdb
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: imdb)
+	 - artistId: IMDB artist ID (e.g. nm0000138) (default: )
+	 - first: max number of credits to return (default: 25)
+
   - infocon
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
 	 - route: route to expose the feed (default: infocon)

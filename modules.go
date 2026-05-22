@@ -15,6 +15,7 @@ import (
 	"github.com/nbr23/rss-banquet/parser/goodreads"
 	"github.com/nbr23/rss-banquet/parser/hackerone"
 	"github.com/nbr23/rss-banquet/parser/hackeronePrograms"
+	"github.com/nbr23/rss-banquet/parser/imdb"
 	"github.com/nbr23/rss-banquet/parser/infocon"
 	"github.com/nbr23/rss-banquet/parser/lego"
 	"github.com/nbr23/rss-banquet/parser/nytimes"
@@ -43,6 +44,9 @@ var Modules = map[string]func() parser.Parser{
 	},
 	"infocon": func() parser.Parser {
 		return infocon.InfoConParser()
+	},
+	"imdb": func() parser.Parser {
+		return imdb.IMDBParser()
 	},
 	"pentesterland": func() parser.Parser {
 		return pentesterland.PentesterLandParser()
