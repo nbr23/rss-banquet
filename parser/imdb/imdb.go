@@ -32,7 +32,9 @@ type IMDBWork struct {
 	ReleaseDate time.Time
 	HasFullDate bool
 	Category    string
+	CategoryID  string
 	TitleType   string
+	TitleTypeID string
 	Role        string
 	Link        string
 	ImageURL    string
@@ -53,6 +55,7 @@ type gqlCredit struct {
 			Year  *int `json:"year"`
 		} `json:"releaseDate"`
 		TitleType *struct {
+			ID   string `json:"id"`
 			Text string `json:"text"`
 		} `json:"titleType"`
 		PrimaryImage *struct {
@@ -60,6 +63,7 @@ type gqlCredit struct {
 		} `json:"primaryImage"`
 	} `json:"title"`
 	Category *struct {
+		ID   string `json:"id"`
 		Text string `json:"text"`
 	} `json:"category"`
 	Characters []struct {
@@ -100,10 +104,10 @@ func buildQuery(artistId string, first int) []byte {
 								titleText { text }
 								releaseYear { year }
 								releaseDate { day month year }
-								titleType { text }
+								titleType { id text }
 								primaryImage { url }
 							}
-							category { text }
+							category { id text }
 							... on Cast { characters { name } }
 						}
 					}
@@ -176,9 +180,11 @@ func getArtistWorks(artistId string, first int, post httpPostFunc) ([]IMDBWork, 
 		}
 		if n.Title.TitleType != nil {
 			work.TitleType = n.Title.TitleType.Text
+			work.TitleTypeID = n.Title.TitleType.ID
 		}
 		if n.Category != nil {
 			work.Category = n.Category.Text
+			work.CategoryID = n.Category.ID
 		}
 		if n.Title.PrimaryImage != nil {
 			work.ImageURL = n.Title.PrimaryImage.URL
@@ -201,6 +207,37 @@ func getArtistWorksProd(artistId string, first int) ([]IMDBWork, string, error) 
 	return getArtistWorks(artistId, first, http.Post)
 }
 
+func toFilterSet(values []string) map[string]bool {
+	set := make(map[string]bool)
+	for _, v := range values {
+		v = strings.ToLower(strings.TrimSpace(v))
+		if v != "" {
+			set[v] = true
+		}
+	}
+	return set
+}
+
+func filterWorks(works []IMDBWork, titleTypes, categories []string) []IMDBWork {
+	typeSet := toFilterSet(titleTypes)
+	categorySet := toFilterSet(categories)
+	if len(typeSet) == 0 && len(categorySet) == 0 {
+		return works
+	}
+
+	filtered := make([]IMDBWork, 0, len(works))
+	for _, w := range works {
+		if len(typeSet) > 0 && !typeSet[strings.ToLower(w.TitleTypeID)] {
+			continue
+		}
+		if len(categorySet) > 0 && !categorySet[strings.ToLower(w.CategoryID)] {
+			continue
+		}
+		filtered = append(filtered, w)
+	}
+	return filtered
+}
+
 func (IMDB) Parse(options *parser.Options) (*feeds.Feed, error) {
 	artistId := options.Get("artistId").(string)
 	if artistId == "" {
@@ -215,6 +252,8 @@ func (IMDB) Parse(options *parser.Options) (*feeds.Feed, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	works = filterWorks(works, options.Get("titleType").([]string), options.Get("category").([]string))
 
 	feed := feeds.Feed{
 		Title:       fmt.Sprintf("IMDB - %s", artistName),
@@ -291,6 +330,18 @@ func (IMDB) GetOptions() parser.Options {
 				Type:     "int",
 				Help:     "max number of credits to return",
 				Default:  "25",
+			},
+			{
+				Flag:     "titleType",
+				Required: false,
+				Type:     "stringSlice",
+				Help:     "filter by title type (e.g. movie, short, tvSeries, tvMiniSeries, tvMovie, tvSpecial, tvShort, video, videoGame, musicVideo, podcastSeries)",
+			},
+			{
+				Flag:     "category",
+				Required: false,
+				Type:     "stringSlice",
+				Help:     "filter by credit category (e.g. actor, director, writer, producer, self, soundtrack, archive_footage, art_department, animation_department, miscellaneous, thanks)",
 			},
 		},
 		Parser: IMDB{},

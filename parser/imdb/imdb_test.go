@@ -25,10 +25,10 @@ func TestGetArtistWorks(t *testing.T) {
 									"titleText": {"text": "Test Movie"},
 									"releaseYear": {"year": 2023},
 									"releaseDate": {"day": 15, "month": 6, "year": 2023},
-									"titleType": {"text": "Movie"},
+									"titleType": {"id": "movie", "text": "Movie"},
 									"primaryImage": {"url": "https://m.media-amazon.com/images/M/poster.jpg"}
 								},
-								"category": {"text": "Actor"},
+								"category": {"id": "actor", "text": "Actor"},
 								"characters": [{"name": "John Doe"}]
 							}
 						},
@@ -39,9 +39,9 @@ func TestGetArtistWorks(t *testing.T) {
 									"titleText": {"text": "Test Show"},
 									"releaseYear": {"year": 2022},
 									"releaseDate": null,
-									"titleType": {"text": "TV Series"}
+									"titleType": {"id": "tvSeries", "text": "TV Series"}
 								},
-								"category": {"text": "Producer"}
+								"category": {"id": "producer", "text": "Producer"}
 							}
 						}
 					]
@@ -78,6 +78,10 @@ func TestGetArtistWorks(t *testing.T) {
 	assert.Contains(t, works[0].Link, "/title/tt1234567/")
 	assert.Equal(t, "https://m.media-amazon.com/images/M/poster.jpg", works[0].ImageURL)
 	assert.Equal(t, "", works[1].ImageURL)
+	assert.Equal(t, "movie", works[0].TitleTypeID)
+	assert.Equal(t, "actor", works[0].CategoryID)
+	assert.Equal(t, "tvSeries", works[1].TitleTypeID)
+	assert.Equal(t, "producer", works[1].CategoryID)
 
 	assert.Equal(t, "Test Show", works[1].Title)
 	assert.Equal(t, "Producer", works[1].Category)
@@ -88,6 +92,33 @@ func TestGetArtistWorks(t *testing.T) {
 	assert.Equal(t, "nm0000000", vars["id"])
 	assert.EqualValues(t, 25, vars["first"])
 	assert.Contains(t, capturedBody["query"], "NameCredits")
+}
+
+func TestFilterWorks(t *testing.T) {
+	works := []IMDBWork{
+		{Title: "A", TitleTypeID: "movie", CategoryID: "actor"},
+		{Title: "B", TitleTypeID: "tvSeries", CategoryID: "producer"},
+		{Title: "C", TitleTypeID: "movie", CategoryID: "director"},
+	}
+
+	all := filterWorks(works, []string{""}, []string{""})
+	assert.Len(t, all, 3)
+
+	byType := filterWorks(works, []string{"movie"}, nil)
+	assert.Len(t, byType, 2)
+	assert.Equal(t, "A", byType[0].Title)
+	assert.Equal(t, "C", byType[1].Title)
+
+	caseInsensitive := filterWorks(works, []string{"TVSERIES"}, nil)
+	assert.Len(t, caseInsensitive, 1)
+	assert.Equal(t, "B", caseInsensitive[0].Title)
+
+	byCategory := filterWorks(works, nil, []string{"actor", "director"})
+	assert.Len(t, byCategory, 2)
+
+	both := filterWorks(works, []string{"movie"}, []string{"director"})
+	assert.Len(t, both, 1)
+	assert.Equal(t, "C", both[0].Title)
 }
 
 func TestGetArtistWorksGraphqlError(t *testing.T) {
