@@ -108,6 +108,8 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - route: route to expose the feed (default: imdb)
 	 - artistId: IMDB artist ID (e.g. nm0000138) (default: )
 	 - first: max number of credits to return (default: 25)
+	 - titleType: filter by title type (e.g. movie, short, tvSeries, tvMiniSeries, tvMovie, tvSpecial, tvShort, video, videoGame, musicVideo, podcastSeries) (default: )
+	 - category: filter by credit category (e.g. actor, director, writer, producer, self, soundtrack, archive_footage, art_department, animation_department, miscellaneous, thanks) (default: )
 
   - infocon
 	 - feedFormat: feed output format (rss, atom, json) (default: rss)
