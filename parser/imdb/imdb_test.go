@@ -25,7 +25,8 @@ func TestGetArtistWorks(t *testing.T) {
 									"titleText": {"text": "Test Movie"},
 									"releaseYear": {"year": 2023},
 									"releaseDate": {"day": 15, "month": 6, "year": 2023},
-									"titleType": {"text": "Movie"}
+									"titleType": {"text": "Movie"},
+									"primaryImage": {"url": "https://m.media-amazon.com/images/M/poster.jpg"}
 								},
 								"category": {"text": "Actor"},
 								"characters": [{"name": "John Doe"}]
@@ -75,6 +76,8 @@ func TestGetArtistWorks(t *testing.T) {
 	assert.True(t, works[0].HasFullDate)
 	assert.Equal(t, "2023-06-15", works[0].ReleaseDate.Format("2006-01-02"))
 	assert.Contains(t, works[0].Link, "/title/tt1234567/")
+	assert.Equal(t, "https://m.media-amazon.com/images/M/poster.jpg", works[0].ImageURL)
+	assert.Equal(t, "", works[1].ImageURL)
 
 	assert.Equal(t, "Test Show", works[1].Title)
 	assert.Equal(t, "Producer", works[1].Category)

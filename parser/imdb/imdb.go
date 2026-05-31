@@ -35,6 +35,7 @@ type IMDBWork struct {
 	TitleType   string
 	Role        string
 	Link        string
+	ImageURL    string
 }
 
 type gqlCredit struct {
@@ -54,6 +55,9 @@ type gqlCredit struct {
 		TitleType *struct {
 			Text string `json:"text"`
 		} `json:"titleType"`
+		PrimaryImage *struct {
+			URL string `json:"url"`
+		} `json:"primaryImage"`
 	} `json:"title"`
 	Category *struct {
 		Text string `json:"text"`
@@ -97,6 +101,7 @@ func buildQuery(artistId string, first int) []byte {
 								releaseYear { year }
 								releaseDate { day month year }
 								titleType { text }
+								primaryImage { url }
 							}
 							category { text }
 							... on Cast { characters { name } }
@@ -175,6 +180,9 @@ func getArtistWorks(artistId string, first int, post httpPostFunc) ([]IMDBWork, 
 		if n.Category != nil {
 			work.Category = n.Category.Text
 		}
+		if n.Title.PrimaryImage != nil {
+			work.ImageURL = n.Title.PrimaryImage.URL
+		}
 		if len(n.Characters) > 0 {
 			names := make([]string, 0, len(n.Characters))
 			for _, c := range n.Characters {
@@ -251,6 +259,17 @@ func (IMDB) Parse(options *parser.Options) (*feeds.Feed, error) {
 			Id:          parser.GetGuid([]string{artistId, w.TitleID, w.Category}),
 			Created:     created,
 			Updated:     created,
+		}
+		if w.ImageURL != "" {
+			imgExt := parser.GetFileTypeFromUrl(w.ImageURL)
+			if !parser.IsImageType(imgExt) {
+				imgExt = "jpg"
+			}
+			item.Enclosure = &feeds.Enclosure{
+				Url:    w.ImageURL,
+				Type:   "image/" + imgExt,
+				Length: "0",
+			}
 		}
 		feed.Items = append(feed.Items, &item)
 	}
