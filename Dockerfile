@@ -56,7 +56,9 @@ CMD ["watchexec", "-w", ".", "-e", "go,sum,mod", "-r", "sh", "-c", "date && echo
 
 # nginx
 
-FROM base AS nginx
+FROM --platform=${TARGETOS}/${TARGETARCH} alpine:3.18 AS nginx
+ARG TARGETARCH
+ARG TARGETOS
 ENV PORT=8080
 ENV GIN_MODE=release
 
@@ -83,5 +85,7 @@ gzip_types application/json application/rss+xml application/atom+xml;
 	}
 
 EOF
+
+COPY --from=builder /build/rss-banquet-${TARGETOS}-${TARGETARCH} /usr/bin/rss-banquet
 
 CMD ["sh", "-c", "nginx && rss-banquet server -p 8081"]
