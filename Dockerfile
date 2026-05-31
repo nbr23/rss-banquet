@@ -4,7 +4,9 @@ FROM --platform=${BUILDOS}/${BUILDARCH} golang:1-alpine$ALPINE_VERSION AS source
 WORKDIR /build
 
 RUN apk add gcc musl-dev
-COPY go* *.go /build/
+COPY go.mod go.sum /build/
+RUN go mod download
+COPY *.go /build/
 COPY static static
 COPY parser parser
 COPY style style
