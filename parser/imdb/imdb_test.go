@@ -70,8 +70,9 @@ func TestGetArtistWorks(t *testing.T) {
 
 	assert.Equal(t, "Test Movie", works[0].Title)
 	assert.Equal(t, 2023, works[0].Year)
-	assert.Equal(t, "John Doe", works[0].Role)
-	assert.Equal(t, "Actor", works[0].Category)
+	assert.Len(t, works[0].Credits, 1)
+	assert.Equal(t, "John Doe", works[0].Credits[0].Role)
+	assert.Equal(t, "Actor", works[0].Credits[0].Category)
 	assert.Equal(t, "Movie", works[0].TitleType)
 	assert.True(t, works[0].HasFullDate)
 	assert.Equal(t, "2023-06-15", works[0].ReleaseDate.Format("2006-01-02"))
@@ -79,12 +80,12 @@ func TestGetArtistWorks(t *testing.T) {
 	assert.Equal(t, "https://m.media-amazon.com/images/M/poster.jpg", works[0].ImageURL)
 	assert.Equal(t, "", works[1].ImageURL)
 	assert.Equal(t, "movie", works[0].TitleTypeID)
-	assert.Equal(t, "actor", works[0].CategoryID)
+	assert.Equal(t, "actor", works[0].Credits[0].CategoryID)
 	assert.Equal(t, "tvSeries", works[1].TitleTypeID)
-	assert.Equal(t, "producer", works[1].CategoryID)
+	assert.Equal(t, "producer", works[1].Credits[0].CategoryID)
 
 	assert.Equal(t, "Test Show", works[1].Title)
-	assert.Equal(t, "Producer", works[1].Category)
+	assert.Equal(t, "Producer", works[1].Credits[0].Category)
 	assert.False(t, works[1].HasFullDate)
 	assert.Equal(t, 2022, works[1].ReleaseDate.Year())
 
@@ -96,9 +97,9 @@ func TestGetArtistWorks(t *testing.T) {
 
 func TestFilterWorks(t *testing.T) {
 	works := []IMDBWork{
-		{Title: "A", TitleTypeID: "movie", CategoryID: "actor"},
-		{Title: "B", TitleTypeID: "tvSeries", CategoryID: "producer"},
-		{Title: "C", TitleTypeID: "movie", CategoryID: "director"},
+		{Title: "A", TitleTypeID: "movie", Credits: []IMDBCredit{{CategoryID: "actor"}}},
+		{Title: "B", TitleTypeID: "tvSeries", Credits: []IMDBCredit{{CategoryID: "producer"}}},
+		{Title: "C", TitleTypeID: "movie", Credits: []IMDBCredit{{CategoryID: "director"}}},
 	}
 
 	all := filterWorks(works, []string{""}, []string{""})
@@ -119,6 +120,61 @@ func TestFilterWorks(t *testing.T) {
 	both := filterWorks(works, []string{"movie"}, []string{"director"})
 	assert.Len(t, both, 1)
 	assert.Equal(t, "C", both[0].Title)
+}
+
+func TestGetArtistWorksDedupesCredits(t *testing.T) {
+	response := `{
+		"data": {
+			"name": {
+				"nameText": {"text": "David Cronenberg"},
+				"credits": {
+					"edges": [
+						{
+							"node": {
+								"title": {
+									"id": "tt0099763",
+									"titleText": {"text": "Naked Lunch"},
+									"releaseYear": {"year": 1991},
+									"titleType": {"id": "movie", "text": "Movie"}
+								},
+								"category": {"id": "director", "text": "Director"}
+							}
+						},
+						{
+							"node": {
+								"title": {
+									"id": "tt0099763",
+									"titleText": {"text": "Naked Lunch"},
+									"releaseYear": {"year": 1991},
+									"titleType": {"id": "movie", "text": "Movie"}
+								},
+								"category": {"id": "writer", "text": "Writer"}
+							}
+						}
+					]
+				}
+			}
+		}
+	}`
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	post := func(url, contentType string, body io.Reader) (*http.Response, error) {
+		return http.Post(ts.URL, contentType, body)
+	}
+
+	works, _, err := getArtistWorks("nm0000343", 25, post)
+	assert.NoError(t, err)
+	assert.Len(t, works, 1)
+	assert.Len(t, works[0].Credits, 2)
+	assert.Equal(t, "Director", works[0].Credits[0].Category)
+	assert.Equal(t, "Writer", works[0].Credits[1].Category)
+
+	byCategory := filterWorks(works, nil, []string{"writer"})
+	assert.Len(t, byCategory, 1)
 }
 
 func TestGetArtistWorksGraphqlError(t *testing.T) {

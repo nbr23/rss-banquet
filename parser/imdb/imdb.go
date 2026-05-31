@@ -25,19 +25,23 @@ func IMDBParser() parser.Parser {
 	return IMDB{}
 }
 
+type IMDBCredit struct {
+	Category   string
+	CategoryID string
+	Role       string
+}
+
 type IMDBWork struct {
 	TitleID     string
 	Title       string
 	Year        int
 	ReleaseDate time.Time
 	HasFullDate bool
-	Category    string
-	CategoryID  string
 	TitleType   string
 	TitleTypeID string
-	Role        string
 	Link        string
 	ImageURL    string
+	Credits     []IMDBCredit
 }
 
 type gqlCredit struct {
@@ -150,15 +154,38 @@ func getArtistWorks(artistId string, first int, post httpPostFunc) ([]IMDBWork, 
 	}
 
 	works := make([]IMDBWork, 0, len(data.Data.Name.Credits.Edges))
+	byTitle := make(map[string]int)
 	for _, edge := range data.Data.Name.Credits.Edges {
 		n := edge.Node
 		if n.Title.ID == "" {
 			continue
 		}
+
+		credit := IMDBCredit{}
+		if n.Category != nil {
+			credit.Category = n.Category.Text
+			credit.CategoryID = n.Category.ID
+		}
+		if len(n.Characters) > 0 {
+			names := make([]string, 0, len(n.Characters))
+			for _, c := range n.Characters {
+				if c.Name != "" {
+					names = append(names, c.Name)
+				}
+			}
+			credit.Role = strings.Join(names, ", ")
+		}
+
+		if idx, ok := byTitle[n.Title.ID]; ok {
+			works[idx].Credits = append(works[idx].Credits, credit)
+			continue
+		}
+
 		work := IMDBWork{
 			TitleID: n.Title.ID,
 			Title:   n.Title.TitleText.Text,
 			Link:    fmt.Sprintf("https://www.imdb.com/title/%s/", n.Title.ID),
+			Credits: []IMDBCredit{credit},
 		}
 		if n.Title.ReleaseYear != nil {
 			work.Year = n.Title.ReleaseYear.Year
@@ -182,22 +209,10 @@ func getArtistWorks(artistId string, first int, post httpPostFunc) ([]IMDBWork, 
 			work.TitleType = n.Title.TitleType.Text
 			work.TitleTypeID = n.Title.TitleType.ID
 		}
-		if n.Category != nil {
-			work.Category = n.Category.Text
-			work.CategoryID = n.Category.ID
-		}
 		if n.Title.PrimaryImage != nil {
 			work.ImageURL = n.Title.PrimaryImage.URL
 		}
-		if len(n.Characters) > 0 {
-			names := make([]string, 0, len(n.Characters))
-			for _, c := range n.Characters {
-				if c.Name != "" {
-					names = append(names, c.Name)
-				}
-			}
-			work.Role = strings.Join(names, ", ")
-		}
+		byTitle[n.Title.ID] = len(works)
 		works = append(works, work)
 	}
 	return works, artistName, nil
@@ -218,6 +233,15 @@ func toFilterSet(values []string) map[string]bool {
 	return set
 }
 
+func hasMatchingCategory(credits []IMDBCredit, categorySet map[string]bool) bool {
+	for _, c := range credits {
+		if categorySet[strings.ToLower(c.CategoryID)] {
+			return true
+		}
+	}
+	return false
+}
+
 func filterWorks(works []IMDBWork, titleTypes, categories []string) []IMDBWork {
 	typeSet := toFilterSet(titleTypes)
 	categorySet := toFilterSet(categories)
@@ -230,7 +254,7 @@ func filterWorks(works []IMDBWork, titleTypes, categories []string) []IMDBWork {
 		if len(typeSet) > 0 && !typeSet[strings.ToLower(w.TitleTypeID)] {
 			continue
 		}
-		if len(categorySet) > 0 && !categorySet[strings.ToLower(w.CategoryID)] {
+		if len(categorySet) > 0 && !hasMatchingCategory(w.Credits, categorySet) {
 			continue
 		}
 		filtered = append(filtered, w)
@@ -272,11 +296,24 @@ func (IMDB) Parse(options *parser.Options) (*feeds.Feed, error) {
 		}
 
 		var descParts []string
-		if w.Category != "" {
-			descParts = append(descParts, fmt.Sprintf("Credit: %s", w.Category))
+		var categories, roles []string
+		for _, c := range w.Credits {
+			if c.Category != "" {
+				categories = append(categories, c.Category)
+			}
+			if c.Role != "" {
+				roles = append(roles, c.Role)
+			}
 		}
-		if w.Role != "" {
-			descParts = append(descParts, fmt.Sprintf("Role: %s", w.Role))
+		if len(categories) > 0 {
+			label := "Credit"
+			if len(categories) > 1 {
+				label = "Credits"
+			}
+			descParts = append(descParts, fmt.Sprintf("%s: %s", label, strings.Join(categories, ", ")))
+		}
+		if len(roles) > 0 {
+			descParts = append(descParts, fmt.Sprintf("Role: %s", strings.Join(roles, ", ")))
 		}
 		if !w.ReleaseDate.IsZero() {
 			if w.HasFullDate {
@@ -295,7 +332,7 @@ func (IMDB) Parse(options *parser.Options) (*feeds.Feed, error) {
 			Title:       title,
 			Link:        &feeds.Link{Href: w.Link},
 			Description: strings.Join(descParts, " | "),
-			Id:          parser.GetGuid([]string{artistId, w.TitleID, w.Category}),
+			Id:          parser.GetGuid([]string{artistId, w.TitleID}),
 			Created:     created,
 			Updated:     created,
 		}
