@@ -61,9 +61,32 @@
             margin-top: 20px;
             display: none;
         }
-        #urlInput {
-            font-family: monospace;
+        .url-row {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+        }
+        #urlLink {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
             background-color: #f5f5f5;
+            font-family: monospace;
+            color: #007bff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        #urlLink:hover {
+            text-decoration: underline;
+        }
+        #copyButton {
+            white-space: nowrap;
+        }
+        #copyButton.copied {
+            background-color: #28a745;
         }
     </style>
 </head>
@@ -80,8 +103,11 @@
     </div>
     
     <div id="urlDisplay" class="form-group">
-        <label for="urlInput">Generated URL:</label>
-        <input type="text" id="urlInput" readonly>
+        <label>Generated URL:</label>
+        <div class="url-row">
+            <a id="urlLink" href="#" target="_blank" rel="noopener"></a>
+            <button type="button" id="copyButton">Copy</button>
+        </div>
     </div>
     
 
@@ -222,11 +248,34 @@
             const moduleId = document.getElementById('moduleSelect').value;
             
             const url = generateURL(moduleId, data);
-            const urlInput = document.getElementById('urlInput');
+            const urlLink = document.getElementById('urlLink');
             const urlDisplay = document.getElementById('urlDisplay');
-            
-            urlInput.value = url;
+
+            urlLink.href = url;
+            urlLink.textContent = url;
             urlDisplay.style.display = 'block';
+        }
+
+        async function copyURL() {
+            const button = document.getElementById('copyButton');
+            const url = document.getElementById('urlLink').href;
+            try {
+                await navigator.clipboard.writeText(url);
+            } catch (error) {
+                const range = document.createRange();
+                range.selectNodeContents(document.getElementById('urlLink'));
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                document.execCommand('copy');
+                selection.removeAllRanges();
+            }
+            button.textContent = 'Copied!';
+            button.classList.add('copied');
+            setTimeout(() => {
+                button.textContent = 'Copy';
+                button.classList.remove('copied');
+            }, 1500);
         }
 
         async function initializePage() {
@@ -248,6 +297,7 @@
                 });
                 moduleSelect.addEventListener('change', handleModuleChange);
                 configForm.addEventListener('submit', handleSubmit);
+                document.getElementById('copyButton').addEventListener('click', copyURL);
             } catch (error) {
                 moduleSelect.innerHTML = '<option>Error loading modules</option>';
                 moduleSelect.disabled = true;
