@@ -29,7 +29,7 @@ RUN go test ./...
 
 # Base
 
-FROM --platform=${TARGETOS}/${TARGETARCH} alpine:3.18 AS base
+FROM --platform=${TARGETOS}/${TARGETARCH} alpine:$ALPINE_VERSION AS base
 ARG TARGETARCH
 ARG TARGETOS
 
@@ -58,7 +58,7 @@ CMD ["watchexec", "-w", ".", "-e", "go,sum,mod", "-r", "sh", "-c", "date && echo
 
 # nginx
 
-FROM --platform=${TARGETOS}/${TARGETARCH} alpine:3.18 AS nginx
+FROM --platform=${TARGETOS}/${TARGETARCH} alpine:$ALPINE_VERSION AS nginx
 ARG TARGETARCH
 ARG TARGETOS
 ENV PORT=8080
