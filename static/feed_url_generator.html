@@ -188,20 +188,16 @@
             const formContainer = document.getElementById('configFormContainer');
             const form = document.getElementById('configForm');
             form.innerHTML = '';
+            moduleOptions = {};
 
             try {
-                options = await fetchModuleOptions(moduleId);
-                
+                const options = await fetchModuleOptions(moduleId);
+
                 options.forEach(option => {
                     moduleOptions[option.flag] = option;
                     const field = createFormField(option);
                     form.appendChild(field);
                 });
-
-                const submitButton = document.createElement('button');
-                submitButton.type = 'submit';
-                submitButton.textContent = 'Get URL';
-                form.appendChild(submitButton);
 
                 formContainer.style.display = 'block';
             } catch (error) {
@@ -209,15 +205,15 @@
             }
         }
 
-        function handleModuleChange(event) {
+        async function handleModuleChange(event) {
             const moduleId = event.target.value;
             if (moduleId) {
-                initializeModuleForm(moduleId);
-                document.getElementById('urlDisplay').style.display = 'none';
+                await initializeModuleForm(moduleId);
             } else {
-                const formContainer = document.getElementById('configFormContainer');
-                formContainer.style.display = 'none';
+                document.getElementById('configFormContainer').style.display = 'none';
             }
+            syncPageUrl();
+            renderGeneratedURL();
         }
 
         function generateURL(moduleId, options) {
@@ -241,19 +237,50 @@
             return queryString ? `${urlParts.join('/')}?${queryString}` : urlParts.join('/');
         }
 
-        function handleSubmit(event) {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            const data = Object.fromEntries(formData.entries());
+        function hasAllRequired(data) {
+            return Object.values(moduleOptions).every(option =>
+                !option.required || (data[option.flag] && data[option.flag] !== ''));
+        }
+
+        function renderGeneratedURL() {
             const moduleId = document.getElementById('moduleSelect').value;
-            
+            const urlDisplay = document.getElementById('urlDisplay');
+            const data = Object.fromEntries(new FormData(document.getElementById('configForm')).entries());
+
+            if (!moduleId || !hasAllRequired(data)) {
+                urlDisplay.style.display = 'none';
+                return;
+            }
+
             const url = generateURL(moduleId, data);
             const urlLink = document.getElementById('urlLink');
-            const urlDisplay = document.getElementById('urlDisplay');
-
             urlLink.href = url;
             urlLink.textContent = url;
             urlDisplay.style.display = 'block';
+        }
+
+        function syncPageUrl() {
+            const moduleId = document.getElementById('moduleSelect').value;
+            const params = new URLSearchParams();
+
+            if (moduleId) {
+                params.append('module', moduleId);
+                const data = Object.fromEntries(new FormData(document.getElementById('configForm')).entries());
+                for (const [key, value] of Object.entries(data)) {
+                    if (value === '' || !moduleOptions[key]) continue;
+                    if (moduleOptions[key].required || value !== moduleOptions[key].default) {
+                        params.append(key, value);
+                    }
+                }
+            }
+
+            const query = params.toString();
+            history.replaceState(null, '', query ? `?${query}` : window.location.pathname);
+        }
+
+        function handleFormInput() {
+            syncPageUrl();
+            renderGeneratedURL();
         }
 
         async function copyURL() {
@@ -278,10 +305,28 @@
             }, 1500);
         }
 
+        async function restoreFromPageUrl(modules) {
+            const params = new URLSearchParams(window.location.search);
+            const moduleId = params.get('module');
+            if (!moduleId || !modules.includes(moduleId)) return;
+
+            const moduleSelect = document.getElementById('moduleSelect');
+            moduleSelect.value = moduleId;
+            await initializeModuleForm(moduleId);
+
+            params.forEach((value, key) => {
+                if (key === 'module') return;
+                const input = document.querySelector(`#configForm [name="${key}"]`);
+                if (input) input.value = value;
+            });
+
+            renderGeneratedURL();
+        }
+
         async function initializePage() {
             const moduleSelect = document.getElementById('moduleSelect');
             const configForm = document.getElementById('configForm');
-            
+
             try {
                 const placeholder = document.createElement('option');
                 placeholder.value = '';
@@ -296,8 +341,10 @@
                     moduleSelect.appendChild(option);
                 });
                 moduleSelect.addEventListener('change', handleModuleChange);
-                configForm.addEventListener('submit', handleSubmit);
+                configForm.addEventListener('input', handleFormInput);
                 document.getElementById('copyButton').addEventListener('click', copyURL);
+
+                await restoreFromPageUrl(modules);
             } catch (error) {
                 moduleSelect.innerHTML = '<option>Error loading modules</option>';
                 moduleSelect.disabled = true;
