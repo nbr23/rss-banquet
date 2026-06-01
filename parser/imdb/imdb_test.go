@@ -63,7 +63,7 @@ func TestGetArtistWorks(t *testing.T) {
 		return http.Post(ts.URL, contentType, body)
 	}
 
-	works, artistName, err := getArtistWorks("nm0000000", 25, post)
+	works, artistName, err := getArtistWorks("nm0000000", post)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test Artist", artistName)
 	assert.Len(t, works, 2)
@@ -91,7 +91,7 @@ func TestGetArtistWorks(t *testing.T) {
 
 	vars, _ := capturedBody["variables"].(map[string]any)
 	assert.Equal(t, "nm0000000", vars["id"])
-	assert.EqualValues(t, 25, vars["first"])
+	assert.EqualValues(t, creditsPageSize, vars["first"])
 	assert.Contains(t, capturedBody["query"], "NameCredits")
 }
 
@@ -166,7 +166,7 @@ func TestGetArtistWorksDedupesCredits(t *testing.T) {
 		return http.Post(ts.URL, contentType, body)
 	}
 
-	works, _, err := getArtistWorks("nm0000343", 25, post)
+	works, _, err := getArtistWorks("nm0000343", post)
 	assert.NoError(t, err)
 	assert.Len(t, works, 1)
 	assert.Len(t, works[0].Credits, 2)
@@ -175,6 +175,60 @@ func TestGetArtistWorksDedupesCredits(t *testing.T) {
 
 	byCategory := filterWorks(works, nil, []string{"writer"})
 	assert.Len(t, byCategory, 1)
+}
+
+func TestGetArtistWorksPaginates(t *testing.T) {
+	page1 := `{
+		"data": {
+			"name": {
+				"nameText": {"text": "Test Artist"},
+				"credits": {
+					"pageInfo": {"hasNextPage": true, "endCursor": "CURSOR1"},
+					"edges": [
+						{"node": {"title": {"id": "tt0000001", "titleText": {"text": "First"}, "releaseYear": {"year": 2020}}, "category": {"id": "actor", "text": "Actor"}}}
+					]
+				}
+			}
+		}
+	}`
+	page2 := `{
+		"data": {
+			"name": {
+				"nameText": {"text": "Test Artist"},
+				"credits": {
+					"pageInfo": {"hasNextPage": false, "endCursor": ""},
+					"edges": [
+						{"node": {"title": {"id": "tt0000002", "titleText": {"text": "Second"}, "releaseYear": {"year": 2021}}, "category": {"id": "director", "text": "Director"}}}
+					]
+				}
+			}
+		}
+	}`
+
+	var cursors []string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var parsed map[string]any
+		_ = json.Unmarshal(body, &parsed)
+		vars, _ := parsed["variables"].(map[string]any)
+		after, _ := vars["after"].(string)
+		cursors = append(cursors, after)
+		if after == "CURSOR1" {
+			w.Write([]byte(page2))
+		} else {
+			w.Write([]byte(page1))
+		}
+	}))
+	defer ts.Close()
+
+	post := func(url, contentType string, body io.Reader) (*http.Response, error) {
+		return http.Post(ts.URL, contentType, body)
+	}
+
+	works, _, err := getArtistWorks("nm0000000", post)
+	assert.NoError(t, err)
+	assert.Len(t, works, 2)
+	assert.Equal(t, []string{"", "CURSOR1"}, cursors)
 }
 
 func TestGetArtistWorksGraphqlError(t *testing.T) {
@@ -187,7 +241,7 @@ func TestGetArtistWorksGraphqlError(t *testing.T) {
 		return http.Post(ts.URL, contentType, body)
 	}
 
-	_, _, err := getArtistWorks("nm0000000", 25, post)
+	_, _, err := getArtistWorks("nm0000000", post)
 	assert.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "PersistedQueryNotFound"))
 }
@@ -202,6 +256,6 @@ func TestGetArtistNotFound(t *testing.T) {
 		return http.Post(ts.URL, contentType, body)
 	}
 
-	_, _, err := getArtistWorks("nm9999999", 25, post)
+	_, _, err := getArtistWorks("nm9999999", post)
 	assert.Error(t, err)
 }

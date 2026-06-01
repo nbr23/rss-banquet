@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,6 +15,11 @@ import (
 )
 
 const graphqlEndpoint = "https://caching.graphql.imdb.com/"
+
+const (
+	creditsPageSize   = 250
+	maxCreditsFetched = 1000
+)
 
 type IMDB struct{}
 
@@ -82,6 +88,10 @@ type gqlResponse struct {
 				Text string `json:"text"`
 			} `json:"nameText"`
 			Credits struct {
+				PageInfo struct {
+					HasNextPage bool   `json:"hasNextPage"`
+					EndCursor   string `json:"endCursor"`
+				} `json:"pageInfo"`
 				Edges []struct {
 					Node gqlCredit `json:"node"`
 				} `json:"edges"`
@@ -95,12 +105,20 @@ type gqlResponse struct {
 
 type httpPostFunc func(url, contentType string, body io.Reader) (*http.Response, error)
 
-func buildQuery(artistId string, first int) []byte {
+func buildQuery(artistId, after string, first int) []byte {
+	variables := map[string]any{
+		"id":    artistId,
+		"first": first,
+	}
+	if after != "" {
+		variables["after"] = after
+	}
 	gql := map[string]any{
-		"query": `query NameCredits($id: ID!, $first: Int!) {
+		"query": `query NameCredits($id: ID!, $first: Int!, $after: ID) {
 			name(id: $id) {
 				nameText { text }
-				credits(first: $first) {
+				credits(first: $first, after: $after, sort: {by: RELEASE_DATE, order: DESC}) {
+					pageInfo { hasNextPage endCursor }
 					edges {
 						node {
 							title {
@@ -118,108 +136,136 @@ func buildQuery(artistId string, first int) []byte {
 				}
 			}
 		}`,
-		"variables": map[string]any{
-			"id":    artistId,
-			"first": first,
-		},
+		"variables": variables,
 	}
 	b, _ := json.Marshal(gql)
 	return b
 }
 
-func getArtistWorks(artistId string, first int, post httpPostFunc) ([]IMDBWork, string, error) {
-	body := buildQuery(artistId, first)
+func fetchCreditsPage(artistId, after string, post httpPostFunc) (*gqlResponse, error) {
+	body := buildQuery(artistId, after, creditsPageSize)
 	resp, err := post(graphqlEndpoint, "application/json", bytes.NewReader(body))
 	if err != nil {
-		return nil, "", parser.NewInternalError(fmt.Sprintf("imdb graphql request failed: %s", err))
+		return nil, parser.NewInternalError(fmt.Sprintf("imdb graphql request failed: %s", err))
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, "", parser.NewInternalError("unable to read imdb graphql response")
+		return nil, parser.NewInternalError("unable to read imdb graphql response")
 	}
 
 	var data gqlResponse
 	if err := json.Unmarshal(respBody, &data); err != nil {
-		return nil, "", parser.NewInternalError("unable to parse imdb graphql response")
+		return nil, parser.NewInternalError("unable to parse imdb graphql response")
 	}
 	if len(data.Errors) > 0 {
-		return nil, "", parser.NewInternalError(fmt.Sprintf("imdb graphql error: %s", data.Errors[0].Message))
+		return nil, parser.NewInternalError(fmt.Sprintf("imdb graphql error: %s", data.Errors[0].Message))
 	}
+	return &data, nil
+}
 
-	artistName := data.Data.Name.NameText.Text
-	if artistName == "" {
-		return nil, "", parser.NewNotFoundError("artist not found")
+func creditFromNode(n gqlCredit) IMDBCredit {
+	credit := IMDBCredit{}
+	if n.Category != nil {
+		credit.Category = n.Category.Text
+		credit.CategoryID = n.Category.ID
 	}
+	if len(n.Characters) > 0 {
+		names := make([]string, 0, len(n.Characters))
+		for _, c := range n.Characters {
+			if c.Name != "" {
+				names = append(names, c.Name)
+			}
+		}
+		credit.Role = strings.Join(names, ", ")
+	}
+	return credit
+}
 
-	works := make([]IMDBWork, 0, len(data.Data.Name.Credits.Edges))
+func workFromNode(n gqlCredit) IMDBWork {
+	work := IMDBWork{
+		TitleID: n.Title.ID,
+		Title:   n.Title.TitleText.Text,
+		Link:    fmt.Sprintf("https://www.imdb.com/title/%s/", n.Title.ID),
+	}
+	if n.Title.ReleaseYear != nil {
+		work.Year = n.Title.ReleaseYear.Year
+	}
+	if n.Title.ReleaseDate != nil && n.Title.ReleaseDate.Year != nil {
+		year := *n.Title.ReleaseDate.Year
+		month := 1
+		day := 1
+		if n.Title.ReleaseDate.Month != nil {
+			month = *n.Title.ReleaseDate.Month
+		}
+		if n.Title.ReleaseDate.Day != nil {
+			day = *n.Title.ReleaseDate.Day
+		}
+		work.ReleaseDate = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+		work.HasFullDate = n.Title.ReleaseDate.Month != nil && n.Title.ReleaseDate.Day != nil
+	} else if work.Year > 0 {
+		work.ReleaseDate = time.Date(work.Year, 1, 1, 0, 0, 0, 0, time.UTC)
+	}
+	if n.Title.TitleType != nil {
+		work.TitleType = n.Title.TitleType.Text
+		work.TitleTypeID = n.Title.TitleType.ID
+	}
+	if n.Title.PrimaryImage != nil {
+		work.ImageURL = n.Title.PrimaryImage.URL
+	}
+	return work
+}
+
+func getArtistWorks(artistId string, post httpPostFunc) ([]IMDBWork, string, error) {
+	var works []IMDBWork
 	byTitle := make(map[string]int)
-	for _, edge := range data.Data.Name.Credits.Edges {
-		n := edge.Node
-		if n.Title.ID == "" {
-			continue
+	artistName := ""
+	after := ""
+	fetched := 0
+
+	for {
+		data, err := fetchCreditsPage(artistId, after, post)
+		if err != nil {
+			return nil, "", err
 		}
 
-		credit := IMDBCredit{}
-		if n.Category != nil {
-			credit.Category = n.Category.Text
-			credit.CategoryID = n.Category.ID
-		}
-		if len(n.Characters) > 0 {
-			names := make([]string, 0, len(n.Characters))
-			for _, c := range n.Characters {
-				if c.Name != "" {
-					names = append(names, c.Name)
-				}
+		if artistName == "" {
+			artistName = data.Data.Name.NameText.Text
+			if artistName == "" {
+				return nil, "", parser.NewNotFoundError("artist not found")
 			}
-			credit.Role = strings.Join(names, ", ")
 		}
 
-		if idx, ok := byTitle[n.Title.ID]; ok {
-			works[idx].Credits = append(works[idx].Credits, credit)
-			continue
+		credits := data.Data.Name.Credits
+		for _, edge := range credits.Edges {
+			n := edge.Node
+			if n.Title.ID == "" {
+				continue
+			}
+			fetched++
+			credit := creditFromNode(n)
+			if idx, ok := byTitle[n.Title.ID]; ok {
+				works[idx].Credits = append(works[idx].Credits, credit)
+				continue
+			}
+			work := workFromNode(n)
+			work.Credits = []IMDBCredit{credit}
+			byTitle[n.Title.ID] = len(works)
+			works = append(works, work)
 		}
 
-		work := IMDBWork{
-			TitleID: n.Title.ID,
-			Title:   n.Title.TitleText.Text,
-			Link:    fmt.Sprintf("https://www.imdb.com/title/%s/", n.Title.ID),
-			Credits: []IMDBCredit{credit},
+		if !credits.PageInfo.HasNextPage || credits.PageInfo.EndCursor == "" || fetched >= maxCreditsFetched {
+			break
 		}
-		if n.Title.ReleaseYear != nil {
-			work.Year = n.Title.ReleaseYear.Year
-		}
-		if n.Title.ReleaseDate != nil && n.Title.ReleaseDate.Year != nil {
-			year := *n.Title.ReleaseDate.Year
-			month := 1
-			day := 1
-			if n.Title.ReleaseDate.Month != nil {
-				month = *n.Title.ReleaseDate.Month
-			}
-			if n.Title.ReleaseDate.Day != nil {
-				day = *n.Title.ReleaseDate.Day
-			}
-			work.ReleaseDate = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
-			work.HasFullDate = n.Title.ReleaseDate.Month != nil && n.Title.ReleaseDate.Day != nil
-		} else if work.Year > 0 {
-			work.ReleaseDate = time.Date(work.Year, 1, 1, 0, 0, 0, 0, time.UTC)
-		}
-		if n.Title.TitleType != nil {
-			work.TitleType = n.Title.TitleType.Text
-			work.TitleTypeID = n.Title.TitleType.ID
-		}
-		if n.Title.PrimaryImage != nil {
-			work.ImageURL = n.Title.PrimaryImage.URL
-		}
-		byTitle[n.Title.ID] = len(works)
-		works = append(works, work)
+		after = credits.PageInfo.EndCursor
 	}
+
 	return works, artistName, nil
 }
 
-func getArtistWorksProd(artistId string, first int) ([]IMDBWork, string, error) {
-	return getArtistWorks(artistId, first, http.Post)
+func getArtistWorksProd(artistId string) ([]IMDBWork, string, error) {
+	return getArtistWorks(artistId, http.Post)
 }
 
 func toFilterSet(values []string) map[string]bool {
@@ -272,12 +318,18 @@ func (IMDB) Parse(options *parser.Options) (*feeds.Feed, error) {
 		first = 25
 	}
 
-	works, artistName, err := getArtistWorksProd(artistId, first)
+	works, artistName, err := getArtistWorksProd(artistId)
 	if err != nil {
 		return nil, err
 	}
 
 	works = filterWorks(works, options.Get("titleType").([]string), options.Get("category").([]string))
+	sort.SliceStable(works, func(i, j int) bool {
+		return works[i].ReleaseDate.After(works[j].ReleaseDate)
+	})
+	if len(works) > first {
+		works = works[:first]
+	}
 
 	feed := feeds.Feed{
 		Title:       fmt.Sprintf("IMDB - %s", artistName),
@@ -365,7 +417,7 @@ func (IMDB) GetOptions() parser.Options {
 				Flag:     "first",
 				Required: false,
 				Type:     "int",
-				Help:     "max number of credits to return",
+				Help:     "max number of titles to return",
 				Default:  "25",
 			},
 			{
