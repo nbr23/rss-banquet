@@ -9,6 +9,14 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Prep buildx') {
+            when { branch 'master' }
+            steps {
+                script {
+                    env.BUILDX_BUILDER = getBuildxBuilder();
+                }
+            }
+        }
         stage('Test') {
             when {
                 branch 'master'
@@ -18,14 +26,6 @@ pipeline {
                 sh """
                     docker buildx build --pull --builder \$BUILDX_BUILDER --build-arg BANQUET_GLOBAL_USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0' --target test -t rss-banquet-test .
                     """
-            }
-        }
-        stage('Prep buildx') {
-            when { branch 'master' }
-            steps {
-                script {
-                    env.BUILDX_BUILDER = getBuildxBuilder();
-                }
             }
         }
         stage('Dockerhub login') {
