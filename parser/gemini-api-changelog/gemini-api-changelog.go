@@ -66,7 +66,7 @@ func (GeminiAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error) {
 			return
 		}
 
-		ul.Find("li").Each(func(j int, li *goquery.Selection) {
+		ul.ChildrenFiltered("li").Each(func(j int, li *goquery.Selection) {
 			text := strings.TrimSpace(li.Text())
 			if text == "" {
 				return
