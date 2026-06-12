@@ -42,6 +42,9 @@ func (InfoCon) Parse(options *parser.Options) (*feeds.Feed, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error unescaping url")
 	}
+	if err := parser.ValidateURLHost(url, []string{"infocon.org"}); err != nil {
+		return nil, err
+	}
 	resp, err := parser.HttpGet(url, nil)
 	regexesIgnore := []*regexp.Regexp{
 		regexp.MustCompile(`Thumbs\.db`),

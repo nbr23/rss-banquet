@@ -43,12 +43,15 @@ func (Costco) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var imagePattern = regexp.MustCompile(`(?m)^\s+productImageUrl: '([^']+)'`)
 
 	url := options.Get("url").(string)
+	if url == "" {
+		return nil, fmt.Errorf("url is required")
+	}
 	if url[0] == '/' {
 		url = url[1:]
 	}
 
-	if url == "" {
-		return nil, fmt.Errorf("url is required")
+	if err := parser.ValidateURLHost(url, []string{"costco.com"}); err != nil {
+		return nil, err
 	}
 
 	headers := map[string]string{
