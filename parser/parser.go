@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -474,4 +475,29 @@ func HttpGet(url string, options map[string]any) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+func ValidateURLHost(rawURL string, allowedHosts []string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return NewNotFoundError("invalid url")
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return NewNotFoundError("url scheme must be http or https")
+	}
+
+	host := strings.ToLower(u.Hostname())
+	if host == "" {
+		return NewNotFoundError("url host is required")
+	}
+
+	for _, allowed := range allowedHosts {
+		allowed = strings.ToLower(allowed)
+		if host == allowed || strings.HasSuffix(host, "."+allowed) {
+			return nil
+		}
+	}
+
+	return NewNotFoundError(fmt.Sprintf("url host %q is not allowed", host))
 }
