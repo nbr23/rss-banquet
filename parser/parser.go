@@ -239,6 +239,11 @@ func (o *Options) Get(key string) interface{} {
 	return v
 }
 
+func (o *Options) GetBool(key string) bool {
+	b, ok := o.Get(key).(*bool)
+	return ok && b != nil && *b
+}
+
 func (o *Options) GeWithDefaultFlag(key string) (interface{}, bool) {
 	v, isDefault, err := o.OptionsList.Get(key)
 	if err == nil {

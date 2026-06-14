@@ -244,15 +244,15 @@ func BugcrowdParser() parser.Parser {
 
 func getCrowdStreamUrl(options *parser.Options) string {
 	filters := []string{}
-	disclosures, _ := options.Get("disclosures").(*bool)
-	accepted, _ := options.Get("accepted").(*bool)
-	if *accepted {
+	disclosures := options.GetBool("disclosures")
+	accepted := options.GetBool("accepted")
+	if accepted {
 		filters = append(filters, "accepted")
 	}
-	if *disclosures {
+	if disclosures {
 		filters = append(filters, "disclosures")
 	}
-	if !*disclosures && !*accepted {
+	if !disclosures && !accepted {
 		filters = []string{"accepted", "disclosures"}
 	}
 	return fmt.Sprintf("https://bugcrowd.com/crowdstream.json?page=1&filter_by=%s", strings.Join(filters, "%2C"))

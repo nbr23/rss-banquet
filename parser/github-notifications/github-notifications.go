@@ -150,13 +150,11 @@ func buildAPIURL(options *parser.Options) string {
 	baseURL := "https://api.github.com/notifications"
 	params := url.Values{}
 
-	all, _ := options.Get("all").(*bool)
-	if all != nil && *all {
+	if options.GetBool("all") {
 		params.Set("all", "true")
 	}
 
-	participating, _ := options.Get("participating").(*bool)
-	if participating != nil && *participating {
+	if options.GetBool("participating") {
 		params.Set("participating", "true")
 	}
 
