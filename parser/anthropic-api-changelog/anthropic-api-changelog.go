@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/feeds"
@@ -26,6 +27,9 @@ func (AnthropicAPIChangelog) GetOptions() parser.Options {
 var ordinalRegex = regexp.MustCompile(`(\d+)(st|nd|rd|th)`)
 
 func normalizeDate(s string) string {
+	s = strings.TrimLeftFunc(s, func(r rune) bool {
+		return !unicode.IsLetter(r)
+	})
 	return ordinalRegex.ReplaceAllString(s, "$1")
 }
 
