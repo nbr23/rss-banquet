@@ -185,20 +185,14 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 	}
 
 	products := []legoItem{}
-	doc.Find("li[data-test=product-item]").Each(func(i int, s *goquery.Selection) {
-		if s.Children().Length() == 0 {
-			return
-		}
-		if s.Find("div[data-test=product-listing-disruptor-static]").Length() > 0 {
-			return
-		}
+	doc.Find("article[data-test=product-leaf]").Each(func(i int, s *goquery.Selection) {
 		l := legoItem{}
 		l.Name = s.Find("a[data-test=product-leaf-title]").First().Text()
 		l.ProductUrl = s.Find("a[data-test=product-leaf-title]").First().AttrOr("href", "")
 		if !strings.HasPrefix(l.ProductUrl, "http") {
 			l.ProductUrl = "https://lego.com" + l.ProductUrl
 		}
-		l.ProductCode = s.Find("article[data-test=product-leaf]").First().AttrOr("data-test-key", "")
+		l.ProductCode = s.AttrOr("data-test-key", "")
 		l.Price = s.Find("span[data-test=product-leaf-price]").First().Text()
 		l.AgeRange = s.Find("span[data-test=product-leaf-age-range-label]").First().Text()
 		l.PieceCount = s.Find("span[data-test=product-leaf-piece-count-label]").First().Text()
@@ -215,6 +209,10 @@ func (Lego) Parse(options *parser.Options) (*feeds.Feed, error) {
 		l.ImgUrl = strings.Split(s.Find("ul[data-test=product-leaf-image-wrapper]").First().Find("source").First().AttrOr("srcset", ""), " ")[0]
 		products = append(products, l)
 	})
+
+	if len(products) == 0 {
+		return nil, parser.NewNotFoundError("no products found")
+	}
 
 	return feedAdapter(products, options)
 }
