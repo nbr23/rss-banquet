@@ -264,8 +264,21 @@ func getArtistWorks(artistId string, post httpPostFunc) ([]IMDBWork, string, err
 	return works, artistName, nil
 }
 
+// imdb's caching.graphql.imdb.com endpoint rejects requests without a
+// Referer header pointing at imdb.com, returning a 403 HTML page instead of
+// a JSON body.
+func postWithImdbHeaders(url, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Referer", "https://www.imdb.com/")
+	return http.DefaultClient.Do(req)
+}
+
 func getArtistWorksProd(artistId string) ([]IMDBWork, string, error) {
-	return getArtistWorks(artistId, http.Post)
+	return getArtistWorks(artistId, postWithImdbHeaders)
 }
 
 func toFilterSet(values []string) map[string]bool {
