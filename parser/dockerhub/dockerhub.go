@@ -3,6 +3,7 @@ package dockerhub
 import (
 	"crypto/sha256"
 	"fmt"
+	"net/http"
 	"time"
 
 	"strings"
@@ -12,6 +13,10 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/nbr23/rss-banquet/parser"
 )
+
+// hub.docker.com is fronted by cloudflare, which rejects requests advertising a
+// browser user agent from a non-browser TLS stack: identify as rss-banquet instead.
+const userAgent = "rss-banquet (+https://github.com/nbr23/rss-banquet)"
 
 func (DockerHub) String() string {
 	return "dockerhub"
@@ -178,9 +183,23 @@ func parseDockerImage(imageName string) dockerImageName {
 	}
 }
 
+func dockerhubGet(url string) (*http.Response, error) {
+	res, err := parser.HttpGetUtls(url, map[string]any{
+		"headers": map[string]string{"User-Agent": userAgent},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		res.Body.Close()
+		return nil, fmt.Errorf("dockerhub returned status %s for %s", res.Status, url)
+	}
+	return res, nil
+}
+
 func getDockerTagImagesDetails(image dockerImageName) ([]dockerhubImage, error) {
 	var images []dockerhubImage
-	res, err := parser.HttpGet(fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/%s", image, image.Tag), nil)
+	res, err := dockerhubGet(fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/%s", image, image.Tag))
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +223,7 @@ func getDockerTagImagesDetails(image dockerImageName) ([]dockerhubImage, error) 
 
 func getDockerTagsImages(image dockerImageName) ([]dockerhubImage, error) {
 	var images []dockerhubImage
-	res, err := parser.HttpGet(fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/?page_size=25&page=1&ordering=last_updated", image), nil)
+	res, err := dockerhubGet(fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/?page_size=25&page=1&ordering=last_updated", image))
 	if err != nil {
 		return nil, err
 	}
@@ -254,12 +273,12 @@ func (DockerHub) Parse(options *parser.Options) (*feeds.Feed, error) {
 	if imageName.Tag != "" {
 		images, err = getDockerTagImagesDetails(imageName)
 		if err != nil {
-			return nil, parser.NewNotFoundError("image not found")
+			return nil, parser.NewNotFoundError(fmt.Sprintf("tag not found: %s", err))
 		}
 	} else {
 		images, err = getDockerTagsImages(imageName)
 		if err != nil {
-			return nil, parser.NewNotFoundError("tag not found")
+			return nil, parser.NewNotFoundError(fmt.Sprintf("image not found: %s", err))
 		}
 	}
 
