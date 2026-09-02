@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -335,6 +336,7 @@ type NotFoundError struct {
 
 type InternalError struct {
 	message string
+	err     error
 }
 
 func (e *NotFoundError) Error() string {
@@ -345,12 +347,26 @@ func (e *InternalError) Error() string {
 	return fmt.Sprintf("InternalError: %s", e.message)
 }
 
+func (e *InternalError) Unwrap() error {
+	return e.err
+}
+
 func NewNotFoundError(message string) *NotFoundError {
 	return &NotFoundError{message: message}
 }
 
 func NewInternalError(message string) *InternalError {
 	return &InternalError{message: message}
+}
+
+func WrapInternalError(err error, message string) *InternalError {
+	return &InternalError{message: message, err: err}
+}
+
+var ErrUpstreamBlocked = errors.New("request blocked by upstream bot protection")
+
+func IsBotChallenge(resp *http.Response) bool {
+	return resp.Header.Get("x-amzn-waf-action") == "challenge"
 }
 
 func SortFeedEntries(f *feeds.Feed) {

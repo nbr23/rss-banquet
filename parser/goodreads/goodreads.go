@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,6 +20,8 @@ import (
 )
 
 var CACHE_EXPIRY_RANGE = []int{50, 70}
+
+var FETCH_RETRY_DELAYS = []time.Duration{time.Second, 2 * time.Second, 4 * time.Second}
 
 type GoodReads struct{}
 
@@ -76,9 +79,38 @@ func isReleased(publicationDate string) bool {
 	return d.Before(time.Now())
 }
 
+func httpGetRetry(url string) (*http.Response, error) {
+	var lastErr error
+
+	for attempt := 0; ; attempt++ {
+		resp, err := parser.HttpGet(url, nil)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			return resp, nil
+		}
+		if err != nil {
+			lastErr = err
+		} else {
+			resp.Body.Close()
+			// Goodreads serves an empty 202 body when its WAF challenges the client, and the challenge sticks until solved
+			if parser.IsBotChallenge(resp) {
+				return nil, fmt.Errorf("unable to fetch %s: %w", url, parser.ErrUpstreamBlocked)
+			}
+			lastErr = fmt.Errorf("unable to fetch %s, status code: %d", url, resp.StatusCode)
+			if resp.StatusCode == http.StatusNotFound {
+				return nil, lastErr
+			}
+		}
+		if attempt >= len(FETCH_RETRY_DELAYS) {
+			return nil, lastErr
+		}
+		log.Warn().Msg(fmt.Sprintf("Retrying %s after error: %s", url, lastErr))
+		time.Sleep(FETCH_RETRY_DELAYS[attempt])
+	}
+}
+
 // Grabs rudimentary book details from the editions page
 func getBookEditions(editionsUrl string) ([]*GRBook, error) {
-	resp, err := parser.HttpGet(editionsUrl, nil)
+	resp, err := httpGetRetry(editionsUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +172,7 @@ func getBookFormatFromPageFormat(pageformat string) string {
 }
 
 func getBookDetails(book *GRBook) (*GRBook, error) {
-	resp, err := parser.HttpGet(book.Link, nil)
+	resp, err := httpGetRetry(book.Link)
 	if err != nil {
 		return nil, err
 	}
@@ -227,9 +259,9 @@ func getSeriesBooksList(seriesId string, bookLanguage string, yearMin int, bookF
 }
 
 func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []string) ([]GRBook, string, error) {
-	resp, err := parser.HttpGet(url, nil)
+	resp, err := httpGetRetry(url)
 	if err != nil {
-		return nil, "", parser.NewInternalError("unable to fetch the page")
+		return nil, "", parser.WrapInternalError(err, "unable to fetch the page")
 	}
 
 	defer resp.Body.Close()
@@ -249,6 +281,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 	expectedRe := regexp.MustCompile(`expected[\s]+publication[\s]+(\d{4})`)
 
 	books := []GRBook{}
+	var fetchErr error
 
 	doc.Find("[itemtype='http://schema.org/Book']").Each(func(i int, s *goquery.Selection) {
 		titleSection := s.Find("a[itemprop='url']").First()
@@ -291,6 +324,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			editions, err := getBookEditions(editionsUrl)
 			if err != nil {
 				log.Warn().Msg(fmt.Sprintf("unable to fetch book editions %s: %s", editionsUrl, err.Error()))
+				fetchErr = err
 				return
 			}
 			var earliestEdition *GRBook
@@ -335,6 +369,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 		book, err = getBookDetailsCached(book)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("unable to fetch book details: %s", err.Error()))
+			fetchErr = err
 			return
 		}
 		if book.Language != bookLanguage {
@@ -351,6 +386,10 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 		}
 		books = append(books, *book)
 	})
+
+	if len(books) == 0 && fetchErr != nil {
+		return nil, "", parser.WrapInternalError(fetchErr, fmt.Sprintf("unable to fetch book details: %s", fetchErr))
+	}
 
 	return books, title, nil
 }

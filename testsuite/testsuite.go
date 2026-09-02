@@ -1,6 +1,7 @@
 package testsuite
 
 import (
+	"errors"
 	"regexp"
 	"testing"
 
@@ -21,6 +22,9 @@ func TestParseSuccess(t *testing.T,
 ) {
 	parsed, err := p.Parse(parserOptions)
 	if err != nil {
+		if errors.Is(err, parser.ErrUpstreamBlocked) {
+			t.Skipf("Skipping: %s", err)
+		}
 		t.Errorf("Unable to parse: %s", err)
 		return
 	}
