@@ -12,7 +12,7 @@ import (
 	"github.com/nbr23/rss-banquet/parser"
 )
 
-const url = "https://docs.anthropic.com/en/release-notes/api"
+const url = "https://platform.claude.com/docs/en/release-notes/overview"
 
 type AnthropicAPIChangelog struct{}
 
@@ -27,8 +27,8 @@ func (AnthropicAPIChangelog) GetOptions() parser.Options {
 var ordinalRegex = regexp.MustCompile(`(\d+)(st|nd|rd|th)`)
 
 func normalizeDate(s string) string {
-	s = strings.TrimLeftFunc(s, func(r rune) bool {
-		return !unicode.IsLetter(r)
+	s = strings.TrimFunc(s, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
 	})
 	return ordinalRegex.ReplaceAllString(s, "$1")
 }
@@ -66,10 +66,15 @@ func (AnthropicAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error)
 	}
 
 	doc.Find("h3").Each(func(i int, h3 *goquery.Selection) {
-		dateStr := strings.TrimSpace(h3.Text())
-		date, err := time.Parse("January 2, 2006", normalizeDate(dateStr))
+		dateStr := normalizeDate(h3.Text())
+		date, err := time.Parse("January 2, 2006", dateStr)
 		if err != nil {
 			return
+		}
+
+		link := url
+		if anchor, ok := h3.Attr("id"); ok {
+			link = fmt.Sprintf("%s#%s", url, anchor)
 		}
 
 		ul := h3.NextAllFiltered("ul").First()
@@ -94,7 +99,7 @@ func (AnthropicAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error)
 				Title:       title,
 				Content:     htmlContent,
 				Description: text,
-				Link:        &feeds.Link{Href: url},
+				Link:        &feeds.Link{Href: link},
 				Created:     date,
 				Id:          parser.GetGuid([]string{dateStr, title}),
 			}
