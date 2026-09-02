@@ -10,8 +10,8 @@ import (
 
 func TestConvertAPIURLToWebURL(t *testing.T) {
 	testCases := []struct {
-		apiURL  string
-		webURL  string
+		apiURL string
+		webURL string
 	}{
 		{
 			"https://api.github.com/repos/owner/repo/issues/123",
@@ -159,9 +159,9 @@ func TestFilterNotifications(t *testing.T) {
 
 func TestParseAge(t *testing.T) {
 	testCases := []struct {
-		age      string
-		valid    bool
-		checkFn  func(time.Time) bool
+		age     string
+		valid   bool
+		checkFn func(time.Time) bool
 	}{
 		{"24h", true, func(t time.Time) bool { return time.Since(t) >= 23*time.Hour && time.Since(t) <= 25*time.Hour }},
 		{"7d", true, func(t time.Time) bool { return time.Since(t) >= 6*24*time.Hour && time.Since(t) <= 8*24*time.Hour }},
