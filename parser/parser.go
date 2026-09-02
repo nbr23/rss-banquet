@@ -54,6 +54,9 @@ func GetFullOptions(p Parser) *Options {
 }
 
 func GetLatestDate(dates []time.Time) time.Time {
+	if len(dates) == 0 {
+		return time.Time{}
+	}
 	latestDate := dates[0]
 	for _, date := range dates {
 		if date.After(latestDate) {
@@ -378,16 +381,18 @@ func (o Options) AddFlags(f *flag.FlagSet) {
 }
 
 func GetFileTypeFromUrl(url string) string {
-	parts := strings.Split(strings.Split(url, "?")[0], ".")
+	path := strings.SplitN(strings.SplitN(url, "#", 2)[0], "?", 2)[0]
+	filename := path[strings.LastIndex(path, "/")+1:]
 
-	if len(parts) == 0 {
+	dot := strings.LastIndex(filename, ".")
+	if dot == -1 {
 		return ""
 	}
-	return parts[len(parts)-1]
+	return strings.ToLower(filename[dot+1:])
 }
 
 func IsImageType(t string) bool {
-	switch t {
+	switch strings.ToLower(t) {
 	case "png", "jpg", "jpeg", "gif":
 		return true
 	default:
@@ -398,7 +403,7 @@ func IsImageType(t string) bool {
 // func CachedHttpGet(url string, ttl int) (*http.Response, error) {
 // }
 
-func HttpGetUtls(url string, options map[string]any) (*http.Response, error) {
+func newHttpGetRequest(url string, options map[string]any) (*http.Request, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -415,6 +420,19 @@ func HttpGetUtls(url string, options map[string]any) (*http.Response, error) {
 		}
 	}
 
+	return req, nil
+}
+
+var utlsConfig = func(host string) *utls.Config {
+	return &utls.Config{ServerName: host}
+}
+
+func HttpGetUtls(url string, options map[string]any) (*http.Response, error) {
+	req, err := newHttpGetRequest(url, options)
+	if err != nil {
+		return nil, err
+	}
+
 	transport := &http2.Transport{
 		DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
 			rawConn, err := (&net.Dialer{}).DialContext(ctx, network, addr)
@@ -425,7 +443,7 @@ func HttpGetUtls(url string, options map[string]any) (*http.Response, error) {
 			if err != nil {
 				host = addr
 			}
-			uconn := utls.UClient(rawConn, &utls.Config{ServerName: host}, utls.HelloChrome_Auto)
+			uconn := utls.UClient(rawConn, utlsConfig(host), utls.HelloChrome_Auto)
 			if err := uconn.HandshakeContext(ctx); err != nil {
 				rawConn.Close()
 				return nil, err
@@ -439,24 +457,9 @@ func HttpGetUtls(url string, options map[string]any) (*http.Response, error) {
 }
 
 func HttpGet(url string, options map[string]any) (*http.Response, error) {
-	req, err := http.NewRequest(
-		"GET",
-		url,
-		nil,
-	)
+	req, err := newHttpGetRequest(url, options)
 	if err != nil {
 		return nil, err
-	}
-
-	userAgent := config.GetConfigOption("USER_AGENT")
-	if userAgent != "" {
-		req.Header.Set("User-Agent", userAgent)
-	}
-
-	if headers, ok := options["headers"].(map[string]string); ok {
-		for k, v := range headers {
-			req.Header.Set(k, v)
-		}
 	}
 
 	client := &http.Client{}

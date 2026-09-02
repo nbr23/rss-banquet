@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"crypto/x509"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
+	utls "github.com/refraction-networking/utls"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/nbr23/rss-banquet/config"
@@ -278,6 +280,48 @@ func TestHttpGetWithoutOptions(t *testing.T) {
 
 func TestHttpGetInvalidUrl(t *testing.T) {
 	resp, err := HttpGet("://not a url", nil)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+}
+
+func TestHttpGetUtls(t *testing.T) {
+	var got http.Header
+	var proto string
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Clone()
+		proto = r.Proto
+		w.Write([]byte("ok"))
+	}))
+	ts.EnableHTTP2 = true
+	ts.StartTLS()
+	defer ts.Close()
+
+	pool := x509.NewCertPool()
+	pool.AddCert(ts.Certificate())
+
+	original := utlsConfig
+	utlsConfig = func(host string) *utls.Config {
+		return &utls.Config{ServerName: host, RootCAs: pool}
+	}
+	t.Cleanup(func() { utlsConfig = original })
+
+	resp, err := HttpGetUtls(ts.URL, map[string]any{
+		"headers": map[string]string{"Referer": "https://example.com"},
+	})
+	assert.NoError(t, err)
+	if !assert.NotNil(t, resp) {
+		return
+	}
+	defer resp.Body.Close()
+
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, "HTTP/2.0", proto)
+	assert.Equal(t, config.GetConfigOption("USER_AGENT"), got.Get("User-Agent"))
+	assert.Equal(t, "https://example.com", got.Get("Referer"))
+}
+
+func TestHttpGetUtlsInvalidUrl(t *testing.T) {
+	resp, err := HttpGetUtls("://not a url", nil)
 	assert.Error(t, err)
 	assert.Nil(t, resp)
 }

@@ -212,10 +212,10 @@ func TestOptionsList_Get(t *testing.T) {
 			if err != nil {
 				return
 			}
+			if b, ok := got.(*bool); ok && b != nil {
+				got = *b
+			}
 			if !reflect.DeepEqual(got, tt.want) {
-				if *(got.(*bool)) == tt.want.(bool) {
-					return
-				}
 				t.Errorf("OptionsList.Get() = %v, want %v", got, tt.want)
 			}
 			if d != tt.isDefault {
@@ -242,6 +242,8 @@ func TestGetLatestDate(t *testing.T) {
 	assert.Equal(t, d2, GetLatestDate([]time.Time{d2, d1, d3}))
 	assert.Equal(t, d1, GetLatestDate([]time.Time{d1}))
 	assert.Equal(t, d1, GetLatestDate([]time.Time{d1, d1}))
+	assert.True(t, GetLatestDate(nil).IsZero())
+	assert.True(t, GetLatestDate([]time.Time{}).IsZero())
 }
 
 func TestFeedToText(t *testing.T) {
@@ -285,10 +287,13 @@ func TestGetFileTypeFromUrl(t *testing.T) {
 	}{
 		{"https://example.com/img.png", "png"},
 		{"https://example.com/img.jpg?width=200&h=300", "jpg"},
+		{"https://example.com/img.gif#fragment", "gif"},
 		{"https://example.com/dir.d/img.jpeg", "jpeg"},
-		{"https://example.com/IMG.JPG", "JPG"},
-		{"https://example.com/img", "com/img"},
-		{"http://localhost/img", "http://localhost/img"},
+		{"https://example.com/IMG.JPG", "jpg"},
+		{"https://example.com/img", ""},
+		{"https://example.com/dir.d/img", ""},
+		{"http://localhost/img", ""},
+		{"", ""},
 	}
 
 	for _, tt := range tests {
@@ -299,10 +304,10 @@ func TestGetFileTypeFromUrl(t *testing.T) {
 }
 
 func TestIsImageType(t *testing.T) {
-	for _, ext := range []string{"png", "jpg", "jpeg", "gif"} {
+	for _, ext := range []string{"png", "jpg", "jpeg", "gif", "PNG", "JPG"} {
 		assert.True(t, IsImageType(ext), ext)
 	}
-	for _, ext := range []string{"PNG", "webp", "svg", "mp4", "", "com/img"} {
+	for _, ext := range []string{"webp", "svg", "mp4", ""} {
 		assert.False(t, IsImageType(ext), ext)
 	}
 }
