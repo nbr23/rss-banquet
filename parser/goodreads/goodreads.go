@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -62,7 +63,41 @@ type cachedBook struct {
 var (
 	bookDetailsCache   = make(map[string]cachedBook)
 	bookDetailsCacheMu sync.RWMutex
+	goodreadsIDPattern = regexp.MustCompile(`^([0-9]+)(?:[.-]|$)`)
 )
+
+func getGoodreadsID(rawURL, pathPrefix string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil || !strings.HasPrefix(u.Path, pathPrefix) {
+		return ""
+	}
+	match := goodreadsIDPattern.FindStringSubmatch(strings.TrimPrefix(u.Path, pathPrefix))
+	if match == nil {
+		return ""
+	}
+	id, err := strconv.ParseUint(match[1], 10, 64)
+	if err != nil || id == 0 {
+		return ""
+	}
+	return strconv.FormatUint(id, 10)
+}
+
+func editionLinkLess(a, b string) bool {
+	aID := getGoodreadsID(a, "/book/show/")
+	bID := getGoodreadsID(b, "/book/show/")
+	if aID != bID {
+		if aID == "" {
+			return false
+		}
+		if bID == "" {
+			return true
+		}
+		aNumber, _ := strconv.ParseUint(aID, 10, 64)
+		bNumber, _ := strconv.ParseUint(bID, 10, 64)
+		return aNumber < bNumber
+	}
+	return a < b
+}
 
 func isReleased(publicationDate string) bool {
 	d, err := getDateFromPubDateErr(publicationDate)
@@ -223,7 +258,9 @@ func getBookDetailsCached(book *GRBook) (*GRBook, error) {
 			log.Info().Msg(fmt.Sprintf("Cache expired for %s", book.Link))
 		} else if isReleased(cached.book.PublicationDate) {
 			log.Info().Msg(fmt.Sprintf("Using cached book details for %s %s", book.Link, cached.book.PublicationDate))
-			return cached.book, nil
+			details := *cached.book
+			details.WorkID = book.WorkID
+			return &details, nil
 		}
 	}
 	log.Info().Msg(fmt.Sprintf("Fetching book details for %s %s", book.Link, book.PublicationDate))
@@ -237,8 +274,10 @@ func getBookDetailsCached(book *GRBook) (*GRBook, error) {
 		days := rand.Intn(maxDays-minDays+1) + minDays
 		expireAt := time.Now().Add(time.Duration(days) * 24 * time.Hour)
 		log.Info().Msg(fmt.Sprintf("Caching book details for %s %s, expires in %d days", b.Link, b.PublicationDate, days))
+		details := *b
+		details.WorkID = ""
 		bookDetailsCacheMu.Lock()
-		bookDetailsCache[book.Link] = cachedBook{book: b, expireAt: expireAt}
+		bookDetailsCache[book.Link] = cachedBook{book: &details, expireAt: expireAt}
 		bookDetailsCacheMu.Unlock()
 	} else {
 		log.Info().Msg(fmt.Sprintf("Not caching book details for %s %s", b.Link, b.PublicationDate))
@@ -281,6 +320,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 	expectedRe := regexp.MustCompile(`expected[\s]+publication[\s]+(\d{4})`)
 
 	books := []GRBook{}
+	seen := make(map[string]bool)
 	var fetchErr error
 
 	doc.Find("[itemtype='http://schema.org/Book']").Each(func(i int, s *goquery.Selection) {
@@ -319,6 +359,7 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			editionsUrl = s.AttrOr("href", "")
 		})
 		if editionsUrl != "" {
+			book.WorkID = getGoodreadsID(editionsUrl, "/work/editions/")
 			editionsUrl = fmt.Sprintf("https://www.goodreads.com%s", editionsUrl)
 
 			editions, err := getBookEditions(editionsUrl)
@@ -350,7 +391,8 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 						log.Info().Msg(fmt.Sprintf("Skipping edition with invalid date %v %s", e.PublicationDate, e.Link))
 						continue
 					}
-					if earliestEdition == nil || publicationDate.Before(earliestEditionDate) || publicationDate.Equal(earliestEditionDate) {
+					if earliestEdition == nil || publicationDate.Before(earliestEditionDate) ||
+						(publicationDate.Equal(earliestEditionDate) && editionLinkLess(e.Link, earliestEdition.Link)) {
 						earliestEdition = e
 						earliestEditionDate = publicationDate
 					}
@@ -384,7 +426,11 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			log.Debug().Msg(fmt.Sprintf("Skipping book with year %s", book.PublicationDate))
 			return
 		}
-		books = append(books, *book)
+		id := book.feedID()
+		if !seen[id] {
+			seen[id] = true
+			books = append(books, *book)
+		}
 	})
 
 	if len(books) == 0 && fetchErr != nil {
@@ -413,6 +459,7 @@ type GRBookJson struct {
 }
 
 type GRBook struct {
+	WorkID          string
 	Title           string
 	SubTitle        string
 	PublicationDate string
@@ -422,6 +469,16 @@ type GRBook struct {
 	Description     string
 	Language        string
 	CoverUrl        string
+}
+
+func (book GRBook) feedID() string {
+	if book.WorkID != "" {
+		return "goodreads:work:" + book.WorkID
+	}
+	if id := getGoodreadsID(book.Link, "/book/show/"); id != "" {
+		return "goodreads:book:" + id
+	}
+	return book.Link
 }
 
 func getBookLanguage(bookLanguage string) (string, error) {
@@ -512,7 +569,7 @@ func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
 		item.Content = fmt.Sprintf("%s by %s - %s", book.Title, book.Author, book.PublicationDate)
 		item.Description = item.Content
 		item.Link = &feeds.Link{Href: book.Link}
-		item.Id = fmt.Sprintf("%s|%s", book.Link, book.PublicationDate)
+		item.Id = book.feedID()
 		item.Created = getDateFromPubDate(book.PublicationDate)
 		item.Updated = item.Created
 		feed.Items = append(feed.Items, &item)
