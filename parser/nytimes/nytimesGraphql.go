@@ -60,7 +60,7 @@ func getGraphQLResponse(author string) (*AnyWork, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:138.0) Gecko/20100101 Firefox/138.0")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:157.0) Gecko/20100101 Firefox/157.0")
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Accept-Language", "en-GB,en;q=0.5")
 	req.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
