@@ -520,7 +520,7 @@ func getDateFromPubDateErr(publicationDate string) (time.Time, error) {
 	for _, format := range possibleFormats {
 		pubDate, err := time.Parse(format, fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
 		if err == nil {
-			log.Info().Msg(fmt.Sprintf("Found publication date %s", pubDate))
+			log.Debug().Msg(fmt.Sprintf("Found publication date %s", pubDate))
 			return pubDate, nil
 		}
 		log.Debug().Msg(fmt.Sprintf("Failed to parse date %s with format %s", publicationDate, format))
