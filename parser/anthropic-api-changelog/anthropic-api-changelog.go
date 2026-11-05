@@ -3,6 +3,7 @@ package anthropicapichangelog
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -47,6 +48,18 @@ func extractTitle(text string) string {
 	return text
 }
 
+const idKeyWords = 6
+
+func idKey(text string) string {
+	words := strings.FieldsFunc(strings.ToLower(text), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	if len(words) > idKeyWords {
+		words = words[:idKeyWords]
+	}
+	return strings.Join(words, " ")
+}
+
 func (AnthropicAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
 
@@ -77,18 +90,17 @@ func (AnthropicAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error)
 			link = fmt.Sprintf("%s#%s", url, anchor)
 		}
 
-		ul := h3.NextAllFiltered("ul").First()
-		if ul.Length() == 0 {
-			return
-		}
-
-		ul.Find("li").Each(func(j int, li *goquery.Selection) {
+		seen := map[string]int{}
+		h3.NextUntil("h2, h3").Filter("ul").ChildrenFiltered("li").Each(func(j int, li *goquery.Selection) {
 			text := strings.TrimSpace(li.Text())
 			if text == "" {
 				return
 			}
 
 			title := extractTitle(text)
+
+			key := idKey(text)
+			seen[key]++
 
 			htmlContent, err := li.Html()
 			if err != nil {
@@ -101,7 +113,7 @@ func (AnthropicAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error)
 				Description: text,
 				Link:        &feeds.Link{Href: link},
 				Created:     date,
-				Id:          parser.GetGuid([]string{dateStr, title}),
+				Id:          parser.GetGuid([]string{dateStr, key, strconv.Itoa(seen[key])}),
 			}
 			feed.Items = append(feed.Items, &item)
 		})
