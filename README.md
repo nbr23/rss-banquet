@@ -9,6 +9,7 @@ Usage: rss-banquet <command> [options]
 Commands:
   server: run rss-banquet in server mode
   oneshot: run rss-banquet in oneshot mode to fetch a specific module's results
+  version: print the running version and commit
 ```
 
 ## Global options
@@ -147,6 +148,10 @@ Usage: `rss-banquet oneshot <module> [module options]`
 	 - route: route to expose the feed (default: psupdates)
 	 - hardware: hardware of the updates (default: ps5)
 	 - local: local of the updates (default: en-us)
+
+  - rss-banquet
+	 - feedFormat: feed output format (rss, atom, json) (default: rss)
+	 - route: route to expose the feed (default: rss-banquet)
 
 
 ## Removed modules

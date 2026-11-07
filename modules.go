@@ -27,6 +27,9 @@ import (
 )
 
 var Modules = map[string]func() parser.Parser{
+	"rss-banquet": func() parser.Parser {
+		return deploymentFeed{build: getBuildInfo()}
+	},
 	"psupdates": func() parser.Parser {
 		return psupdates.PSUpdatesParser()
 	},

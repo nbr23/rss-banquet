@@ -30,6 +30,7 @@ var moduleRoutes = map[string]string{
 	"pentesterland":                "pentesterland",
 	"pocorgtfo":                    "pocorgtfo",
 	"psupdates":                    "psupdates",
+	"rss-banquet":                  "rss-banquet",
 }
 
 func TestModuleRoutes(t *testing.T) {

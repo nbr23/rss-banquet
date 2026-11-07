@@ -15,12 +15,18 @@ COPY config config
 
 FROM source AS builder
 
-RUN GOOS=linux GOARCH=arm64 go build -trimpath -o rss-banquet-linux-arm64
-RUN GOOS=linux GOARCH=amd64 go build -trimpath -o rss-banquet-linux-amd64
+ARG VERSION=v0.0.0-dev
+ARG COMMIT
+ARG COMMIT_TIME
+
+RUN GOOS=linux GOARCH=arm64 go build -trimpath -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.commitTime=${COMMIT_TIME}" -o rss-banquet-linux-arm64
+RUN GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.commitTime=${COMMIT_TIME}" -o rss-banquet-linux-amd64
 
 FROM source AS test
 
+RUN apk add --no-cache bash
 COPY testsuite testsuite
+COPY scripts scripts
 ARG BANQUET_GLOBAL_USER_AGENT
 ENV BANQUET_GLOBAL_USER_AGENT=$BANQUET_GLOBAL_USER_AGENT
 

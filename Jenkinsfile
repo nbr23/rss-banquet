@@ -23,9 +23,10 @@ pipeline {
                 not { changelog '^skip-tests.*' }
             }
             steps {
-                sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER --build-arg BANQUET_GLOBAL_USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:157.0) Gecko/20100101 Firefox/157.0' --target test -t rss-banquet-test .
-                    """
+                sh '''#!/bin/bash
+                    set -euo pipefail
+                    docker buildx build --pull --builder "$BUILDX_BUILDER" --build-arg BANQUET_GLOBAL_USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:157.0) Gecko/20100101 Firefox/157.0' --target test -t rss-banquet-test .
+                    '''
             }
         }
         stage('Dockerhub login') {
@@ -39,25 +40,28 @@ pipeline {
         stage('Build Base Docker Image') {
             when { branch 'master' }
             steps {
-                sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target base --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:latest -t nbr23/rss-banquet:`git rev-parse --short HEAD` --push .
-                    """
+                sh '''#!/bin/bash
+                    set -euo pipefail
+                    docker buildx build --pull --builder "$BUILDX_BUILDER" --build-arg VERSION="$(bash scripts/version.sh)" --build-arg COMMIT="$(git rev-parse HEAD)" --build-arg COMMIT_TIME="$(git show -s --format=%cI HEAD)" --target base --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:latest -t "nbr23/rss-banquet:$(git rev-parse --short HEAD)" --push .
+                    '''
             }
         }
         stage('Build Server Docker Image') {
             when { branch 'master' }
             steps {
-                sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target server --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:server-latest -t nbr23/rss-banquet:server-`git rev-parse --short HEAD` --push .
-                    """
+                sh '''#!/bin/bash
+                    set -euo pipefail
+                    docker buildx build --pull --builder "$BUILDX_BUILDER" --build-arg VERSION="$(bash scripts/version.sh)" --build-arg COMMIT="$(git rev-parse HEAD)" --build-arg COMMIT_TIME="$(git show -s --format=%cI HEAD)" --target server --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:server-latest -t "nbr23/rss-banquet:server-$(git rev-parse --short HEAD)" --push .
+                    '''
             }
         }
         stage('Build Nginx Server Docker Image') {
             when { branch 'master' }
             steps {
-                sh """
-                    docker buildx build --pull --builder \$BUILDX_BUILDER  --target nginx --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:server-nginx-latest -t nbr23/rss-banquet:server-nginx-`git rev-parse --short HEAD` --push .
-                    """
+                sh '''#!/bin/bash
+                    set -euo pipefail
+                    docker buildx build --pull --builder "$BUILDX_BUILDER" --build-arg VERSION="$(bash scripts/version.sh)" --build-arg COMMIT="$(git rev-parse HEAD)" --build-arg COMMIT_TIME="$(git show -s --format=%cI HEAD)" --target nginx --platform linux/arm64,linux/amd64 -t nbr23/rss-banquet:server-nginx-latest -t "nbr23/rss-banquet:server-nginx-$(git rev-parse --short HEAD)" --push .
+                    '''
             }
         }
         stage('Sync github repos') {

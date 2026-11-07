@@ -237,6 +237,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Commands:\n")
 		fmt.Fprintf(os.Stderr, "  server: run rss-banquet in server mode\n")
 		fmt.Fprintf(os.Stderr, "  oneshot: run rss-banquet in oneshot mode to fetch a specific module's results\n")
+		fmt.Fprintf(os.Stderr, "  version: print the running version and commit\n")
 	}
 	flag.Parse()
 	if flag.NArg() < 1 {
@@ -251,6 +252,8 @@ func main() {
 		runOneShot(os.Args[2:])
 	case "readme":
 		readMe(flag.Usage)
+	case "version":
+		fmt.Println(getBuildInfo())
 	default:
 		flag.Usage()
 		return
