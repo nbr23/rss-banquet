@@ -138,20 +138,11 @@ func programsFeedQuery(options *parser.Options) (*http.Response, error) {
 		"variables": variables,
 	}
 
-	client := &http.Client{}
 	jsonValue, _ := json.Marshal(gql)
 
-	req, err := http.NewRequest(
-		"POST",
+	return parser.HttpPost(
 		"https://hackerone.com/graphql",
 		strings.NewReader(string(jsonValue)),
+		map[string]any{"headers": map[string]string{"Content-Type": "application/json"}},
 	)
-
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", "Mozilla/5.0")
-	req.Header.Set("Content-Type", "application/json")
-
-	return client.Do(req)
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -420,7 +421,11 @@ func IsImageType(t string) bool {
 // }
 
 func newHttpGetRequest(url string, options map[string]any) (*http.Request, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	return newHttpRequest("GET", url, nil, options)
+}
+
+func newHttpRequest(method string, url string, body io.Reader, options map[string]any) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -494,6 +499,15 @@ func HttpGet(url string, options map[string]any) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+func HttpPost(url string, body io.Reader, options map[string]any) (*http.Response, error) {
+	req, err := newHttpRequest("POST", url, body, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return (&http.Client{}).Do(req)
 }
 
 func ValidateURLHost(rawURL string, allowedHosts []string) error {
