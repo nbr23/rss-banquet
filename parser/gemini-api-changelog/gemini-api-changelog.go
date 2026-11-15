@@ -6,6 +6,7 @@ import (
 	"html"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,26 +41,12 @@ func (GeminiAPIChangelog) GetOptions() parser.Options {
 	return parser.Options{}
 }
 
-func extractTitle(text string) string {
-	text = strings.Join(strings.Fields(text), " ")
-	if idx := strings.Index(text, ". "); idx > 0 && idx < 200 {
-		return text[:idx]
-	}
-	if len(text) > 120 {
-		if idx := strings.LastIndex(text[:120], " "); idx > 0 {
-			return text[:idx] + "..."
-		}
-		return text[:120] + "..."
-	}
-	return text
-}
-
 func toPlainText(lines []string) string {
 	stripped := make([]string, len(lines))
 	for i, line := range lines {
 		stripped[i] = subBulletRe.ReplaceAllString(line, "")
 	}
-	text := inlineBullet.ReplaceAllString(strings.Join(stripped, " "), " ")
+	text := inlineBullet.ReplaceAllString(html.UnescapeString(strings.Join(stripped, " ")), " ")
 	text = linkRe.ReplaceAllString(text, "$1")
 	text = codeRe.ReplaceAllString(text, "$1")
 	text = boldRe.ReplaceAllString(text, "$1")
@@ -149,9 +136,8 @@ func renderItem(lines []string) string {
 }
 
 type entry struct {
-	dateStr string
-	date    time.Time
-	lines   []string
+	date  time.Time
+	lines []string
 }
 
 func parseEntries(md string) []entry {
@@ -192,7 +178,7 @@ func parseEntries(md string) []entry {
 		case topBulletRe.MatchString(line):
 			flush()
 			inList = true
-			current = &entry{dateStr: dateStr, date: date, lines: []string{topBulletRe.ReplaceAllString(line, "")}}
+			current = &entry{date: date, lines: []string{topBulletRe.ReplaceAllString(line, "")}}
 		case !inList:
 		case strings.TrimSpace(line) == "" || strings.HasPrefix(line, " "):
 			current.lines = append(current.lines, line)
@@ -204,6 +190,30 @@ func parseEntries(md string) []entry {
 	flush()
 
 	return entries
+}
+
+func buildItems(entries []entry) []*feeds.Item {
+	var items []*feeds.Item
+	seen := map[string]int{}
+	for _, e := range entries {
+		text := toPlainText(e.lines)
+		if text == "" {
+			continue
+		}
+		day := e.date.Format("2006-01-02")
+		key := parser.TextKey(text)
+		seen[day+" "+key]++
+
+		items = append(items, &feeds.Item{
+			Title:       parser.ExtractTitle(text),
+			Content:     renderItem(e.lines),
+			Description: text,
+			Link:        &feeds.Link{Href: url},
+			Created:     e.date,
+			Id:          parser.GetGuid([]string{day, key, strconv.Itoa(seen[day+" "+key])}),
+		})
+	}
+	return items
 }
 
 func (GeminiAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error) {
@@ -224,22 +234,7 @@ func (GeminiAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error) {
 		return nil, err
 	}
 
-	for _, e := range parseEntries(string(body)) {
-		text := toPlainText(e.lines)
-		if text == "" {
-			continue
-		}
-		title := extractTitle(text)
-
-		feed.Items = append(feed.Items, &feeds.Item{
-			Title:       title,
-			Content:     renderItem(e.lines),
-			Description: text,
-			Link:        &feeds.Link{Href: url},
-			Created:     e.date,
-			Id:          parser.GetGuid([]string{e.dateStr, title}),
-		})
-	}
+	feed.Items = buildItems(parseEntries(string(body)))
 
 	feed.Title = "Gemini API Changelog"
 	feed.Description = "Release notes for the Gemini API"
