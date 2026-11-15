@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
@@ -70,6 +71,32 @@ func GetLatestDate(dates []time.Time) time.Time {
 
 func GetGuid(ss []string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprint(ss))))
+}
+
+const textKeyWords = 6
+
+func TextKey(text string) string {
+	words := strings.FieldsFunc(strings.ToLower(text), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	if len(words) > textKeyWords {
+		words = words[:textKeyWords]
+	}
+	return strings.Join(words, " ")
+}
+
+func ExtractTitle(text string) string {
+	text = strings.Join(strings.Fields(text), " ")
+	if idx := strings.Index(text, ". "); idx > 0 && idx < 200 {
+		return text[:idx]
+	}
+	if len(text) > 120 {
+		if idx := strings.LastIndex(text[:120], " "); idx > 0 {
+			return text[:idx] + "..."
+		}
+		return text[:120] + "..."
+	}
+	return text
 }
 
 func GetRemoteFileLastModified(url string) (time.Time, error) {
