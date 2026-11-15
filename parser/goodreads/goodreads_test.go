@@ -325,3 +325,60 @@ func TestBookIdentityFallback(t *testing.T) {
 		})
 	}
 }
+
+func TestParsePubDate(t *testing.T) {
+	nextYear := time.Now().Year() + 1
+	for _, test := range []struct {
+		input    string
+		want     time.Time
+		released bool
+	}{
+		{"January 2, 2001", time.Date(2001, 1, 2, 0, 0, 0, 0, time.UTC), true},
+		{"First published\n  August 20th 2001\n", time.Date(2001, 8, 20, 0, 0, 0, 0, time.UTC), true},
+		{"Published 2 Mar 2001", time.Date(2001, 3, 2, 0, 0, 0, 0, time.UTC), true},
+		{"Expected publication August 2001", time.Date(2001, 8, 1, 0, 0, 0, 0, time.UTC), true},
+		{"Published 2001", time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC), true},
+		{fmt.Sprintf("%d", time.Now().Year()), time.Date(time.Now().Year(), 1, 1, 0, 0, 0, 0, time.UTC), false},
+		{fmt.Sprintf("Expected publication %s %d", time.Now().Month(), time.Now().Year()), time.Date(time.Now().Year(), time.Now().Month(), 1, 0, 0, 0, 0, time.UTC), false},
+		{fmt.Sprintf("Expected publication March %d", nextYear), time.Date(nextYear, 3, 1, 0, 0, 0, 0, time.UTC), false},
+	} {
+		t.Run(test.input, func(t *testing.T) {
+			d, err := getDateFromPubDateErr(test.input)
+			require.NoError(t, err)
+			assert.Equal(t, test.want, d)
+			assert.Equal(t, test.released, isReleased(test.input))
+		})
+	}
+	for _, input := range []string{"", "Expected publication", "soon"} {
+		d, err := getDateFromPubDateErr(input)
+		assert.Error(t, err, input)
+		assert.True(t, d.IsZero(), input)
+		assert.False(t, isReleased(input), input)
+	}
+}
+
+func TestImpreciseDateStableAcrossPolls(t *testing.T) {
+	year := time.Now().Year() + 1
+	bookPath := "/book/show/1-test"
+	pages := map[string]string{
+		"/author/list/1-test":     "<h1>Test Books</h1>" + goodreadsListRow(bookPath, "/work/editions/123-test"),
+		"/work/editions/123-test": "",
+		bookPath:                  goodreadsBookPage(fmt.Sprintf("%d", year), true),
+	}
+	mockGoodreadsPages(t, pages)
+	options := GoodReads{}.GetOptions()
+	options.Set("authorId", "1-test")
+	options.Set("year-min", "2000")
+
+	var outputs []string
+	for range 2 {
+		feed, err := (GoodReads{}).Parse(&options)
+		require.NoError(t, err)
+		require.Len(t, feed.Items, 1)
+		assert.Equal(t, time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC), feed.Items[0].Created)
+		output, err := feed.ToRss()
+		require.NoError(t, err)
+		outputs = append(outputs, output)
+	}
+	assert.Equal(t, outputs[0], outputs[1])
+}

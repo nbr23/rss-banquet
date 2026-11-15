@@ -100,18 +100,8 @@ func editionLinkLess(a, b string) bool {
 }
 
 func isReleased(publicationDate string) bool {
-	d, err := getDateFromPubDateErr(publicationDate)
-	if err != nil {
-		return false
-	}
-	trimmed := strings.TrimSpace(publicationDate)
-	if len(trimmed) == 4 && regexp.MustCompile(`^\d{4}$`).MatchString(trimmed) {
-		year, _ := strconv.Atoi(trimmed)
-		if year == time.Now().Year() {
-			return false
-		}
-	}
-	return d.Before(time.Now())
+	_, periodEnd, err := parsePubDate(publicationDate)
+	return err == nil && periodEnd.Before(time.Now())
 }
 
 func httpGetRetry(url string) (*http.Response, error) {
@@ -422,7 +412,8 @@ func getBooksList(url string, bookLanguage string, yearMin int, bookFormats []st
 			log.Debug().Msg(fmt.Sprintf("Skipping book with format %s", book.BookFormat))
 			return
 		}
-		if book.PublicationDate == "" || getDateFromPubDate(book.PublicationDate).Year() < yearMin {
+		publicationDate, err := getDateFromPubDateErr(book.PublicationDate)
+		if book.PublicationDate == "" || (err == nil && publicationDate.Year() < yearMin) {
 			log.Debug().Msg(fmt.Sprintf("Skipping book with year %s", book.PublicationDate))
 			return
 		}
@@ -494,40 +485,45 @@ func getDateFromPubDate(publicationDate string) time.Time {
 	return d
 }
 
-func getDateFromPubDateErr(publicationDate string) (time.Time, error) {
-
-	if publicationDate == "" {
-		log.Warn().Msg("No publication date found")
-		return time.Now(), fmt.Errorf("no publication date found")
+var (
+	ordinalSuffixPattern = regexp.MustCompile(`(\d+)(st|nd|rd|th)`)
+	pubDateFormats       = []struct {
+		tokens  int
+		layouts []string
+		period  func(time.Time) time.Time
+	}{
+		{3, []string{"2 Jan 06", "2 Jan 2006", "January 2, 2006", "January 2 2006"}, func(d time.Time) time.Time { return d }},
+		{2, []string{"January 2006", "Jan 2006"}, func(d time.Time) time.Time { return d.AddDate(0, 1, 0) }},
+		{1, []string{"2006"}, func(d time.Time) time.Time { return d.AddDate(1, 0, 0) }},
 	}
+)
 
-	re := regexp.MustCompile(`(\d+)(st|nd|rd|th)`)
-	publicationDate = re.ReplaceAllString(publicationDate, "$1")
-
-	pubDateSplit := strings.Split(publicationDate, " ")
-	if len(pubDateSplit) < 3 {
-		log.Warn().Msg(fmt.Sprint("Invalid publication date, defaulting to now", publicationDate))
-		return time.Now(), fmt.Errorf("invalid publication date")
-	}
-
-	possibleFormats := []string{
-		"2 Jan 06",
-		"2 Jan 2006",
-		"January 2, 2006",
-		"January 2 2006",
-	}
-
-	for _, format := range possibleFormats {
-		pubDate, err := time.Parse(format, fmt.Sprintf("%s %s %s", pubDateSplit[len(pubDateSplit)-3], pubDateSplit[len(pubDateSplit)-2], pubDateSplit[len(pubDateSplit)-1]))
-		if err == nil {
-			log.Debug().Msg(fmt.Sprintf("Found publication date %s", pubDate))
-			return pubDate, nil
+func parsePubDate(publicationDate string) (time.Time, time.Time, error) {
+	fields := strings.Fields(ordinalSuffixPattern.ReplaceAllString(publicationDate, "$1"))
+	for _, format := range pubDateFormats {
+		if len(fields) < format.tokens {
+			continue
 		}
-		log.Debug().Msg(fmt.Sprintf("Failed to parse date %s with format %s", publicationDate, format))
+		value := strings.Join(fields[len(fields)-format.tokens:], " ")
+		for _, layout := range format.layouts {
+			if d, err := time.Parse(layout, value); err == nil {
+				return d, format.period(d), nil
+			}
+		}
 	}
+	return time.Time{}, time.Time{}, fmt.Errorf("unhandled publication date format `%s`", publicationDate)
+}
 
-	log.Warn().Msg(fmt.Sprintf("Unhandled publication date format `%s`", publicationDate))
-	return time.Now(), fmt.Errorf("invalid publication date")
+func getDateFromPubDateErr(publicationDate string) (time.Time, error) {
+	if strings.TrimSpace(publicationDate) == "" {
+		log.Warn().Msg("No publication date found")
+		return time.Time{}, fmt.Errorf("no publication date found")
+	}
+	d, _, err := parsePubDate(publicationDate)
+	if err != nil {
+		log.Warn().Msg(err.Error())
+	}
+	return d, err
 }
 
 func (GoodReads) Parse(options *parser.Options) (*feeds.Feed, error) {
