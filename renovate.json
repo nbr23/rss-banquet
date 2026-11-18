@@ -1,3 +1,31 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json"
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "customDatasources": {
+    "firefox": {
+      "defaultRegistryUrlTemplate": "https://product-details.mozilla.org/1.0/firefox_versions.json",
+      "format": "json",
+      "transformTemplates": [
+        "{\"releases\": [{\"version\": $split(LATEST_FIREFOX_VERSION, '.')[0] & '.0'}]}"
+      ]
+    }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Firefox version in the scraper user agent",
+      "managerFilePatterns": [
+        "/^Makefile$/",
+        "/^Jenkinsfile$/",
+        "/^config/config\\.go$/"
+      ],
+      "matchStrings": [
+        "rv:(?<currentValue>\\d+\\.0)\\) Gecko/\\d+ Firefox/",
+        "Gecko/\\d+ Firefox/(?<currentValue>\\d+\\.0)"
+      ],
+      "matchStringsStrategy": "any",
+      "depNameTemplate": "firefox-user-agent",
+      "datasourceTemplate": "custom.firefox",
+      "versioningTemplate": "loose"
+    }
+  ]
 }
