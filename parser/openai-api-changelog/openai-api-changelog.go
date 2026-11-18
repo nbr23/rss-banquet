@@ -13,6 +13,8 @@ import (
 
 const url = "https://developers.openai.com/changelog/"
 
+var getChangelog = parser.HttpGet
+
 type OpenAIAPIChangelog struct{}
 
 func (OpenAIAPIChangelog) String() string {
@@ -40,7 +42,7 @@ func sectionYear(sectionStr string) string {
 func (OpenAIAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
 
-	resp, err := parser.HttpGet(url, nil)
+	resp, err := getChangelog(url, nil)
 	if err != nil {
 		return nil, err
 	}

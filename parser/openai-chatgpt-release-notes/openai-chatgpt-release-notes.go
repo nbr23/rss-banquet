@@ -3,6 +3,7 @@ package openaichatgptreleasenotes
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 )
 
 const url = "https://help.openai.com/en/articles/6825453-chatgpt-release-notes"
+
+var getReleaseNotes = parser.HttpGetUtls
 
 type OpenAIChatGPTReleaseNotes struct{}
 
@@ -115,11 +118,10 @@ func (s *section) item() *feeds.Item {
 	}
 }
 
-func parseCallout(callout *goquery.Selection) []*feeds.Item {
+func parseBlocks(blocks *goquery.Selection, dated bool, date time.Time) []*feeds.Item {
 	var items []*feeds.Item
 	var current *section
 	var dateStr string
-	var date time.Time
 	sectionHasTitle := false
 
 	flush := func() {
@@ -132,19 +134,20 @@ func parseCallout(callout *goquery.Selection) []*feeds.Item {
 		current = nil
 	}
 
-	callout.Children().Each(func(_ int, child *goquery.Selection) {
+	blocks.Each(func(_ int, child *goquery.Selection) {
 		switch goquery.NodeName(child) {
 		case "h1":
 			flush()
 			dateStr = ""
+			dated = false
 			sectionHasTitle = false
 			s := cleanText(child.Text())
 			if d, err := parseDate(s); err == nil {
-				dateStr, date = s, d
+				dateStr, date, dated = s, d, true
 				current = &section{dateStr: dateStr, date: date}
 			}
 		case "h2":
-			if dateStr == "" {
+			if !dated {
 				return
 			}
 			if sectionHasTitle {
@@ -163,18 +166,57 @@ func parseCallout(callout *goquery.Selection) []*feeds.Item {
 	return items
 }
 
+var updatedAtRegex = regexp.MustCompile(`\\?"updatedAt\\?",(\d+)`)
+
+func articleUpdatedAt(doc *goquery.Document) (time.Time, bool) {
+	m := updatedAtRegex.FindStringSubmatch(doc.Find("script").Text())
+	if m == nil {
+		return time.Time{}, false
+	}
+	secs, err := strconv.ParseInt(m[1], 10, 64)
+	if err != nil {
+		return time.Time{}, false
+	}
+	return time.Unix(secs, 0).UTC(), true
+}
+
+func leadingBlocks(doc *goquery.Document) *goquery.Selection {
+	return doc.Find("div.article-content").First().Children().FilterFunction(func(_ int, s *goquery.Selection) bool {
+		return !s.Is("div.intercom-interblocks-callout") && s.PrevAllFiltered("div.intercom-interblocks-callout").Length() == 0
+	})
+}
+
+func newestDate(items []*feeds.Item) (time.Time, bool) {
+	var newest time.Time
+	for _, item := range items {
+		if item.Created.After(newest) {
+			newest = item.Created
+		}
+	}
+	return newest, !newest.IsZero()
+}
+
 func parseDocument(doc *goquery.Document) []*feeds.Item {
 	var items []*feeds.Item
 	doc.Find("div.intercom-interblocks-callout").Each(func(_ int, callout *goquery.Selection) {
-		items = append(items, parseCallout(callout)...)
+		items = append(items, parseBlocks(callout.Children(), false, time.Time{})...)
 	})
-	return items
+
+	date, ok := articleUpdatedAt(doc)
+	if !ok {
+		date, ok = newestDate(items)
+	}
+	if !ok {
+		return items
+	}
+	// Entries published above the first callout carry no date heading of their own
+	return append(parseBlocks(leadingBlocks(doc), true, date), items...)
 }
 
 func (OpenAIChatGPTReleaseNotes) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
 
-	resp, err := parser.HttpGetUtls(url, nil)
+	resp, err := getReleaseNotes(url, nil)
 	if err != nil {
 		return nil, err
 	}

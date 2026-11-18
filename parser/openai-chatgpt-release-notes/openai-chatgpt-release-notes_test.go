@@ -1,6 +1,9 @@
 package openaichatgptreleasenotes
 
 import (
+	"fmt"
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -10,6 +13,18 @@ import (
 )
 
 func TestOpenAIChatGPTReleaseNotesParse(t *testing.T) {
+	previousGet := getReleaseNotes
+	getReleaseNotes = func(gotURL string, options map[string]any) (*http.Response, error) {
+		if gotURL != url {
+			t.Fatalf("got URL %q, want %q", gotURL, url)
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(fixture)),
+		}, nil
+	}
+	t.Cleanup(func() { getReleaseNotes = previousGet })
+
 	testsuite.TestParseSuccess(
 		t,
 		OpenAIChatGPTReleaseNotes{},
@@ -95,5 +110,56 @@ func TestParseDocument(t *testing.T) {
 	}
 	if strings.Contains(items[7].Description, "Intro paragraph") {
 		t.Errorf("intro before first h2 leaked into item: %q", items[7].Description)
+	}
+}
+
+const leadingFixture = `<html><body>
+<div class="article-content">
+<h2>Two new models in Work</h2>
+<p>GPT-6.2 Astra follows your template more closely.</p>
+<div class="intercom-interblocks-callout">
+<h1>November 16, 2026</h1>
+<h2>Clinical search</h2>
+<p>Clinical body.</p>
+</div>
+<h2>Trailing heading</h2>
+<p>Not a leading entry.</p>
+</div>
+%s
+</body></html>`
+
+func TestParseDocumentLeadingEntry(t *testing.T) {
+	cases := []struct {
+		name   string
+		script string
+		date   string
+	}{
+		{"updatedAt", `<script>self.__next_f.push([1,"\"updatedAt\",1794937479.286,\"fetchedAt\""])</script>`, "2026-11-17"},
+		{"fallback", "", "2026-11-16"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			doc, err := goquery.NewDocumentFromReader(strings.NewReader(fmt.Sprintf(leadingFixture, c.script)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			items := parseDocument(doc)
+			if len(items) != 2 {
+				t.Fatalf("got %d items, want 2", len(items))
+			}
+			lead := items[0]
+			if lead.Title != "Two new models in Work" {
+				t.Errorf("title %q", lead.Title)
+			}
+			if got := lead.Created.Format("2006-01-02"); got != c.date {
+				t.Errorf("date %s, want %s", got, c.date)
+			}
+			if !strings.Contains(lead.Description, "GPT-6.2 Astra") {
+				t.Errorf("description %q", lead.Description)
+			}
+			if items[1].Title != "Clinical search" {
+				t.Errorf("second item title %q", items[1].Title)
+			}
+		})
 	}
 }
