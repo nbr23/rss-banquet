@@ -25,7 +25,7 @@ pipeline {
             steps {
                 sh '''#!/bin/bash
                     set -euo pipefail
-                    docker buildx build --pull --builder "$BUILDX_BUILDER" --build-arg BANQUET_GLOBAL_USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:157.0) Gecko/20100101 Firefox/157.0' --target test -t rss-banquet-test .
+                    docker buildx build --pull --builder "$BUILDX_BUILDER" --build-arg BANQUET_GLOBAL_USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:159.0) Gecko/20100101 Firefox/159.0' --target test -t rss-banquet-test .
                     '''
             }
         }

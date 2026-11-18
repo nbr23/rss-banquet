@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/nbr23/rss-banquet/config"
 )
 
 const NYT_GRAPHQL_HASH = "57cb59fc351b816edf094c214f5ef56532145dd548fdf88103396b349640aa62"
@@ -60,7 +62,7 @@ func getGraphQLResponse(author string) (*AnyWork, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:157.0) Gecko/20100101 Firefox/157.0")
+	req.Header.Set("User-Agent", config.GetConfigOption("USER_AGENT"))
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Accept-Language", "en-GB,en;q=0.5")
 	req.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
