@@ -34,32 +34,6 @@ func normalizeDate(s string) string {
 	return ordinalRegex.ReplaceAllString(s, "$1")
 }
 
-func extractTitle(text string) string {
-	text = strings.Join(strings.Fields(text), " ")
-	if idx := strings.Index(text, ". "); idx > 0 && idx < 200 {
-		return text[:idx]
-	}
-	if len(text) > 120 {
-		if idx := strings.LastIndex(text[:120], " "); idx > 0 {
-			return text[:idx] + "..."
-		}
-		return text[:120] + "..."
-	}
-	return text
-}
-
-const idKeyWords = 6
-
-func idKey(text string) string {
-	words := strings.FieldsFunc(strings.ToLower(text), func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	})
-	if len(words) > idKeyWords {
-		words = words[:idKeyWords]
-	}
-	return strings.Join(words, " ")
-}
-
 func (AnthropicAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error) {
 	var feed feeds.Feed
 
@@ -97,9 +71,9 @@ func (AnthropicAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error)
 				return
 			}
 
-			title := extractTitle(text)
+			title := parser.ExtractTitle(text)
 
-			key := idKey(text)
+			key := parser.TextKey(text)
 			seen[key]++
 
 			htmlContent, err := li.Html()

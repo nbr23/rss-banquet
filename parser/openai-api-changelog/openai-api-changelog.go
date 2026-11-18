@@ -29,20 +29,6 @@ func normalizeDate(s string) string {
 	return ordinalRegex.ReplaceAllString(s, "$1")
 }
 
-func extractTitle(text string) string {
-	text = strings.Join(strings.Fields(text), " ")
-	if idx := strings.Index(text, ". "); idx > 0 && idx < 200 {
-		return text[:idx]
-	}
-	if len(text) > 120 {
-		if idx := strings.LastIndex(text[:120], " "); idx > 0 {
-			return text[:idx] + "..."
-		}
-		return text[:120] + "..."
-	}
-	return text
-}
-
 func sectionYear(sectionStr string) string {
 	parts := strings.SplitN(sectionStr, ",", 2)
 	if len(parts) != 2 {
@@ -118,7 +104,7 @@ func (OpenAIAPIChangelog) Parse(options *parser.Options) (*feeds.Feed, error) {
 				htmlContent = bodyText
 			}
 
-			title := extractTitle(bodyText)
+			title := parser.ExtractTitle(bodyText)
 			if typeStr != "" {
 				title = fmt.Sprintf("%s: %s", typeStr, title)
 			}
